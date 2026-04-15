@@ -7,6 +7,30 @@
 
 typedef bool(test_func_t)();
 
+struct unit_test_t {
+public:
+	test_func_t* const test_func;
+	std::string const test_name;
+
+	unit_test_t(test_func_t* const test_func, std::string const test_name) : test_func(test_func), test_name(test_name) {
+
+	}
+
+	bool call() const {
+		return this->test_func();
+	}
+};
+
+#define MAKE_TEST(FUNC) (unit_test_t( (FUNC), #FUNC ))
+
+
+
+
+
+
+
+
+
 
 
 
@@ -29,6 +53,19 @@ bool mats_equal(const uint64_t* a, const uint64_t* b, const uint32_t m, const ui
 	}
 	return true;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -77,19 +114,40 @@ bool test04() {
 	return mats_equal(c, exp, size, size);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int main() {
-	test_func_t* tests[] = {
-		test01, test02, test03, test04
+	unit_test_t tests[] = {
+		MAKE_TEST(test01),
+		MAKE_TEST(test02),
+		MAKE_TEST(test03),
+		MAKE_TEST(test04),
 	};
-	int tests_count = sizeof(tests) / sizeof(test_func_t*);
+	int tests_count = sizeof(tests) / sizeof(unit_test_t);
 
 	bool all_successful = true;
 	for (int i = 0; i < tests_count; i++) {
-		bool success = tests[i]();
+		bool success = tests[i].call();
 		if (!success) {
-			std::cout << "Test " << i << ": FAIL" << std::endl;
+			std::cout << "\"" << tests[i].test_name << "\": FAIL" << std::endl;
 		} else {
-			std::cout << "Test " << i << ": SUCCESS" << std::endl;
+			std::cout << "\"" << tests[i].test_name << "\": SUCCESS" << std::endl;
 		}
 		all_successful &= success;
 	}
