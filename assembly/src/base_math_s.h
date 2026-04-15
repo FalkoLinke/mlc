@@ -5,12 +5,12 @@ extern "C" {
 
 
 
-    
-int32_t add(const int32_t a, const int32_t b);
+
+int32_t add(int32_t const a, int32_t const b);
 
 int64_t inner_product(uint32_t const* a, 
                       uint32_t const* b, 
-                      uint32_t size);
+                      uint32_t const size);
 
 void outer_product(uint32_t const *i_a,
                    uint32_t const *i_b,
