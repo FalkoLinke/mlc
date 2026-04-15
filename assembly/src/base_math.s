@@ -6,9 +6,9 @@ _add:
 
 
 
-; int64_t inner_product_cpp(uint32_t const *i_a,
-;                           uint32_t const *i_b,
-;                           uint32_t const i_size); 
+; int64_t inner_product(uint32_t const *i_a,
+;                       uint32_t const *i_b,
+;                       uint32_t const i_size); 
 	.global _inner_product
 _inner_product:
 	mov x3, x2	; x3 - size
@@ -37,10 +37,10 @@ end01:
 
 
 
-; void outer_product_cpp(uint32_t const *i_a,
-;                        uint32_t const *i_b,
-;                        uint32_t const i_size,
-;                        uint64_t *o_c); 
+; void outer_product(uint32_t const *i_a,
+;                    uint32_t const *i_b,
+;                    uint32_t const i_size,
+;                    uint64_t *o_c); 
 	.global _outer_product
 _outer_product:
 	mov x4, x2
@@ -69,10 +69,10 @@ loop03:
 	beq end03
 
 	mov x7, #0
-	mov x8, #0
+	mov x20, #0
 	ldr w7, [x0]
-	ldr w8, [x1]
-	mul x7, x7, x8
+	ldr w20, [x1]
+	mul x7, x7, x20
 	str x7, [x2]
 
 	adds x2, x2, #8
