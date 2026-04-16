@@ -11,30 +11,53 @@ _add:
 ;                       uint32_t const i_size); 
 	.global _inner_product
 _inner_product:
-	mov x3, x2	; x3 - size
-	mov x2, x1	; x2 - ptr to b
-	mov x1, x0	; x1 - ptr to a
-	mov x0, #0	; x0 - result register
 
-loop01:
-	cmp x3, #0
-	beq end01 
+	movi v4.16b, #0
+;	movi v5.16b, #0
+	mov x6, xzr
 	
-	ldr w4, [x1]
-	ldr w5, [x2]
-	mul w4, w4, w5
-	adds w0, w0, w4	
+	uxtw x2, w2
 
-	adds x1, x1, #4
-	adds x2, x2, #4
+	and x3, x2, #0x3
+	lsr x2, x2, #2
+	add x2, x2, #1
+	
+loop_vector_inner:
+	subs x2, x2, #1
+	b.eq check_rest
+
+;	ldp q0, q1, [x0], #32
+;	ldp q2, q3, [x1], #32
+	
+;	mla v4.4s, v0.4s, v2.4s
+;	mla v5.4s, v1.4s, v3.4s
+
+	ldr q0, [x0], #16
+	ldr q2, [x1], #16
+
+	mla v4.4s, v0.4s, v2.4s
+
+	b loop_vector_inner
+
+check_rest:
+    cbz x3, finish_inner
+
+loop_rest_inner:
+	ldr w4, [x0], #4
+	ldr w5, [x1], #4
+	madd x6, x4, x5, x6;
+
+
 	subs x3, x3, #1
-	b loop01
-end01:
+	b.ne loop_rest_inner
+
+finish_inner:
+;	add v4.4s, v4.4s, v5.4s
+	addv s4, v4.4s
+	umov w0, v4.s[0]
+
+	add x0, x0, x6
 	ret
-
-
-
-
 
 
 ; void outer_product(uint32_t const *i_a,
@@ -43,50 +66,35 @@ end01:
 ;                    uint64_t *o_c); 
 	.global _outer_product
 _outer_product:
-	mov x4, x2
-	mov x2, x3
-	mov x3, x4
-	mov x6, x1
 
-	; x0 - ptr to a
-	; x1 - ptr to b
-	; x2 - ptr to c
-	; x3 - size
-	; x4 - row counter
-	; x5 - column counter
-	; x6 - copy of base ptr to b
+	movi v4.16b, #0
 
-	mov x4, x3
-loop02:
-	cmp x4, #0
-	beq end02	
+	mov x6, xzr
+	
+	uxtw x2, w2
 
+	and x3, x2, #0x3
+	lsr x2, x2, #2
+	add x2, x2, #1
+	
+loop_vector_outer:
+	subs x2, x2, #1
+	b.eq check_rest_outer
 
-	mov x1, x6
-	mov x5, x3
-loop03:
-	cmp x5, #0
-	beq end03
+	ldr q0, [x0], #16
+	ldr q1, [x1], #16
 
-	mov x7, #0
-	mov x20, #0
-	ldr w7, [x0]
-	ldr w20, [x1]
-	mul x7, x7, x20
-	str x7, [x2]
+	mla v4.4s, v1.4s, v0.s[0]
+	mla v5.4s, v1.4s, v0.s[1]
+	mla v6.4s, v1.4s, v0.s[2]
+	mla v7.4s, v1.4s, v0.s[3]
 
-	adds x2, x2, #8
+	b loop_vector_outer
 
-	adds x1, x1, #4
-	subs x5, x5, #1
-	b loop03
-end03:
+check_rest_outer:
 
-	adds x0, x0, #4
-	subs x4, x4, #1
-	b loop02
-end02:
 	ret
+
 
 
 

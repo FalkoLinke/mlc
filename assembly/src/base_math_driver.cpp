@@ -2,9 +2,6 @@
 #include "base_math_cpp.h"
 #include "base_math_s.h"
 
-
-
-
 typedef bool(test_func_t)();
 
 struct unit_test_t {
@@ -22,14 +19,6 @@ public:
 };
 
 #define MAKE_TEST(FUNC) (unit_test_t( (FUNC), #FUNC ))
-
-
-
-
-
-
-
-
 
 
 
@@ -72,23 +61,6 @@ bool mats_equal(uint64_t const* a, uint64_t const* b, uint32_t const m, uint32_t
 	}
 	return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
