@@ -30,14 +30,46 @@ public:
 
 
 
-void handle_kernel(kernel_t const kernel, int const repetitions) {
+void handle_kernel_average(kernel_t const kernel, int const repetitions) {
     std::cout << "========================" << std::endl;
-    std::cout << "Benchmarking \"" << kernel.name "\"" << std::endl;
+    std::cout << "Benchmarking \"" << kernel.name << "\"" << std::endl;
 
-    
-    
+    double avg_insts_per_second = 0.0;
+
+    for (int i = 0; i < repetitions; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
+        
+        int insts_count = kernel.call();
+
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::micro> duration = end - start;
+
+        double insts_per_second = insts_count / duration.count();
+        avg_insts_per_second += insts_per_second;
+    }
+
+    avg_insts_per_second /= repetitions;
+
+    std::cout << "Average instructions per second: " << avg_insts_per_second << std::endl;
 }
 
+void handle_kernel_total(kernel_t const kernel, int const repetitions) {
+    std::cout << "========================" << std::endl;
+    std::cout << "Benchmarking \"" << kernel.name << "\"" << std::endl;
+
+    int insts_count = 0;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    insts_count += kernel.call();
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::micro> duration = end - start;
+
+    double insts_per_second = insts_count / duration.count();
+
+    std::cout << "Instructions per second: " << insts_per_second << std::endl;
+}
 
 
 
@@ -51,8 +83,11 @@ int main() {
     int repetitions = 20;
 
     for (int i = 0; i < kernels_count; i++) {
-        handle_kernel(kernels[i], repetitions);
+        handle_kernel_average(kernels[i], repetitions);
     }
 
+    for (int i = 0; i < kernels_count; i++) {
+        handle_kernel_total(kernels[i], repetitions);
+    }
     return 0;
 }

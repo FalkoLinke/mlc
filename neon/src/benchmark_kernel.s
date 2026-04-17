@@ -12,6 +12,22 @@ insts_start:
     .rept   200
     fmadd s0, s0, s0, s0
     fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
+    fmadd s0, s0, s0, s0
     .endr
 insts_end:
 
