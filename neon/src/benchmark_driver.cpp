@@ -28,7 +28,11 @@ public:
 
 
 
-
+void warmup_kernel(kernel_t const kernel, int const repetitions) {
+    for (int i = 0; i < repetitions; i++) {
+        kernel.call();
+    }
+}
 
 void handle_kernel_average(kernel_t const kernel, int const repetitions) {
     std::cout << "========================" << std::endl;
@@ -87,10 +91,12 @@ int main() {
     int repetitions = 4000;
 
     for (int i = 0; i < kernels_count; i++) {
+        warmup_kernel(kernels[i], repetitions);
         handle_kernel_average(kernels[i], repetitions);
     }
 
     for (int i = 0; i < kernels_count; i++) {
+        warmup_kernel(kernels[i], repetitions);
         handle_kernel_total(kernels[i], repetitions);
     }
     return 0;
