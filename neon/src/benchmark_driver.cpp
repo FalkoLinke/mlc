@@ -78,6 +78,8 @@ void handle_kernel_total(kernel_t const kernel, int const repetitions) {
 int main() {
     kernel_t kernels[] = {
         MAKE_KERNEL(fmadd_kernel),
+        MAKE_KERNEL(fmla_4s_kernel),
+        MAKE_KERNEL(fmla_2s_kernel),
     };
     size_t kernels_count = sizeof(kernels) / sizeof(kernel_t);
     int repetitions = 4000;
