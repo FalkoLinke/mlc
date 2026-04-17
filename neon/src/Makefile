@@ -1,4 +1,4 @@
-all: benchmark_driver
+all: benchmark_driver permutation_driver
 
 clean:
 	rm -f benchmark_driver
@@ -6,4 +6,5 @@ clean:
 benchmark_driver: benchmark_driver.cpp benchmark_kernel.s
 	g++ -O0 benchmark_driver.cpp -x assembler-with-cpp benchmark_kernel.s -o benchmark_driver
 
-
+permutation_driver: permutation_driver.cpp permutation_kernel.s
+	g++ $^ -o permutation
