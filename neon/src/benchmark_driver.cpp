@@ -61,7 +61,9 @@ void handle_kernel_total(kernel_t const kernel, int const repetitions) {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    insts_count += kernel.call();
+    for (int i = 0; i < repetitions; i++) {
+        insts_count += kernel.call();
+    }
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::micro> duration = end - start;
