@@ -42,7 +42,7 @@ void handle_kernel_average(kernel_t const kernel, int const repetitions) {
         int insts_count = kernel.call();
 
         auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::micro> duration = end - start;
+        std::chrono::duration<double> duration = end - start;
 
         double insts_per_second = insts_count / duration.count();
         avg_insts_per_second += insts_per_second;
@@ -66,7 +66,7 @@ void handle_kernel_total(kernel_t const kernel, int const repetitions) {
     }
 
     auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::micro> duration = end - start;
+    std::chrono::duration<double> duration = end - start;
 
     double insts_per_second = insts_count / duration.count();
 
