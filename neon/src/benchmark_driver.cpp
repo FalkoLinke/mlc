@@ -80,7 +80,7 @@ int main() {
         MAKE_KERNEL(fmadd_kernel),
     };
     size_t kernels_count = sizeof(kernels) / sizeof(kernel_t);
-    int repetitions = 20;
+    int repetitions = 4000;
 
     for (int i = 0; i < kernels_count; i++) {
         handle_kernel_average(kernels[i], repetitions);

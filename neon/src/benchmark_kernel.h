@@ -4,7 +4,7 @@
 extern "C" {
 
     int fmadd_kernel();
-
+    
 }
 
 #endif /*BENCHMARK_KERNEL_H*/
