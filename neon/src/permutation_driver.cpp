@@ -27,6 +27,7 @@ int main() {
     const int64_t size_a = 8;
     const int64_t size_b = 4;
     const int64_t size_c = 4;
+    const int64_t total_size = size_a * size_b * size_c;
 
     float abc[size_a][size_b][size_c];
     float cba[size_c][size_b][size_a];
