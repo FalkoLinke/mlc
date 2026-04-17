@@ -4,6 +4,6 @@ clean:
 	rm -f benchmark_driver
 
 benchmark_driver: benchmark_driver.cpp benchmark_kernel.s
-	g++ $^ -o benchmark_driver
+	g++ -O0 $^ -o benchmark_driver
 
 
