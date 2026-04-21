@@ -29,7 +29,7 @@ jobs:
       - name: Install docs dependencies
         run: | 
           cd docs
-          uv sync --only-group docs --no-default-groups --no-install-project --frozen
+          uv sync --only-group docs
       - name: Build HTML
         run: |
           cd docs
