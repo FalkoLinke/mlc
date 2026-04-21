@@ -1,0 +1,18 @@
+[project]
+# Python project configuration
+name = "mlc"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.7"
+
+[tool.poetry]
+# Additional tool configuration can go here
+
+[tool.sphinx]
+dependencies = ["sphinx", "sphinx_rtd_theme", "napoleon"]
+
+[options]
+packages = [{ include = "mlc" }]
+
+[options.extras]
+docs = ["sphinx", "sphinx_rtd_theme"]
