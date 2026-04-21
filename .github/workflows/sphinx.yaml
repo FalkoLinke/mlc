@@ -27,9 +27,13 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v5
       - name: Install docs dependencies
-        run: uv sync --only-group docs --no-default-groups --no-install-project --frozen
+        run: | 
+          cd docs
+          uv sync --only-group docs --no-default-groups --no-install-project --frozen
       - name: Build HTML
-        run: uv run --no-sync sphinx-build -b html docs/source docs/build/html
+        run: |
+          cd docs
+          uv run --no-sync sphinx-build -b html source build/html
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
