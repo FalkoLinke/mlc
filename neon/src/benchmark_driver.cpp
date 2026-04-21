@@ -63,6 +63,7 @@ int main() {
         MAKE_KERNEL(fmadd_kernel, 2),
         MAKE_KERNEL(fmla_4s_kernel, 2 * 4),
         MAKE_KERNEL(fmla_2s_kernel, 2 * 2),
+        MAKE_KERNEL(fmadd_kernel_v2, 2),
     };
     size_t kernels_count = sizeof(kernels) / sizeof(kernel_t);
     int repetitions = 4000;
