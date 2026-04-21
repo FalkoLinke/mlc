@@ -9,8 +9,9 @@ struct kernel_t {
 public:
     kernel_func_t* const func;
     std::string const name;
+    int const fpops_per_inst;
 
-    kernel_t(kernel_func_t* const func, std::string const name) : func(func), name(name) {
+    kernel_t(kernel_func_t* const func, std::string const name, int const fpops_per_inst) : func(func), name(name), fpops_per_inst(fpops_per_inst) {
 
     }
 
@@ -19,7 +20,7 @@ public:
     }
 };
 
-#define MAKE_KERNEL(FUNC) ( kernel_t( (FUNC), #FUNC ) )
+#define MAKE_KERNEL(FUNC, OPS) ( kernel_t( (FUNC), #FUNC , (OPS)) )
 
 
 
@@ -47,7 +48,10 @@ void handle_kernel_total(kernel_t const kernel, int const repetitions) {
 
     double insts_per_second = insts_count / duration.count();
 
-    std::cout << "Instructions per second: " << insts_per_second << std::endl;
+    std::cout << "\tTime taken [s]: " << duration.count() << std::endl;
+    std::cout << "\tTotal instructions: " << insts_count << std::endl;
+    std::cout << "\tInstructions per second: " << insts_per_second << std::endl;
+    std::cout << "\tFlops: " << insts_per_second * kernel.fpops_per_inst << std::endl;
 }
 
 
@@ -56,9 +60,9 @@ void handle_kernel_total(kernel_t const kernel, int const repetitions) {
 
 int main() {
     kernel_t kernels[] = {
-        MAKE_KERNEL(fmadd_kernel),
-        MAKE_KERNEL(fmla_4s_kernel),
-        MAKE_KERNEL(fmla_2s_kernel),
+        MAKE_KERNEL(fmadd_kernel, 2),
+        MAKE_KERNEL(fmla_4s_kernel, 2 * 4),
+        MAKE_KERNEL(fmla_2s_kernel, 2 * 2),
     };
     size_t kernels_count = sizeof(kernels) / sizeof(kernel_t);
     int repetitions = 4000;
