@@ -2,12 +2,16 @@
 
 
 ;
-;    int fmadd_kernel();
+;    int fmadd_kernel(int repetitions);
 ;
     .global _fmadd_kernel
 _fmadd_kernel:
     movi v0.4s, #0
     movi v1.4s, #1
+    mov x2, x0
+
+loop01:
+    cbz x0, end01
 
 fmadd_insts_start:
     .rept  4000
@@ -15,8 +19,13 @@ fmadd_insts_start:
     .endr
 fmadd_insts_end:
 
+    subs x0, x0, #1
+    b loop01
+end01:
+
     adr x1, fmadd_insts_count
     ldr x0, [x1]
+    mul x0, x0, x2
     ret
 fmadd_insts_count:
     .long (fmadd_insts_end - fmadd_insts_start) / 4
@@ -29,13 +38,17 @@ fmadd_insts_count:
 
 
 ;
-;    int fmla_4s_kernel();
+;    int fmla_4s_kernel(int repetitions);
 ;
     .global _fmla_4s_kernel
 _fmla_4s_kernel:
     movi v0.4s, #0
     movi v1.4s, #1
     movi v2.4s, #0
+    mov x2, x0
+
+loop02:
+    cbz x0, end02
 
 fmla_4s_insts_start:
     .rept  4000
@@ -43,8 +56,13 @@ fmla_4s_insts_start:
     .endr
 fmla_4s_insts_end:
 
+    subs x0, x0, #1
+    b loop02
+end02:
+
     adr x1, fmla_4s_insts_count
     ldr x0, [x1]
+    mul x0, x0, x2
     ret
 fmla_4s_insts_count:
     .long (fmla_4s_insts_end - fmla_4s_insts_start) / 4
@@ -54,13 +72,17 @@ fmla_4s_insts_count:
 
 
 ;
-;    int fmla_2s_kernel();
+;    int fmla_2s_kernel(int repetitions);
 ;
     .global _fmla_2s_kernel
 _fmla_2s_kernel:
     movi v0.4s, #0
     movi v1.4s, #1
     movi v2.4s, #0
+    mov x2, x0
+
+loop03:
+    cbz x0, end03
 
 fmla_2s_insts_start:
     .rept  4000
@@ -68,8 +90,13 @@ fmla_2s_insts_start:
     .endr
 fmla_2s_insts_end:
 
+    subs x0, x0, #1
+    b loop03
+end03:
+
     adr x1, fmla_2s_insts_count
     ldr x0, [x1]
+    mul x0, x0, x2
     ret
 fmla_2s_insts_count:
     .long (fmla_2s_insts_end - fmla_2s_insts_start) / 4

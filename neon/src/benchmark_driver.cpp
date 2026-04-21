@@ -3,7 +3,7 @@
 
 #include "benchmark_kernel.h"
 
-typedef int(kernel_func_t)();
+typedef int(kernel_func_t)(int);
 
 struct kernel_t {
 public:
@@ -14,8 +14,8 @@ public:
 
     }
 
-    int call() const {
-        return func();
+    int call(int const repetitions) const {
+        return func(repetitions);
     }
 };
 
@@ -29,32 +29,7 @@ public:
 
 
 void warmup_kernel(kernel_t const kernel, int const repetitions) {
-    for (int i = 0; i < repetitions; i++) {
-        kernel.call();
-    }
-}
-
-void handle_kernel_average(kernel_t const kernel, int const repetitions) {
-    std::cout << "========================" << std::endl;
-    std::cout << "Benchmarking \"" << kernel.name << "\"" << std::endl;
-
-    double avg_insts_per_second = 0.0;
-
-    for (int i = 0; i < repetitions; i++) {
-        auto start = std::chrono::high_resolution_clock::now();
-        
-        int insts_count = kernel.call();
-
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> duration = end - start;
-
-        double insts_per_second = insts_count / duration.count();
-        avg_insts_per_second += insts_per_second;
-    }
-
-    avg_insts_per_second /= repetitions;
-
-    std::cout << "Average instructions per second: " << avg_insts_per_second << std::endl;
+    kernel.call(repetitions);
 }
 
 void handle_kernel_total(kernel_t const kernel, int const repetitions) {
@@ -65,9 +40,7 @@ void handle_kernel_total(kernel_t const kernel, int const repetitions) {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    for (int i = 0; i < repetitions; i++) {
-        insts_count += kernel.call();
-    }
+    insts_count = kernel.call(repetitions);
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
@@ -89,11 +62,6 @@ int main() {
     };
     size_t kernels_count = sizeof(kernels) / sizeof(kernel_t);
     int repetitions = 4000;
-
-    for (int i = 0; i < kernels_count; i++) {
-        warmup_kernel(kernels[i], repetitions);
-        handle_kernel_average(kernels[i], repetitions);
-    }
 
     for (int i = 0; i < kernels_count; i++) {
         warmup_kernel(kernels[i], repetitions);

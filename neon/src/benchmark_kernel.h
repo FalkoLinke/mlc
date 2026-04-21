@@ -3,9 +3,9 @@
 
 extern "C" {
 
-    int fmadd_kernel();
-    int fmla_4s_kernel();
-    int fmla_2s_kernel();
+    int fmadd_kernel(int const repetitions);
+    int fmla_4s_kernel(int const repetitions);
+    int fmla_2s_kernel(int const repetitions);
 }
 
 #endif /*BENCHMARK_KERNEL_H*/
