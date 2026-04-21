@@ -11,9 +11,9 @@
     .text
 
 
-;
-;    int fmadd_kernel(int repetitions);
-;
+//
+//    int fmadd_kernel(int repetitions);
+//
     .global FUNCLABEL(fmadd_kernel)
 FUNCLABEL(fmadd_kernel):
     movi v0.4s, #0
@@ -47,9 +47,9 @@ fmadd_insts_count:
 
 
 
-;
-;    int fmla_4s_kernel(int repetitions);
-;
+//
+//    int fmla_4s_kernel(int repetitions);
+//
     .global FUNCLABEL(fmla_4s_kernel)
 FUNCLABEL(fmla_4s_kernel):
     movi v0.4s, #0
@@ -81,9 +81,9 @@ fmla_4s_insts_count:
 
 
 
-;
-;    int fmla_2s_kernel(int repetitions);
-;
+//
+//    int fmla_2s_kernel(int repetitions);
+//
     .global FUNCLABEL(fmla_2s_kernel)
 FUNCLABEL(fmla_2s_kernel):
     movi v0.4s, #0
