@@ -1,11 +1,21 @@
-    .text   
+#ifdef __APPLE__
+#define FUNCLABEL(NAME) _##NAME
+#else
+#define FUNCLABEL(NAME) NAME
+#endif /* __APPLE__ */
+
+
+
+
+
+    .text
 
 
 ;
 ;    int fmadd_kernel(int repetitions);
 ;
-    .global _fmadd_kernel
-_fmadd_kernel:
+    .global FUNCLABEL(fmadd_kernel)
+FUNCLABEL(fmadd_kernel):
     movi v0.4s, #0
     movi v1.4s, #1
     mov x2, x0
@@ -40,8 +50,8 @@ fmadd_insts_count:
 ;
 ;    int fmla_4s_kernel(int repetitions);
 ;
-    .global _fmla_4s_kernel
-_fmla_4s_kernel:
+    .global FUNCLABEL(fmla_4s_kernel)
+FUNCLABEL(fmla_4s_kernel):
     movi v0.4s, #0
     movi v1.4s, #1
     movi v2.4s, #0
@@ -74,8 +84,8 @@ fmla_4s_insts_count:
 ;
 ;    int fmla_2s_kernel(int repetitions);
 ;
-    .global _fmla_2s_kernel
-_fmla_2s_kernel:
+    .global FUNCLABEL(fmla_2s_kernel)
+FUNCLABEL(fmla_2s_kernel):
     movi v0.4s, #0
     movi v1.4s, #1
     movi v2.4s, #0
