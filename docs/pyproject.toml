@@ -1,11 +1,15 @@
 [project]
-# Python project configuration
 name = "mlc"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.12"
+
+[dependency-groups]
+docs = [
+    "myst-parser>=5.0.0",
+    "sphinx>=9.1.0",
+    "sphinx-rtd-theme>=3.1.0",
+]
 
 [tool.uv]
-dependency-groups = {
-    docs = ["sphinx", "sphinx_rtd_theme", "napoleon"]
-}
+default-groups = ["docs"]
