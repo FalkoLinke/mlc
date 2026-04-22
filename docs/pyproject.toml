@@ -1,0 +1,7 @@
+[project]
+name = "mlc"
+version = "0.1.0"
+requires-python = ">=3.7"
+
+[dependency-groups]
+docs = ["sphinx", "sphinx_rtd_theme", "sphinxcontrib-napoleon"]
