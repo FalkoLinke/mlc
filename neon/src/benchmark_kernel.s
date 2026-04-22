@@ -7,6 +7,28 @@
 
 
 
+    .macro KERNEL_PROLOGUE
+    stp x29, x30, [sp, #-16]!
+    mov x29, sp
+
+    stp d8, d9, [sp, #-16]!
+    stp d10, d11, [sp, #-16]!
+    stp d12, d13, [sp, #-16]!
+    stp d14, d15, [sp, #-16]!
+    .endm
+
+
+
+    .macro KERNEL_EPILOGUE
+    ldp d14, d15, [sp], #16
+    ldp d12, d13, [sp], #16
+    ldp d10, d11, [sp], #16
+    ldp d18, d19, [sp], #16
+
+    ldp x29, x30, [sp], #16
+    .endm
+
+
 
     .macro INIT_FPREGS
     movi v0.4s, #0
@@ -75,6 +97,8 @@
 //
     .global FUNCLABEL(fmadd_kernel)
 FUNCLABEL(fmadd_kernel):
+    KERNEL_PROLOGUE
+    
     mov x2, x0
 
     INIT_FPREGS
@@ -95,6 +119,8 @@ end01:
     adr x1, fmadd_insts_count
     ldr x0, [x1]
     mul x0, x0, x2
+
+    KERNEL_EPILOGUE
     ret
 fmadd_insts_count:
     .long (fmadd_insts_end - fmadd_insts_start) / 4
@@ -127,6 +153,8 @@ fmadd_insts_count:
 //
     .global FUNCLABEL(fmla_4s_kernel)
 FUNCLABEL(fmla_4s_kernel):
+    KERNEL_PROLOGUE
+
     mov x2, x0
 
     INIT_FPREGS
@@ -147,6 +175,8 @@ end02:
     adr x1, fmla_4s_insts_count
     ldr x0, [x1]
     mul x0, x0, x2
+
+    KERNEL_EPILOGUE
     ret
 fmla_4s_insts_count:
     .long (fmla_4s_insts_end - fmla_4s_insts_start) / 4
@@ -175,6 +205,8 @@ fmla_4s_insts_count:
 //
     .global FUNCLABEL(fmla_2s_kernel)
 FUNCLABEL(fmla_2s_kernel):
+    KERNEL_PROLOGUE
+
     mov x2, x0
 
     INIT_FPREGS
@@ -195,6 +227,8 @@ end03:
     adr x1, fmla_2s_insts_count
     ldr x0, [x1]
     mul x0, x0, x2
+
+    KERNEL_EPILOGUE
     ret
 fmla_2s_insts_count:
     .long (fmla_2s_insts_end - fmla_2s_insts_start) / 4
@@ -226,6 +260,8 @@ fmla_2s_insts_count:
 //
     .global FUNCLABEL(fmadd_kernel_v2)
 FUNCLABEL(fmadd_kernel_v2):
+    KERNEL_PROLOGUE
+
     mov x2, x0
 
     INIT_FPREGS
@@ -262,6 +298,8 @@ end04:
     adr x1, fmadd_v2_insts_count
     ldr x0, [x1]
     mul x0, x0, x2
+
+    KERNEL_EPILOGUE
     ret
 fmadd_v2_insts_count:
     .long (fmadd_v2_insts_end - fmadd_v2_insts_start) / 4
@@ -295,6 +333,8 @@ fmadd_v2_insts_count:
 //
     .global FUNCLABEL(fmla_4s_kernel_v2)
 FUNCLABEL(fmla_4s_kernel_v2):
+    KERNEL_PROLOGUE
+
     mov x2, x0
 
     INIT_FPREGS
@@ -331,6 +371,8 @@ end05:
     adr x1, fmla_4s_v2_insts_count
     ldr x0, [x1]
     mul x0, x0, x2
+
+    KERNEL_EPILOGUE
     ret
 fmla_4s_v2_insts_count:
     .long (fmla_4s_v2_insts_end - fmla_4s_v2_insts_start) / 4
@@ -371,6 +413,8 @@ fmla_4s_v2_insts_count:
 //
     .global FUNCLABEL(fmla_2s_kernel_v2)
 FUNCLABEL(fmla_2s_kernel_v2):
+    KERNEL_PROLOGUE
+
     mov x2, x0
 
     INIT_FPREGS
@@ -407,6 +451,8 @@ end06:
     adr x1, fmla_2s_v2_insts_count
     ldr x0, [x1]
     mul x0, x0, x2
+
+    KERNEL_EPILOGUE
     ret
 fmla_2s_v2_insts_count:
     .long (fmla_2s_v2_insts_end - fmla_2s_v2_insts_start) / 4
