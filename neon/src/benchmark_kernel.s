@@ -47,6 +47,26 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     .text
 
 
@@ -78,6 +98,22 @@ end01:
     ret
 fmadd_insts_count:
     .long (fmadd_insts_end - fmadd_insts_start) / 4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -119,6 +155,21 @@ fmla_4s_insts_count:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //
 //    int fmla_2s_kernel(int repetitions);
 //
@@ -147,6 +198,19 @@ end03:
     ret
 fmla_2s_insts_count:
     .long (fmla_2s_insts_end - fmla_2s_insts_start) / 4
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -201,3 +265,148 @@ end04:
     ret
 fmadd_v2_insts_count:
     .long (fmadd_v2_insts_end - fmadd_v2_insts_start) / 4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//    int fmla_4s_kernel_v2(int repetitions);
+//
+    .global FUNCLABEL(fmla_4s_kernel_v2)
+FUNCLABEL(fmla_4s_kernel_v2):
+    mov x2, x0
+
+    INIT_FPREGS
+
+loop05:
+    cbz x0, end05
+
+fmla_4s_v2_insts_start:
+    .rept  4000
+    fmla v0.4s, v8.4s, v16.4s
+    fmla v1.4s, v9.4s, v17.4s
+    fmla v2.4s, v10.4s, v18.4s
+    fmla v3.4s, v11.4s, v19.4s
+    fmla v4.4s, v12.4s, v20.4s
+    fmla v5.4s, v13.4s, v21.4s
+    fmla v6.4s, v14.4s, v22.4s
+    fmla v7.4s, v15.4s, v23.4s
+
+    fmla v8.4s, v16.4s, v24.4s
+    fmla v9.4s, v17.4s, v25.4s
+    fmla v10.4s, v18.4s, v26.4s
+    fmla v11.4s, v19.4s, v27.4s
+    fmla v12.4s, v20.4s, v28.4s
+    fmla v13.4s, v21.4s, v29.4s
+    fmla v14.4s, v22.4s, v30.4s
+    fmla v15.4s, v23.4s, v31.4s
+    .endr
+fmla_4s_v2_insts_end:
+
+    subs x0, x0, #1
+    b loop05
+end05:
+
+    adr x1, fmla_4s_v2_insts_count
+    ldr x0, [x1]
+    mul x0, x0, x2
+    ret
+fmla_4s_v2_insts_count:
+    .long (fmla_4s_v2_insts_end - fmla_4s_v2_insts_start) / 4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//    int fmla_2s_kernel_v2(int repetitions);
+//
+    .global FUNCLABEL(fmla_2s_kernel_v2)
+FUNCLABEL(fmla_2s_kernel_v2):
+    mov x2, x0
+
+    INIT_FPREGS
+
+loop06:
+    cbz x0, end06
+
+fmla_2s_v2_insts_start:
+    .rept  4000
+    fmla v0.2s, v8.2s, v16.2s
+    fmla v1.2s, v9.2s, v17.2s
+    fmla v2.2s, v10.2s, v18.2s
+    fmla v3.2s, v11.2s, v19.2s
+    fmla v4.2s, v12.2s, v20.2s
+    fmla v5.2s, v13.2s, v21.2s
+    fmla v6.2s, v14.2s, v22.2s
+    fmla v7.2s, v15.2s, v23.2s
+
+    fmla v8.2s, v16.2s, v24.2s
+    fmla v9.2s, v17.2s, v25.2s
+    fmla v10.2s, v18.2s, v26.2s
+    fmla v11.2s, v19.2s, v27.2s
+    fmla v12.2s, v20.2s, v28.2s
+    fmla v13.2s, v21.2s, v29.2s
+    fmla v14.2s, v22.2s, v30.2s
+    fmla v15.2s, v23.2s, v31.2s
+    .endr
+fmla_2s_v2_insts_end:
+
+    subs x0, x0, #1
+    b loop06
+end06:
+
+    adr x1, fmla_2s_v2_insts_count
+    ldr x0, [x1]
+    mul x0, x0, x2
+    ret
+fmla_2s_v2_insts_count:
+    .long (fmla_2s_v2_insts_end - fmla_2s_v2_insts_start) / 4
