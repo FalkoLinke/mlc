@@ -8,10 +8,10 @@
 
 
     .macro KERNEL_PROLOGUE
-    stp x29, x30, [sp, #-16]!
-    mov x29, sp
+    stp x29, x30, [sp, #-16]!               // push link- and frame-registers
+    mov x29, sp                             // set frame-register to stack pointer
 
-    stp d8, d9, [sp, #-16]!
+    stp d8, d9, [sp, #-16]!                 // push callee-saved float registers
     stp d10, d11, [sp, #-16]!
     stp d12, d13, [sp, #-16]!
     stp d14, d15, [sp, #-16]!
@@ -20,18 +20,18 @@
 
 
     .macro KERNEL_EPILOGUE
-    ldp d14, d15, [sp], #16
+    ldp d14, d15, [sp], #16                 // pop callee-saved float registers
     ldp d12, d13, [sp], #16
     ldp d10, d11, [sp], #16
     ldp d18, d19, [sp], #16
 
-    ldp x29, x30, [sp], #16
+    ldp x29, x30, [sp], #16                 // restore link- and frame-registers
     .endm
 
 
 
     .macro INIT_FPREGS
-    movi v0.4s, #0
+    movi v0.4s, #0                          // set all floating point registers to 0
     movi v1.4s, #0
     movi v2.4s, #0
     movi v3.4s, #0
