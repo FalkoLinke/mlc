@@ -26,7 +26,9 @@ int main() {
 
     const uint64_t size_a = 8;
     const uint64_t size_b = 4;
-    const uint64_t size_c = 2;
+
+    // only works for factors of 4
+    const uint64_t size_c = 8;
     const uint64_t total_size = size_a * size_b * size_c;
 
     float abc[size_a][size_b][size_c];

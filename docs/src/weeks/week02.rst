@@ -79,7 +79,8 @@ Permutation
    :language: armasm
 
 
-* ``permutation_kernel``:       18.4 Gib/s
+* ``permutation_kernel c=4``:     GiB/s: 31.5954
+* ``permutation_kernel c=8``:     GiB/s: 32.2068
 
 
 
