@@ -43,13 +43,6 @@ public:
 
 
 
-
-
-
-
-
-
-
 /**
  * Calls `kernel` with `repetitions`.
  */
