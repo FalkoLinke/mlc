@@ -75,9 +75,8 @@ on the provided Raspberry Pi machines.
 Permutation
 -------------------------
 
-```{literalinclude} ../../../neon/src/permutation_kernel.s
-:language: armasm
-```
+.. literalinclude:: ../../../neon/src/permutation_kernel.s
+   :language: armasm
 
 
 * ``permutation_kernel``:       18.4 Gib/s
