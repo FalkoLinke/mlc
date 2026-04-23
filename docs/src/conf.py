@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Week 1'
+project = 'Project Report'
 copyright = '2026, Falko Linke, Johann Schwarze'
 author = 'Falko Linke, Johann Schwarze'
 
