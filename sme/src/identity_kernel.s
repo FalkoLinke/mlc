@@ -80,7 +80,7 @@ identity_4_4:
     trn2 z3.d, z5.d, z7.d
 
 skip01:
-    // store nontransposed variant
+    // store result
     st1 { v0.4s }, [x1], x3
     st1 { v1.4s }, [x1], x3
     st1 { v2.4s }, [x1], x3
@@ -101,16 +101,38 @@ void identity_16_16( float const * a,
 */
     .global identity_16_16
 identity_16_16:
+    stp x29, x30, [sp, #-16]!
+    mov fp, sp
+
     mov x6, x0
     mov x7, x1
-    mov x9, #4*4
+    lsl x9, x2, #2
+    lsl x10, x3, #2
+    mov x11, #4*4
 
     mov x0, x6
     mov x1, x7
     bl identity_4_4
 
     mov x0, x6
+    add x0, x0, x11
+    mov x1, x7
+    add x1, x1, x10
+    bl identity_4_4
+
+    mov x0, x6
     add x0, x0, x9
     mov x1, x7
+    add x1, x1, x11
+    bl identity_4_4
 
+    mov x0, x6
+    add x0, x0, x9
+    add x0, x0, x11
+    mov x1, x7
+    add x1, x1, x10
+    add x1, x1, x11
+    bl identity_4_4
+
+    ldp x29, x30, [sp], #16
     ret

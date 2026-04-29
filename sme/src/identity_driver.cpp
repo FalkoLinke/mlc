@@ -11,21 +11,22 @@ void print_mat(float const* mat, int m, int n) {
     }
 }
 
+void fill_indices(float* buffer, int const size) {
+    for (int i = 0; i < size; i++) {
+        buffer[i] = (float)i;
+    }
+}
 
 
 
 
 int main() {
-    float a[] = {
-        0, 1, 2, 3,
-        4, 5, 6, 7,
-        8, 9, 10, 11,
-        12, 13, 14, 15
-    };
-    float b[16] = {0.0f};
+    float a[256] = {0.0f};
+    float b[256] = {0.0f};
 
-    identity_4_4(a, b, 4 * sizeof(float), 4 * sizeof(float), 1);
-    print_mat(b, 4, 4);
+    fill_indices(a, 256);
+    identity_4_4(a, b, 16 * sizeof(float), 16 * sizeof(float), 1);
+    print_mat(b, 16, 16);
 
     return 0;
 }
