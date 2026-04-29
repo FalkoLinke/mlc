@@ -58,20 +58,14 @@ void identity_4_4( float const * a,
 */
     .global identity_4_4
 identity_4_4:
-    // prepare predicates
-    ptrue p0.b
-    ptrue p1.s, VL4
-    ptrue p2.s, VL2
-    not p3.b, p0/z, p2.b
-    and p3.b, p0/z, p3.b, p1.b
-
     // load A
     ld1 { v0.4s }, [x0], x2
     ld1 { v1.4s }, [x0], x2
     ld1 { v2.4s }, [x0], x2
     ld1 { v3.4s }, [x0], x2
 
-    cbz x4, notrans01
+    // skip transpose if necessary
+    cbz x4, skip01
 
     // perform transpose on 2x2 submatrices
     trn1 z4.s, z0.s, z1.s
@@ -79,21 +73,44 @@ identity_4_4:
     trn1 z6.s, z2.s, z3.s
     trn2 z7.s, z2.s, z3.s
 
-    // store result
-    st1w z6.s, p2, [x1, #4*2]
-    st1w z4.s, p2, [x1], x3
-    st1w z7.s, p2, [x1, #4*2]
-    st1w z5.s, p2, [x1], x3
-    st1w z6.s, p3, [x1, #4*2]
-    st1w z4.s, p3, [x1], x3
-    st1w z7.s, p3, [x1, #4*2]
-    st1w z5.s, p3, [x1], x3
-    ret
+    // transpose matrix of submatrices
+    trn1 z0.d, z4.d, z6.d
+    trn1 z1.d, z5.d, z7.d
+    trn2 z2.d, z4.d, z6.d
+    trn2 z3.d, z5.d, z7.d
 
-notrans01:
+skip01:
     // store nontransposed variant
     st1 { v0.4s }, [x1], x3
     st1 { v1.4s }, [x1], x3
     st1 { v2.4s }, [x1], x3
     st1 { v3.4s }, [x1], x3
+    ret
+
+
+
+
+
+
+/*
+void identity_16_16( float const * a,
+                   float       * b,
+                   int64_t       ld_a,
+                   int64_t       ld_b,
+                   int32_t       trans_b );
+*/
+    .global identity_16_16:
+identity_16_16:
+    mov x6, x0
+    mov x7, x1
+    mov x9, #4*4
+
+    mov x0, x6
+    mov x1, x7
+    bl identity_4_4
+
+    mov x0, x6
+    add x0, x0, x9
+    mov x1, x7
+
     ret
