@@ -27,7 +27,7 @@ relu_16_16:
     ptrue p0.b
     mov x5, #16
 loop01:
-    cpz x5, end01
+    cbz x5, end01
 
     ld1 {v0.4s, v1.4s, v2.4s, v3.4s}, [x1]
     fmax z0.s, p0/m, z0.s, #0.0

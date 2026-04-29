@@ -11,9 +11,12 @@ void print_mat(float const* mat, int m, int n) {
 }
 
 int main() {
-    float a[16*16] = {5.0f};
+    float a[16*16] = {0.0f};
     float b[16*16] = {0.0f};
 
+    for (int i = 0; i < 16*16; i++) {
+	a[i] = 5.0f;
+    }
     for (int i = 0; i < 16; i++) {
         a[i*16 + i] = -1.0f;
     }
