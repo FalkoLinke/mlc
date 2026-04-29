@@ -21,7 +21,7 @@ int main() {
         a[i*16 + i] = -1.0f;
     }
 
-    relu_16_16(a, b, 16*sizeof(float), 16*sizeof(float), 0);
+    relu_16_16(a, b, 16, 16, 0);
     print_mat(b, 16, 16);
 
     return 0;

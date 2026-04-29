@@ -24,7 +24,7 @@ void identity_4_4( float const * a,
 */
     .global FUNCLABEL(identity_4_4)
 FUNCLABEL(identity_4_4):
-    ptrue p0.b, VL4
+    ptrue p0.s, VL4
 
     // load A
     ld1w z0.s, p0/z, [x0]
