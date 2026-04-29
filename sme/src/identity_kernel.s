@@ -99,7 +99,7 @@ void identity_16_16( float const * a,
                    int64_t       ld_b,
                    int32_t       trans_b );
 */
-    .global identity_16_16:
+    .global identity_16_16
 identity_16_16:
     mov x6, x0
     mov x7, x1
