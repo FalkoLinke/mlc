@@ -1,44 +1,3 @@
-/*
-
-
-
-A = [
-    [0, 1, 2, 3],
-    [4, 5, 6, 7],
-    [8, 9, A, B],
-    [C, D, E, F]
-]
-A^T = [
-    [0, 4, 8, C],
-    [1, 5, 9, D],
-    [2, 6, A, E],
-    [3, 7, B, F]
-]
-
-ld
-trn
-mov
-
-
-v0 = [0, 4, 2, 6]
-v1 = [1, 5, 3, 7]
-v2 = [8, C, A, E]
-v3 = [9, D, B, F]
-
-
-
-
-
-
-
-
-*/
-
-
-
-
-
-
 
     .text
 
@@ -104,7 +63,7 @@ identity_16_16:
     stp x29, x30, [sp, #-16]!
     mov fp, sp
 
-    // select pointer offset values to apply
+    // select pointer offset values to apply to the B pointer
     cbz x4, skip02
     // offset values with transpose
     mov x13, #16
@@ -119,9 +78,9 @@ skip02:
 skip03:
 
     // perform copy
-    mov x9, x0
-    mov x11, x1
-    mov x5, #4
+    mov x9, x0              // x9 and x10 point to A
+    mov x11, x1             // x11 and x12 point to B
+    mov x5, #4              // x5 and x6 are loop counters
 loop01:
     cbz x5, end01
 
@@ -131,21 +90,64 @@ loop01:
 loop02:
     cbz x6, end02
 
+    // perform submatrix transpose, writing to the correct target submatrix
     mov x0, x10
     mov x1, x12
     bl identity_4_4
 
-    add x12, x12, x14
-    add x10, x10, #16
+    add x12, x12, x14       // B pointer changes based on transpose flag
+    add x10, x10, #16       // A pointer changes normally
     subs x6, x6, #1
     b loop02
 end02:
 
-    add x11, x11, x13
-    add x9, x9, x2, LSL #2
+    add x11, x11, x13       // B pointer changes based on transpose flag
+    add x9, x9, x2, LSL #2  // A pointer changes normally
     subs x5, x5, #1
     b loop01
 end01:
 
     ldp x29, x30, [sp], #16
     ret
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+Notes:
+
+A = [
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [8, 9, A, B],
+    [C, D, E, F]
+]
+A^T = [
+    [0, 4, 8, C],
+    [1, 5, 9, D],
+    [2, 6, A, E],
+    [3, 7, B, F]
+]
+
+
+v0 = [0, 4, 2, 6]
+v1 = [1, 5, 3, 7]
+v2 = [8, C, A, E]
+v3 = [9, D, B, F]
+
+
+
+*/
+
+
+
