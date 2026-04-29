@@ -104,6 +104,21 @@ identity_16_16:
     stp x29, x30, [sp, #-16]!
     mov fp, sp
 
+    // select pointer offset values to apply
+    cbz x4, skip02
+    // offset values with transpose
+    mov x13, #16
+    mov x14, x3
+    lsl x14, x14, #2
+    b skip03
+skip02:
+    // offset values without transpose
+    mov x13, x3
+    lsl x13, x13, #2
+    mov x14, #16
+skip03:
+
+    // perform copy
     mov x9, x0
     mov x11, x1
     mov x5, #4
@@ -120,13 +135,13 @@ loop02:
     mov x1, x12
     bl identity_4_4
 
-    add x12, x12, x3, LSL #2
+    add x12, x12, x14
     add x10, x10, #16
     subs x6, x6, #1
     b loop02
 end02:
 
-    add x11, x11, #16
+    add x11, x11, x13
     add x9, x9, x2, LSL #2
     subs x5, x5, #1
     b loop01
