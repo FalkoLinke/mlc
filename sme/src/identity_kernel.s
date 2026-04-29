@@ -24,6 +24,8 @@ void identity_4_4( float const * a,
 */
     .global FUNCLABEL(identity_4_4)
 FUNCLABEL(identity_4_4):
+    smstart
+
     ptrue p0.s, VL4
 
     // load A
@@ -61,6 +63,8 @@ skip01:
     add x1, x1, x3, LSL #2
     st1w z3.s, p0, [x1]
     add x1, x1, x3, LSL #2
+
+    smstop
     ret
 
 

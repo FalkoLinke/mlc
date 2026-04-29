@@ -21,8 +21,6 @@ FUNCLABEL(relu_16_16):
     stp x29, x30, [sp, #-16]!
     mov fp, sp
 
-    ptrue p1.s, VL4
-
     // perform transpose if necessary and copy
     stp x0, x1, [sp, #-16]!
     stp x2, x3, [sp, #-16]!
@@ -33,7 +31,10 @@ FUNCLABEL(relu_16_16):
     ldp x0, x1, [sp], #16
 
     // perform the RELU inplace on B
+    smstart
+
     ptrue p0.b
+    ptrue p1.s, VL4
     mov x5, #16
 loop01:
     cbz x5, end01
@@ -50,6 +51,6 @@ loop01:
     b loop01
 end01:
 
-
+    smstop
     ldp x29, x30, [sp], #16
     ret
