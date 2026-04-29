@@ -17,7 +17,6 @@ A^T = [
 
 ld
 trn
-revd
 mov
 
 
@@ -25,11 +24,6 @@ v0 = [0, 4, 2, 6]
 v1 = [1, 5, 3, 7]
 v2 = [8, C, A, E]
 v3 = [9, D, B, F]
-
-v4 = [2, 6, 0, 4]
-v5 = [3, 7, 1, 5]
-v6 = [A, E, 8, C]
-v7 = [B, F, 9, D]
 
 
 
@@ -77,8 +71,7 @@ identity_4_4:
     ld1 { v2.4s }, [x0], x2
     ld1 { v3.4s }, [x0], x2
 
-    // skip transpose if not requested
-    cbz x4, skip01
+    cbz x4, notrans01
 
     // perform transpose on 2x2 submatrices
     trn1 z4.s, z0.s, z1.s
@@ -86,13 +79,19 @@ identity_4_4:
     trn1 z6.s, z2.s, z3.s
     trn2 z7.s, z2.s, z3.s
 
-    mov z0.s, p0/m, z4.s
-    mov z1.s, p0/m, z5.s
-    mov z2.s, p0/m, z6.s
-    mov z3.s, p0/m, z7.s
+    // store result
+    st1w z6.s, p2, [x1, #4*2]
+    st1w z4.s, p2, [x1], x3
+    st1w z7.s, p2, [x1, #4*2]
+    st1w z5.s, p2, [x1], x3
+    st1w z6.s, p3, [x1, #4*2]
+    st1w z4.s, p3, [x1], x3
+    st1w z7.s, p3, [x1, #4*2]
+    st1w z5.s, p3, [x1], x3
+    ret
 
-skip01:
-    // store into B
+notrans01:
+    // store nontransposed variant
     st1 { v0.4s }, [x1], x3
     st1 { v1.4s }, [x1], x3
     st1 { v2.4s }, [x1], x3
