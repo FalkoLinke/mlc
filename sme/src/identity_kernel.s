@@ -72,32 +72,29 @@ identity_4_4:
     and p3.b, p0/z, p3.b, p1.b
 
     // load A
-    ld1 { v0.4s }, [x0], x2!
-    ld1 { v1.4s }, [x0], x2!
-    ld1 { v2.4s }, [x0], x2!
-    ld1 { v3.4s }, [x0], x2!
+    ld1 { v0.4s }, [x0], x2
+    ld1 { v1.4s }, [x0], x2
+    ld1 { v2.4s }, [x0], x2
+    ld1 { v3.4s }, [x0], x2
 
     // skip transpose if not requested
     cbz x4, skip01
 
     // perform transpose on 2x2 submatrices
-    trn01 z4.s, z0.s, z1.s
-    trn02 z5.s, z0.s, z1.s
-    trn01 z6.s, z2.s, z3.s
-    trn02 z7.s, z2.s, z3.s
+    trn1 z4.s, z0.s, z1.s
+    trn2 z5.s, z0.s, z1.s
+    trn1 z6.s, z2.s, z3.s
+    trn2 z7.s, z2.s, z3.s
 
-    // flip 2x2 submatrices
-    revd z16.q, p0/m, z4.q
-    revd z17.q, p0/m, z5.q
-    revd z18.q, p0/m, z6.q
-    revd z19.q, p0/m, z7.q
-
-
+    mov z0.s, p0/m, z4.s
+    mov z1.s, p0/m, z5.s
+    mov z2.s, p0/m, z6.s
+    mov z3.s, p0/m, z7.s
 
 skip01:
     // store into B
-    st1 { v0.4s }, [x1], x3!
-    st1 { v1.4s }, [x1], x3!
-    st1 { v2.4s }, [x1], x3!
-    st1 { v3.4s }, [x1], x3!
+    st1 { v0.4s }, [x1], x3
+    st1 { v1.4s }, [x1], x3
+    st1 { v2.4s }, [x1], x3
+    st1 { v3.4s }, [x1], x3
     ret
