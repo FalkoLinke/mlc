@@ -16,7 +16,7 @@ ifeq ($(TOOLCHAIN),llvm)
 LLVM_PREFIX = /opt/homebrew/opt/llvm
 CXX = $(LLVM_PREFIX)/bin/clang++
 CC = $(LLVM_PREFIX)/bin/clang
-CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+sme -O3
+CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+nosve+sme -O3
 ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
 
 else
