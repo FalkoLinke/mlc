@@ -104,35 +104,33 @@ identity_16_16:
     stp x29, x30, [sp, #-16]!
     mov fp, sp
 
-    mov x6, x0
-    mov x7, x1
-    lsl x9, x2, #2
-    lsl x10, x3, #2
-    mov x11, #4*4
+    mov x9, x0
+    mov x11, x1
+    mov x5, #4
+loop01:
+    cbz x5, end01
 
-    mov x0, x6
-    mov x1, x7
+    mov x10, x9
+    mov x12, x11
+    mov x6, #4
+loop02:
+    cbz x6, end02
+
+    mov x0, x10
+    mov x1, x12
     bl identity_4_4
 
-    mov x0, x6
-    add x0, x0, x11
-    mov x1, x7
-    add x1, x1, x10
-    bl identity_4_4
+    add x12, x12, x3, #2
+    add x10, x10, #16
+    subs x6, x6, #1
+    b loop02
+end02:
 
-    mov x0, x6
-    add x0, x0, x9
-    mov x1, x7
-    add x1, x1, x11
-    bl identity_4_4
-
-    mov x0, x6
-    add x0, x0, x9
-    add x0, x0, x11
-    mov x1, x7
-    add x1, x1, x10
-    add x1, x1, x11
-    bl identity_4_4
+    add x11, x11, #16
+    add x9, x9, x2, #2
+    subs x5, x5, #1
+    b loop01
+end01:
 
     ldp x29, x30, [sp], #16
     ret
