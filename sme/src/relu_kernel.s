@@ -25,7 +25,7 @@ FUNCLABEL(relu_16_16):
     stp x0, x1, [sp, #-16]!
     stp x2, x3, [sp, #-16]!
     stp x4, x5, [sp, #-16]!
-    bl identity_16_16
+    bl FUNCLABEL(identity_16_16)
     ldp x4, x5, [sp], #16
     ldp x2, x3, [sp], #16
     ldp x0, x1, [sp], #16

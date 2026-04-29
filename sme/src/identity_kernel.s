@@ -100,7 +100,7 @@ loop02:
     // perform submatrix transpose, writing to the correct target submatrix
     mov x0, x10
     mov x1, x12
-    bl identity_4_4
+    bl FUNCLABEL(identity_4_4)
 
     add x12, x12, x14       // B pointer changes based on transpose flag
     add x10, x10, #16       // A pointer changes normally
