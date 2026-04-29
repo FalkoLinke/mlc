@@ -9,8 +9,8 @@ void relu_16_16( float const * a,
                 int64_t       ld_b,
                 int32_t       trans_b );
 */
-    .global relu_16_16
-relu_16_16:
+    .global FUNCLABEL(relu_16_16)
+FUNCLABEL(relu_16_16):
     stp x29, x30, [sp, #-16]!
     mov fp, sp
 

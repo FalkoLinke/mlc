@@ -1,3 +1,10 @@
+#ifdef __APPLE__
+#define FUNCLABEL(NAME) _##NAME
+#else
+#define FUNCLABEL(NAME) NAME
+#endif /* __APPLE__ */
+
+
 
     .text
 
@@ -15,8 +22,8 @@ void identity_4_4( float const * a,
                    int64_t       ld_b,
                    int32_t       trans_b );
 */
-    .global identity_4_4
-identity_4_4:
+    .global FUNCLABEL(identity_4_4)
+FUNCLABEL(identity_4_4):
     // load A
     ld1 { v0.4s }, [x0], x2
     ld1 { v1.4s }, [x0], x2
@@ -58,8 +65,8 @@ void identity_16_16( float const * a,
                    int64_t       ld_b,
                    int32_t       trans_b );
 */
-    .global identity_16_16
-identity_16_16:
+    .global FUNCLABEL(identity_16_16)
+FUNCLABEL(identity_16_16):
     stp x29, x30, [sp, #-16]!
     mov fp, sp
 
