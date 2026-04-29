@@ -1,6 +1,39 @@
-CPP = g++
-CPPFLAGS = -march=armv9-a+sve -O0
-ASFLAGS = $(CPPFLAGS) -x assembler-with-cpp
+
+CXXFLAGS_COMMON = -Wall -Wextra
+
+TOOLCHAIN ?= gnu
+
+ifeq ($(TOOLCHAIN),gnu)
+
+CXX = g++
+CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9-a+sve -O0
+ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
+
+else
+
+ifeq ($(TOOLCHAIN),llvm)
+
+LLVM_PREFIX = /opt/homebrew/opt/llvm
+CXX = $(LLVM_PREFIX)/bin/clang++
+CC = $(LLVM_PREFIX)/bin/clang
+CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+sme -O3
+ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
+
+else
+
+$(error Invalid toolchain. Select either "TOOLCHAIN=gnu" or "TOOLCHAIN=llvm")
+
+endif
+
+endif
+
+
+
+
+
+
+
+
 
 
 
@@ -16,25 +49,25 @@ clean:
 
 
 identity_driver: identity_driver.o identity_kernel.o
-	g++ $^ -o identity_driver
+	$(CXX) $^ -o identity_driver
 
 relu_driver: relu_driver.o relu_kernel.o identity_kernel.o
-	g++ $^ -o relu_driver
+	$(CXX) $^ -o relu_driver
 
 
 
 
 identity_driver.o: identity_driver.cpp
-	g++ -c $(CPPFLAGS) $^ -o identity_driver.o
+	$(CXX) -c $(CXXFLAGS) $^ -o identity_driver.o
 
 relu_driver.o: relu_driver.cpp
-	g++ -c $(CPPFLAGS) $^ -o relu_driver.o
+	$(CXX) -c $(CXXFLAGS) $^ -o relu_driver.o
 
 relu_kernel.o: relu_kernel.s
-	g++ -c $(ASFLAGS) $^ -o relu_kernel.o
+	$(CXX) -c $(ASFLAGS) $^ -o relu_kernel.o
 
 identity_kernel.o: identity_kernel.s
-	g++ -c $(ASFLAGS) $^ -o identity_kernel.o
+	$(CXX) -c $(ASFLAGS) $^ -o identity_kernel.o
 
 
 
