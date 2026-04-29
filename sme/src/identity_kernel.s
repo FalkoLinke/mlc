@@ -120,14 +120,14 @@ loop02:
     mov x1, x12
     bl identity_4_4
 
-    add x12, x12, x3, #2
+    add x12, x12, x3, LSL #2
     add x10, x10, #16
     subs x6, x6, #1
     b loop02
 end02:
 
     add x11, x11, #16
-    add x9, x9, x2, #2
+    add x9, x9, x2, LSL #2
     subs x5, x5, #1
     b loop01
 end01:

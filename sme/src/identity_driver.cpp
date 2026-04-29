@@ -25,7 +25,7 @@ int main() {
     float b[256] = {0.0f};
 
     fill_indices(a, 256);
-    identity_4_4(a, b, 16 * sizeof(float), 16 * sizeof(float), 1);
+    identity_16_16(a, b, 16 * sizeof(float), 16 * sizeof(float), 1);
     print_mat(b, 16, 16);
 
     return 0;
