@@ -21,6 +21,8 @@ FUNCLABEL(relu_16_16):
     stp x29, x30, [sp, #-16]!
     mov fp, sp
 
+    ptrue p0.b, VL4
+
     // perform transpose if necessary and copy
     stp x0, x1, [sp, #-16]!
     stp x2, x3, [sp, #-16]!
@@ -36,14 +38,14 @@ FUNCLABEL(relu_16_16):
 loop01:
     cbz x5, end01
 
-    ld1 {v0.4s, v1.4s, v2.4s, v3.4s}, [x1]
+    ld4w {z0.s, z1.s, z2.s, z3.s}, p0/z, [x1]
     fmax z0.s, p0/m, z0.s, #0.0
     fmax z1.s, p0/m, z1.s, #0.0
     fmax z2.s, p0/m, z2.s, #0.0
     fmax z3.s, p0/m, z3.s, #0.0
-    st1 {v0.4s, v1.4s, v2.4s, v3.4s}, [x1]
+    st4w {z0.s, z1.s, z2.s, z3.s}, p0, [x1]
 
-    add x1, x1, x3
+    add x1, x1, x3, LSL #2
     subs x5, x5, #1
     b loop01
 end01:

@@ -24,11 +24,17 @@ void identity_4_4( float const * a,
 */
     .global FUNCLABEL(identity_4_4)
 FUNCLABEL(identity_4_4):
+    ptrue p0.b, VL4
+
     // load A
-    ld1 { v0.4s }, [x0], x2
-    ld1 { v1.4s }, [x0], x2
-    ld1 { v2.4s }, [x0], x2
-    ld1 { v3.4s }, [x0], x2
+    ld1w z0.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
+    ld1w z1.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
+    ld1w z2.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
+    ld1w z3.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
 
     // skip transpose if necessary
     cbz x4, skip01
@@ -47,10 +53,14 @@ FUNCLABEL(identity_4_4):
 
 skip01:
     // store result
-    st1 { v0.4s }, [x1], x3
-    st1 { v1.4s }, [x1], x3
-    st1 { v2.4s }, [x1], x3
-    st1 { v3.4s }, [x1], x3
+    st1w z0.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z1.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z2.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z3.s, p0, [x1]
+    add x1, x1, x3, LSL #2
     ret
 
 
@@ -75,12 +85,12 @@ FUNCLABEL(identity_16_16):
     // offset values with transpose
     mov x13, #16
     mov x14, x3
-    lsl x14, x14, #2
+    lsl x14, x14, #4
     b skip03
 skip02:
     // offset values without transpose
     mov x13, x3
-    lsl x13, x13, #2
+    lsl x13, x13, #4
     mov x14, #16
 skip03:
 
@@ -109,7 +119,7 @@ loop02:
 end02:
 
     add x11, x11, x13       // B pointer changes based on transpose flag
-    add x9, x9, x2, LSL #2  // A pointer changes normally
+    add x9, x9, x2, LSL #4  // A pointer changes normally
     subs x5, x5, #1
     b loop01
 end01:
