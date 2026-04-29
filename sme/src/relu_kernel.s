@@ -1,3 +1,10 @@
+#ifdef __APPLE__
+#define FUNCLABEL(NAME) _##NAME
+#else
+#define FUNCLABEL(NAME) NAME
+#endif /* __APPLE__ */
+
+
     .text
 
 
