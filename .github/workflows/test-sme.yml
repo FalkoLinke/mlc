@@ -1,0 +1,21 @@
+name: SME Testing Workflow
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: lscpu
+      run: lscpu
+
+    - name: make
+      run: make
