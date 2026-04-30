@@ -22,7 +22,7 @@ jobs:
     - name: make
       run: |
         cd sme/src/
-        make clean
+        make clean TOOLCHAIN=standard
         make all TOOLCHAIN=standard
     
     - name: run
