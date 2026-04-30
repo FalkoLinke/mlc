@@ -17,11 +17,14 @@ jobs:
     - name: deps
       run: |
         sudo apt-get update
-        sudo apt-get install qemu-user qemu-user-static
+        sudo apt-get install qemu-user qemu-user-static clang++
 
-    - name: lscpu
-      run: lscpu
+    - name: make
+      run: |
+        cd sme/src/
+        make clean
+        make all TOOLCHAIN=standard
+    
+    - name: run
+      run: qemu-aarch64 identity_driver
 
-    - name: qemu-aarch64
-      run: qemu-aarch64
-      
