@@ -1,17 +1,17 @@
 
 CXXFLAGS_COMMON = -Wall -Wextra
 
-TOOLCHAIN ?= gnu
+TOOLCHAIN ?= standard 
 
-ifeq ($(TOOLCHAIN),gnu)
+ifeq ($(TOOLCHAIN),standard)
 
-CXX = g++
-CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9-a+sve -O0
+CXX = clang++
+CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+nosve+sme -O0
 ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
 
 else
 
-ifeq ($(TOOLCHAIN),llvm)
+ifeq ($(TOOLCHAIN),homebrew)
 
 LLVM_PREFIX = /opt/homebrew/opt/llvm
 CXX = $(LLVM_PREFIX)/bin/clang++
@@ -21,7 +21,7 @@ ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
 
 else
 
-$(error Invalid toolchain. Select either "TOOLCHAIN=gnu" or "TOOLCHAIN=llvm")
+$(error Invalid toolchain. Select either "TOOLCHAIN=standard" or "TOOLCHAIN=homebrew")
 
 endif
 
@@ -72,8 +72,3 @@ identity_kernel.o: identity_kernel.s
 
 
 
-
-# clang++
-# /opt/homebrew/opt/llvm
-
-# ASFLAGS ?= -march=armv9.2-a+sme
