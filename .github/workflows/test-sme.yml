@@ -14,8 +14,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: lscpu
-      run: lscpu
+    - name: qemu-aarch64
+      run: qemu-aarch64
 
     - name: make
       run: make
