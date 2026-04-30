@@ -27,5 +27,5 @@ jobs:
     
     - name: run
       run: |
-        qemu-aarch64-static -cpu max,sve=off,sme=on identity_driver
+        qemu-aarch64-static -cpu max,sme=on identity_driver
 
