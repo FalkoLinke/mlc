@@ -26,5 +26,10 @@ jobs:
         make all TOOLCHAIN=standard
     
     - name: run
-      run: qemu-aarch64 -cpu max,sve=off,sme=on identity_driver
+      run: |
+        qemu-aarch64 --version
+        qemu-aarch64 -cpu help
+        qemu-aarch64-static --version
+        qemu-aarch64-static -cpu help
+        qemu-aarch64-static -cpu max,sve=off,sme=on identity_driver
 
