@@ -37,13 +37,14 @@ endif
 
 
 
-all: identity_driver relu_driver
+all: identity_driver relu_driver gemm_driver
 
 
 
 clean:
 	rm -f identity_driver
 	rm -f relu_driver
+	rm -f gemm_driver
 	rm -f *.o
 
 
@@ -54,7 +55,8 @@ identity_driver: identity_driver.o identity_kernel.o
 relu_driver: relu_driver.o relu_kernel.o identity_kernel.o
 	$(CXX) $^ -o relu_driver
 
-
+gemm_driver: gemm_driver.o gemm_kernel_32_32_1.o identity_kernel.o
+	$(CXX) $^ -o gemm_driver
 
 
 identity_driver.o: identity_driver.cpp
@@ -63,12 +65,18 @@ identity_driver.o: identity_driver.cpp
 relu_driver.o: relu_driver.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o relu_driver.o
 
+gemm_driver.o: gemm_driver.cpp
+	$(CXX) -c $(CXXFLAGS) $^ -o gemm_driver.o
+
+
 relu_kernel.o: relu_kernel.s
 	$(CXX) -c $(ASFLAGS) $^ -o relu_kernel.o
 
 identity_kernel.o: identity_kernel.s
 	$(CXX) -c $(ASFLAGS) $^ -o identity_kernel.o
 
+gemm_kernel_32_32_1.o: gemm_32_32_1_kernel.s
+	$(CXX) -c $(ASFLAGS) $^ -o gemm_kernel_32_32_1.o
 
 
 

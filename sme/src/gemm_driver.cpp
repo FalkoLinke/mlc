@@ -1,66 +1,123 @@
 #include <iostream>
-#include "identity_kernel.h"
+#include <vector>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <chrono> // <-- Wichtig für die Zeitmessung
 
+// --- Deklarationen ---
 extern "C" {
-    /**
-    * @brief GEMM that computes: C+=AB.
-    * @param a    Pointer to column-major matrix A.
-    * @param b    Pointer to row-major matrix B.
-    * @param c    Pointer to column-major matrix C.
-    * @param ld_a Leading dimension of A.
-    * @param ld_b Leading dimension of B.
-    * @param ld_c Leading dimension of C.
-    **/
-   void gemm_32_32_1( float   const * a,
-                      float   const * b,
-                      float         * c,
-                      int64_t         ld_a,
-                      int64_t         ld_b,
-                      int64_t         ld_c );
-
- /**
- * @brief Identity operation with m=16 and n=16.
- * @param a       Pointer to column-major matrix A.
- * @param b       Pointer to matrix B.
- * @param ld_a    Leading dimension of A.
- * @param ld_b    Leading dimension of B.
- * @param trans_b Column-major B if 0, row-major B if 1. 
- **/
-void identity_16_16( float const * a,
-                    float       * b,
-                    int64_t       ld_a,
-                    int64_t       ld_b,
-                    int32_t       trans_b );
-
+    void gemm_32_32_1( float const * a,
+                       float const * b,
+                       float       * c,
+                       int64_t       ld_a,
+                       int64_t       ld_b,
+                       int64_t       ld_c );
 }
 
-void print_mat(float const* mat, int m, int n) {
-    for (int r = 0; r < m; r++) {
-        for (int c = 0; c < n; c++) {
-            std::cout << mat[c * m + r] << " ";
+// --- C++ Referenz-Implementierung für die Verifizierung ---
+void gemm_32_32_1_reference(float const* a, float const* b, float* c, int64_t ld_c) {
+    for (int j = 0; j < 32; j++) {         
+        for (int i = 0; i < 32; i++) {     
+            c[j * ld_c + i] += a[i] * b[j];
         }
-        std::cout << std::endl;
     }
 }
 
-void fill_indices(float* buffer, int const size) {
-    for (int i = 0; i < size; i++) {
-        buffer[i] = (float)i;
+// Hilfsfunktion zum Füllen mit zufälligen Float-Werten
+void fill_random(std::vector<float>& vec) {
+    for (size_t i = 0; i < vec.size(); i++) {
+        vec[i] = static_cast<float>(rand() % 100) / 10.0f; 
     }
 }
-
 
 int main() {
-    float a[32][32] = {0.0f};
-    float b[32][32] = {0.0f};
-    float c[32][32] = {0.0f};
+    srand(time(nullptr)); 
 
-    fill_indices(&a[0][0], 1024);
-    fill_indices(&b[0][0], 1024);
+    int const M = 32;
+    int const N = 32;
+    int const K = 1;
+    int const ld_c = 32;
+
+    std::vector<float> a(M * K);
+    std::vector<float> b(K * N);
+    std::vector<float> c_asm(M * N); 
+    std::vector<float> c_ref(M * N); 
+
+    // Mit Werten füllen
+    fill_random(a);
+    fill_random(b);
+    fill_random(c_asm);
+
+    c_ref = c_asm;
+
+    // ==========================================
+    // 1. KORREKTHEIT VERIFIZIEREN
+    // ==========================================
     
-    gemm_32_32_1(&a[0][0], &b[0][0], &c[0][0], 32, 32, 32);
+    gemm_32_32_1(a.data(), b.data(), c_asm.data(), 32, 32, ld_c);
+    gemm_32_32_1_reference(a.data(), b.data(), c_ref.data(), ld_c);
+
+    bool passed = true;
+    float max_diff = 0.0f;
+
+    for (int i = 0; i < M * N; i++) {
+        float diff = std::abs(c_asm[i] - c_ref[i]);
+        if (diff > max_diff) max_diff = diff;
+        if (diff > 1e-4f) {
+            passed = false;
+            break; 
+        }
+    }
+
+    if (!passed) {
+        std::cout << "FEHLGESCHLAGEN! Ergebnisse stimmen nicht überein.\n";
+        return 1; // Programm abbrechen, wenn der Kernel falsch rechnet
+    }
     
-    print_mat(&c[0][0], 32, 32);
+    std::cout << "============================================\n";
+    std::cout << " VERIFIZIERUNG ERFOLGREICH!\n";
+    std::cout << " Maximale Abweichung: " << max_diff << "\n";
+    std::cout << "============================================\n\n";
+
+    // ==========================================
+    // 2. PERFORMANCE BENCHMARKING
+    // ==========================================
+    std::cout << "Starte Benchmark...\n";
+
+    // Wir rufen den Kernel sehr oft auf, um eine messbare Zeit zu erhalten
+    int const num_iterations = 5000000; // 5 Millionen Durchläufe
+
+    // Startzeit erfassen
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    // Schleife für die Messung
+    for (int i = 0; i < num_iterations; i++) {
+        gemm_32_32_1(a.data(), b.data(), c_asm.data(), 32, 32, ld_c);
+    }
+
+    // Endzeit erfassen
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    // Dauer in Sekunden berechnen
+    std::chrono::duration<double> elapsed_seconds = end_time - start_time;
+    double duration = elapsed_seconds.count();
+
+    // --- GFLOPS Berechnung ---
+    // Rechenoperationen = 2 * M * N * K (Multiplikation + Addition pro Element)
+    double flops_per_call = 2.0 * M * N * K;
+    double total_flops = flops_per_call * num_iterations;
+    
+    // GFLOPS = (Total FLOPs / 1 Milliarde) / Dauer in Sekunden
+    double gflops = (total_flops / 1e9) / duration;
+
+    std::cout << "============================================\n";
+    std::cout << " BENCHMARK ERGEBNISSE\n";
+    std::cout << "============================================\n";
+    std::cout << " Durchlaeufe:   " << num_iterations << "\n";
+    std::cout << " Gesamtzeit:    " << duration << " Sekunden\n";
+    std::cout << " Performance:   " << gflops << " GFLOPS\n";
+    std::cout << "============================================\n";
 
     return 0;
 }

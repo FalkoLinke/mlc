@@ -8,7 +8,6 @@
 .text
 
 
-
 /*
     * @brief GEMM that computes: C+=AB.
     * @param a    Pointer to column-major matrix A.
@@ -18,93 +17,80 @@
     * @param ld_b Leading dimension of B.
     * @param ld_c Leading dimension of C.
 
-   void gemm_32_32_1( float   const * a,
+   void gemm_16_16_512( float   const * a,
                       float   const * b,
                       float         * c,
                       int64_t         ld_a,
                       int64_t         ld_b,
                       int64_t         ld_c );
 */
-    .global FUNCLABEL(gemm_32_32_1)
-FUNCLABEL(gemm_32_32_1):
+    .global FUNCLABEL(gemm_16_16_512)
+FUNCLABEL(gemm_16_16_512):
 
-
-    smstart
-    // C counter
-    lsr x29, x5, #1
+    // C stride
+    mov x30, x5
+    lsr x30, x30, #1
     // first za reg
     mov w12, #0
-    mov w13, #2
+    mov x6, x3
+    lsl x7, x6, #5 // x7 = x6 * 32 (size of one column of C in bytes)
 
-    mov x6, x2
-    addvl x7, x2, #31
-
+    smstart
     ptrue p0.s
 
     // load C
-load_C_loop:
+load_C_loop_16:
+    subs x30, x30, #1
 
-    //tile 0 and 1
     ldr za[w12, #0], [x6, #0, mul vl]
     ldr za[w12, #1], [x6, #1, mul vl]
-    
-    add w12, w12, #2
-    addvl x6, x6, #2
 
-    //tile 2 and 3
-    ldr za[w13, #0], [x7, #0, mul vl]
-    ldr za[w13, #1], [x7, #1, mul vl]
+    ldr za[w12, #2], [x7, #0, mul vl]
+    ldr za[w12, #3], [x7, #1, mul vl]
 
-    add w13, w13, #2
-    addvl x7, x7, #2
+    add w12, w12, #4
+    addvl, x6, x6, #2
+    addvl, x7, x7, #2
 
-    subs x29, x29, #1
-    cbnz x29, load_C_loop
+    cbnz x30, load_C_loop_16
 
 
-    // load A z0 and B z2 16 floats at a time and perform the outer product for tile 0
+    // load A z0 and B z2 16 floats at a time and perform the outer product
     ld1w {z0.s}, p0/z, [x0, #0, mul vl]
     ld1w {z2.s}, p0/z, [x1, #0, mul vl]
     fmopa za0.s, p0/m, p0/m, z0.s, z2.s
 
-    //tile 1
     ld1w {z1.s}, p0/z, [x0, #1, mul vl]
     fmopa za1.s, p0/m, p0/m, z1.s, z2.s
 
-    //tile 2
     ld1w {z3.s}, p0/z, [x1, #1, mul vl]
     fmopa za2.s, p0/m, p0/m, z0.s, z3.s
     
-    //tile 3
     fmopa za3.s, p0/m, p0/m, z1.s, z3.s
 
 
 
     // store the results back to C
-    lsr x29, x5, #1
-    // first za reg
+    mov x30, x5
+    lsr x30, x30, #1
     mov w12, #0
-    mov w13, #2
+    mov x6, x3
+    lsl x7, x6, #5 // x7 = x6 * 32 (size of one column of C in bytes)
 
-    mov x6, x2
-    addvl x7, x2, #31
+store_C_loop_16:
+    subs x30, x30, #1
 
-store_C_loop:
+    ldr za[w12, #0], [x6, #0, mul vl]
+    ldr za[w12, #1], [x6, #1, mul vl]
 
-    str za[w12, #0], [x6, #0, mul vl]
-    str za[w12, #1], [x6, #1, mul vl]
-    
-    add w12, w12, #2
-    addvl x6, x6, #2
+    ldr za[w12, #2], [x7, #0, mul vl]
+    ldr za[w12, #3], [x7, #1, mul vl]
 
-    str za[w13, #0], [x7, #0, mul vl]
-    str za[w13, #1], [x7, #1, mul vl]
+    add w12, w12, #4
+    addvl x6, x6, #4
+    addvl x7, x7, #4
 
-    add w13, w13, #2
-    addvl x7, x7, #2
-
-    subs x29, x29, #1
-    cbnz x29, store_C_loop
+    cbnz x30, store_C_loop_16
 
     smstop
     
