@@ -17,10 +17,19 @@ extern "C" {
 }
 
 // --- C++ Referenz-Implementierung für die Verifizierung ---
-void gemm_16_16_1_reference(float const* a, float const* b, float* c, int64_t ld_c) {
+void gemm_16_16_512_reference(float const* a, float const* b, float* c, int64_t ld_a, int64_t ld_b, int64_t ld_c) {
+    int const K = 512; // Da es gemm_16_16_512 ist, ist K=512
+    
     for (int j = 0; j < 16; j++) {         
-        for (int i = 0; i < 16; i++) {     
-            c[j * ld_c + i] += a[i] * b[j];
+        for (int i = 0; i < 16; i++) {
+            float sum = 0.0f;
+            for (int k = 0; k < K; k++) {
+                // A ist Column-Major: Spalte k, Zeile i -> Index [k * ld_a + i]
+                // B ist Row-Major:    Zeile k, Spalte j -> Index[k * ld_b + j]
+                sum += a[k * ld_a + i] * b[k * ld_b + j];
+            }
+            // C ist Column-Major: Spalte j, Zeile i -> Index[j * ld_c + i]
+            c[j * ld_c + i] += sum;
         }
     }
 }
@@ -65,7 +74,7 @@ int main() {
 
     int const M = 16;
     int const N = 16;
-    int const K = 1;
+    int const K = 512;
     int const ld_c = 16;
 
     std::vector<float> a(M * K);
@@ -75,8 +84,8 @@ int main() {
 
     // Wir nutzen hier random Werte. Falls du es einfacher im Kopf 
     // nachvollziehen willst, kannst du hier auch fill_sequential() aufrufen!
-    fill_sequential(a);
-    fill_sequential(b);
+    fill_random(a);
+    fill_random(b);
     fill_sequential(c_asm);
 
     c_ref = c_asm;
@@ -89,7 +98,7 @@ int main() {
     gemm_16_16(a.data(), b.data(), c_asm.data(), M, N, ld_c);
     
     // C++ Referenz aufrufen
-    gemm_16_16_1_reference(a.data(), b.data(), c_ref.data(), ld_c);
+    gemm_16_16_512_reference(a.data(), b.data(), c_ref.data(), M, N, ld_c);
 
     bool passed = true;
     float max_diff = 0.0f;
@@ -99,7 +108,7 @@ int main() {
         float diff = std::abs(c_asm[i] - c_ref[i]);
         if (diff > max_diff) max_diff = diff;
         
-        if (diff > 1e-4f && passed) {
+        if (diff > 1e-2f && passed) {
             passed = false;
             error_index = i;
             // Wir breaken hier NICHT mehr, damit wir die max_diff des 

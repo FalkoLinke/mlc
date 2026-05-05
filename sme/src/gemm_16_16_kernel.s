@@ -31,6 +31,11 @@ FUNCLABEL(gemm_16_16):
     smstart
     ptrue p0.s
 
+    // K Variables loop counter in x29
+    mov x29, #512
+    mov x7, x0
+    mov x8, x1
+
     // load C
     mov w12, #0
     mov x6, x2
@@ -52,12 +57,18 @@ FUNCLABEL(gemm_16_16):
 
     .endr
 
-    
+K_loop:
 
     // load A z0 and B z2 16 floats at a time and perform the outer product
-    ldr z0, [x0, #0, mul vl]
-    ldr z2, [x1, #0, mul vl]
-    fmopa za0.s, p0/m, p0/m, z0.s, z2.s
+    ldr z0, [x7, #0, mul vl]
+    ldr z2, [x8, #0, mul vl]
+    fmopa za0.s, p0/m, p0/m, z2.s, z0.s
+
+    addvl x7, x7, #1
+    addvl x8, x8, #1
+
+    subs x29, x29, #1
+    cbnz x29, K_loop
 
 
     // store Results
