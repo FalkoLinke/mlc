@@ -37,7 +37,7 @@ endif
 
 
 
-all: identity_driver relu_driver gemm_driver_32_32_1 gemm_driver_32_32_512 gemm_driver_16_16
+all: identity_driver relu_driver gemm_driver_32_32_1 gemm_driver_32_32_512 gemm_driver_16_16 gemm_driver_512_32_512
 
 
 
@@ -47,6 +47,7 @@ clean:
 	rm -f gemm_driver_32_32_1
 	rm -f gemm_driver_32_32_512
 	rm -f gemm_driver_16_16
+	rm -f gemm_driver_512_32_512
 	rm -f *.o
 
 
@@ -62,6 +63,9 @@ gemm_driver_32_32_1: gemm_driver_32_32_1.o gemm_kernel_32_32_1.o identity_kernel
 
 gemm_driver_32_32_512: gemm_driver_32_32_512.o gemm_kernel_32_32_512.o identity_kernel.o
 	$(CXX) $^ -o gemm_driver_32_32_512
+
+gemm_driver_512_32_512: gemm_driver_512_32_512.o gemm_kernel_512_32_512.o identity_kernel.o
+	$(CXX) $^ -o gemm_driver_512_32_512
 	
 gemm_driver_16_16: gemm_driver_16_16.o gemm_kernel_16_16.o identity_kernel.o
 	$(CXX) $^ -o gemm_driver_16_16
@@ -83,6 +87,9 @@ gemm_driver_16_16.o: gemm_driver_16_16.cpp
 gemm_driver_32_32_512.o: gemm_driver_32_32_512.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o gemm_driver_32_32_512.o
 
+gemm_driver_512_32_512.o: gemm_driver_512_32_512.cpp
+	$(CXX) -c $(CXXFLAGS) $^ -o gemm_driver_512_32_512.o
+
 
 
 relu_kernel.o: relu_kernel.s
@@ -99,3 +106,6 @@ gemm_kernel_16_16.o: gemm_16_16_kernel.s
 
 gemm_kernel_32_32_512.o: gemm_32_32_512_kernel.s
 	$(CXX) -c $(ASFLAGS) $^ -o gemm_kernel_32_32_512.o
+
+gemm_kernel_512_32_512.o: gemm_512_32_512_kernel.s
+	$(CXX) -c $(ASFLAGS) $^ -o gemm_kernel_512_32_512.o
