@@ -34,8 +34,9 @@ FUNCLABEL(gemm_16_16):
     // load C
     mov w12, #0
     mov x6, x2
+    
     .rept 4
-
+    
     ldr za[w12, #0], [x6]
     addvl x6, x6, #1
     add w12, w12, #4
@@ -54,8 +55,8 @@ FUNCLABEL(gemm_16_16):
     
 
     // load A z0 and B z2 16 floats at a time and perform the outer product
-    ld1w {z0.s}, p0/z, [x0, #0, mul vl]
-    ld1w {z2.s}, p0/z, [x1, #0, mul vl]
+    ldr z0, [x0, #0, mul vl]
+    ldr z2, [x1, #0, mul vl]
     fmopa za0.s, p0/m, p0/m, z0.s, z2.s
 
 
