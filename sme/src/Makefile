@@ -37,7 +37,7 @@ endif
 
 
 
-all: identity_driver relu_driver gemm_driver_32_32_1 gemm_driver_32_32_512 gemm_driver_16_16 gemm_driver_512_32_512
+all: identity_driver relu_driver gemm_driver_32_32_1 gemm_driver_32_32_512 gemm_driver_16_16 gemm_driver_512_32_512 gemm_driver_512_512_512
 
 
 
@@ -48,6 +48,7 @@ clean:
 	rm -f gemm_driver_32_32_512
 	rm -f gemm_driver_16_16
 	rm -f gemm_driver_512_32_512
+	rm -f gemm_driver_512_512_512
 	rm -f *.o
 
 
@@ -58,19 +59,22 @@ identity_driver: identity_driver.o identity_kernel.o
 relu_driver: relu_driver.o relu_kernel.o identity_kernel.o
 	$(CXX) $^ -o relu_driver
 
-gemm_driver_32_32_1: gemm_driver_32_32_1.o gemm_kernel_32_32_1.o identity_kernel.o
+gemm_driver_32_32_1: gemm_driver_32_32_1.o gemm_kernel_32_32_1.o
 	$(CXX) $^ -o gemm_driver_32_32_1
 
-gemm_driver_32_32_512: gemm_driver_32_32_512.o gemm_kernel_32_32_512.o identity_kernel.o
+gemm_driver_32_32_512: gemm_driver_32_32_512.o gemm_kernel_32_32_512.o
 	$(CXX) $^ -o gemm_driver_32_32_512
 
-gemm_driver_512_32_512: gemm_driver_512_32_512.o gemm_kernel_512_32_512.o identity_kernel.o
+gemm_driver_512_32_512: gemm_driver_512_32_512.o gemm_kernel_512_32_512.o
 	$(CXX) $^ -o gemm_driver_512_32_512
+
+gemm_driver_512_512_512: gemm_driver_512_512_512.o gemm_kernel_512_512_512.o
+	$(CXX) $^ -o gemm_driver_512_512_512
 	
-gemm_driver_16_16: gemm_driver_16_16.o gemm_kernel_16_16.o identity_kernel.o
+gemm_driver_16_16: gemm_driver_16_16.o gemm_kernel_16_16.o
 	$(CXX) $^ -o gemm_driver_16_16
 	
-
+	
 
 identity_driver.o: identity_driver.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o identity_driver.o
@@ -89,6 +93,9 @@ gemm_driver_32_32_512.o: gemm_driver_32_32_512.cpp
 
 gemm_driver_512_32_512.o: gemm_driver_512_32_512.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o gemm_driver_512_32_512.o
+
+gemm_driver_512_512_512.o: gemm_driver_512_512_512.cpp
+	$(CXX) -c $(CXXFLAGS) $^ -o gemm_driver_512_512_512.o
 
 
 
@@ -109,3 +116,6 @@ gemm_kernel_32_32_512.o: gemm_32_32_512_kernel.s
 
 gemm_kernel_512_32_512.o: gemm_512_32_512_kernel.s
 	$(CXX) -c $(ASFLAGS) $^ -o gemm_kernel_512_32_512.o
+
+gemm_kernel_512_512_512.o: gemm_512_512_512_kernel.s
+	$(CXX) -c $(ASFLAGS) $^ -o gemm_kernel_512_512_512.o
