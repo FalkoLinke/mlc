@@ -37,13 +37,14 @@ endif
 
 
 
-all: identity_driver relu_driver
+all: identity_driver relu_driver zero_driver
 
 
 
 clean:
 	rm -f identity_driver
 	rm -f relu_driver
+	rm -f zero_driver
 	rm -f *.o
 
 
@@ -54,7 +55,8 @@ identity_driver: identity_driver.o identity_kernel.o
 relu_driver: relu_driver.o relu_kernel.o identity_kernel.o
 	$(CXX) $^ -o relu_driver
 
-
+zero_driver: zero_driver.o zero_kernel.o
+	$(CXX) $^ -o zero_driver
 
 
 identity_driver.o: identity_driver.cpp
@@ -63,12 +65,16 @@ identity_driver.o: identity_driver.cpp
 relu_driver.o: relu_driver.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o relu_driver.o
 
+zero_driver.o: zero_driver.cpp
+	$(CXX) -c $(CXXFLAGS) $^ -o zero_driver.o
+
 relu_kernel.o: relu_kernel.s
 	$(CXX) -c $(ASFLAGS) $^ -o relu_kernel.o
 
 identity_kernel.o: identity_kernel.s
 	$(CXX) -c $(ASFLAGS) $^ -o identity_kernel.o
 
-
+zero_kernel.o: zero_kernel.s
+	$(CXX) -c $(ASFLAGS) $^ -o zero_kernel.o
 
 
