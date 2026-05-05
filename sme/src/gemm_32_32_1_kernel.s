@@ -63,16 +63,16 @@ load_C_loop:
 
 
     // load A z0 and B z2 16 floats at a time and perform the outer product for tile 0
-    ld1w {z0.s}, p0/z, [x0, #0, mul vl]
-    ld1w {z2.s}, p0/z, [x1, #0, mul vl]
+    ldr z0, [x0, #0, mul vl]
+    ldr z2, [x1, #0, mul vl]
     fmopa za0.s, p0/m, p0/m, z0.s, z2.s
 
     //tile 1
-    ld1w {z1.s}, p0/z, [x0, #1, mul vl]
+    ldr z1, [x0, #1, mul vl]
     fmopa za1.s, p0/m, p0/m, z1.s, z2.s
 
     //tile 2
-    ld1w {z3.s}, p0/z, [x1, #1, mul vl]
+    ldr z3, [x1, #1, mul vl]
     fmopa za2.s, p0/m, p0/m, z0.s, z3.s
     
     //tile 3
