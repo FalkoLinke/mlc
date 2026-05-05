@@ -87,7 +87,7 @@ int main() {
     int const N = 32;
     int const K = 512;
     
-    // Führende Dimensionen (Leading Dimensions) korrekt definieren
+    // Führende Dimensionen (Leading Dimensions)
     int const ld_a = 32;
     int const ld_b = 32;
     int const ld_c = 32;
@@ -101,7 +101,7 @@ int main() {
     // Mit Werten füllen
     fill_sequential(a);
     fill_sequential(b);
-    fill_zeros(c_asm); // C testweise mit Nullen füllen, dann sieht man das A*B Ergebnis direkt!
+    fill_zeros(c_asm); 
 
     c_ref = c_asm;
 
@@ -109,7 +109,7 @@ int main() {
     // 1. KORREKTHEIT VERIFIZIEREN
     // ==========================================
     
-    // Kernel aufrufen (jetzt korrekt mit ld_a und ld_b anstatt M und N!)
+    // Kernel aufrufen 
     gemm_32_32_512(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     
     // C++ Referenz aufrufen
@@ -138,8 +138,8 @@ int main() {
         std::cout << "============================================\n\n";
 
         // BEIDE MATRIZEN UND DIE INPUTS AUSGEBEN
-        print_matrix_col_major(a, M, K, ld_a, "Matrix A (Column-Major, 32x1)");
-        print_matrix_row_major(b, K, N, ld_b, "Matrix B (Row-Major, 1x32)");
+        print_matrix_col_major(a, M, K, ld_a, "Matrix A (Column-Major, 32x512)");
+        print_matrix_row_major(b, K, N, ld_b, "Matrix B (Row-Major, 512x32)");
         print_matrix_col_major(c_ref, M, N, ld_c, "C++ Referenz (Erwartet)");
         print_matrix_col_major(c_asm, M, N, ld_c, "ASM Kernel (Aktuell)");
 
