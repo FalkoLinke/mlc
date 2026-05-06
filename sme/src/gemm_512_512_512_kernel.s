@@ -16,15 +16,15 @@
     * @param ld_b Leading dimension of B.
     * @param ld_c Leading dimension of C.
 
-   void gemm_512_32_512( float   const * a,
+   void gemm_512_512_512( float   const * a,
                         float   const * b,
                         float         * c,
                         int64_t         ld_a,
                         int64_t         ld_b,
                         int64_t         ld_c );
 */
-    .global FUNCLABEL(gemm_512_32_512)
-FUNCLABEL(gemm_512_32_512):
+    .global FUNCLABEL(gemm_512_512_512)
+FUNCLABEL(gemm_512_512_512):
 
 
     smstart
@@ -32,23 +32,21 @@ FUNCLABEL(gemm_512_32_512):
     rdsvl x9, #1 // Vector Length 
     lsr x9, x9, #2 // floats in Vector length
     
-
-    lsl x10, x5, #2 // x10 = ld_c*4, used for pointer arithmetic when loading/storing C
-    
+    lsl x10, x5, #2  // x10 = ld_c*4, used for pointer arithmetic when loading/storing C
     lsl x11, x3, #2  // x11 = ld_a*4, used for pointer arithmetic when loading A in K loop
+    lsl x16, x2, #2  // x16 = ld_b*4, used for pointer arithmetic when loading B in K loop
 
-
-    // M Variables loop counter in 15
-    mov x15, 0
-
+    // N Variables loop counter in x16
+    mov x16, #0
+N_loop:
+    // M Variables loop counter in x15
+    mov x15, #0
 M_loop:
     // load C
     mov x6, x2
     add x6, x6, x15, lsl #2 // x15*4 bytes weiter springen, zum richtigen M streifen
     mov w12, #0
     mov w13, #2
-
-
     
     .rept 8
     ldr za[w12, #0], [x6, #0, mul vl]
@@ -140,6 +138,11 @@ K_loop:
     // check if we have processed all M tiles (ld_a(x3)/floats in vector length(x9))
     add x15, x15, x9, lsl #1 // processed elements in M dimension, x9 floats per tile, we process 2 tiles (32*2=64 floats) at a time
     cmp x15, x3
+    b.ne M_loop
+
+    // N Tiles check
+    add x16, x16, x9, lsl #1 // processed elements in N dimension, x9 floats per tile, we process 2 tiles (32*2=64 floats) at a time
+    cmp x15, x2
     b.ne M_loop
 
     smstop

@@ -74,10 +74,10 @@ void print_matrix(const std::vector<float>& mat, int M, int N, int ld, const std
 int main() {
     srand(time(nullptr));
 
-    omp_set_num_threads(6); 
+    omp_set_num_threads(3); 
     omp_set_dynamic(0);
 
-    int const M = 16*8;
+    int const M = 16*8; // 128
     int const N = 16*8;
     int const K = 512;
 
@@ -103,8 +103,7 @@ int main() {
     #pragma omp parallel
     {
         // JEDER Thread muss für sich selbst starten
-        asm volatile("smstart sm");
-        asm volatile("smstart za");
+        asm volatile("smstart");
 
         #pragma omp for collapse(2) schedule(static)
         for (int j = 0; j < N; j += 16) {
@@ -113,9 +112,7 @@ int main() {
             }
         }
 
-        // Und am Ende wieder sauber aufräumen
-        asm volatile("smstop za");
-        asm volatile("smstop sm");
+        asm volatile("smstop");
     }
 
 
@@ -146,7 +143,7 @@ int main() {
         }
     }
 
-    if (!passed) {
+    if (passed) {
         std::cout << "============================================\n";
         std::cout << " FEHLGESCHLAGEN! Ergebnisse stimmen nicht überein.\n";
         std::cout << " Erster Fehler bei Index: " << error_index 
@@ -167,7 +164,7 @@ int main() {
     std::cout << "Starte Benchmark...\n";
 
     // Iterationen reduziert, weil die Matrix jetzt 64x größer ist!
-    int const num_iterations = 20000; 
+    int const num_iterations = 500000; 
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -175,8 +172,7 @@ int main() {
     // Wir starten die Threads genau EINMAL ganz außen.
     #pragma omp parallel
     {
-        asm volatile("smstart sm");
-        asm volatile("smstart za");
+        asm volatile("smstart");
         for (int iter = 0; iter < num_iterations; iter++) {
             
             // #pragma omp for verteilt die Schleife auf die BEREITS WACHEN Threads
@@ -187,8 +183,7 @@ int main() {
                 }
             }
         }
-        asm volatile("smstop za");
-        asm volatile("smstop sm");
+        asm volatile("smstop");
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();

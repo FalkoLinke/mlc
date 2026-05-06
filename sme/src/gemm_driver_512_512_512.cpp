@@ -8,7 +8,7 @@
 
 // --- Deklarationen ---
 extern "C" {
-    void gemm_512_32_512( float const * a,
+    void gemm_512_512_512( float const * a,
                        float const * b,
                        float       * c,
                        int64_t       ld_a,
@@ -17,10 +17,10 @@ extern "C" {
 }
 
 // --- C++ Referenz-Implementierung für die Verifizierung ---
-void gemm_512_32_512_reference(float const* a, float const* b, float* c, int64_t ld_a, int64_t ld_b, int64_t ld_c) {
-    int const K = 512; // Da es gemm_512_32_512 ist, ist K=512
+void gemm_512_512_512_reference(float const* a, float const* b, float* c, int64_t ld_a, int64_t ld_b, int64_t ld_c) {
+    int const K = 512; // Da es gemm_512_512_512 ist, ist K=512
     
-    for (int j = 0; j < 32; j++) {         
+    for (int j = 0; j < 512; j++) {         
         for (int i = 0; i < 512; i++) {
             float sum = 0.0f;
             for (int k = 0; k < K; k++) {
@@ -84,12 +84,12 @@ int main() {
     srand(time(nullptr)); 
 
     int const M = 512;
-    int const N = 32;
+    int const N = 512;
     int const K = 512;
     
     // Führende Dimensionen (Leading Dimensions)
     int const ld_a = 512;
-    int const ld_b = 32;
+    int const ld_b = 512;
     int const ld_c = 512;
 
     // Größe der Arrays basierend auf den Leading Dimensions berechnen
@@ -110,10 +110,10 @@ int main() {
     // ==========================================
     
     // Kernel aufrufen 
-    gemm_512_32_512(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
+    gemm_512_512_512(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     
     // C++ Referenz aufrufen
-    gemm_512_32_512_reference(a.data(), b.data(), c_ref.data(), ld_a, ld_b, ld_c);
+    gemm_512_512_512_reference(a.data(), b.data(), c_ref.data(), ld_a, ld_b, ld_c);
 
     bool passed = true;
     float max_diff = 0.0f;
@@ -171,7 +171,7 @@ int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < num_iterations; i++) {
-        gemm_512_32_512(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
+        gemm_512_512_512(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();
