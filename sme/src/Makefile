@@ -37,7 +37,7 @@ endif
 
 
 
-all: identity_driver relu_driver zero_driver
+all: identity_driver relu_driver zero_driver unary_benchmarks_driver
 
 
 
@@ -45,6 +45,7 @@ clean:
 	rm -f identity_driver
 	rm -f relu_driver
 	rm -f zero_driver
+	rm -f unary_benchmarks_driver
 	rm -f *.o
 
 
@@ -58,6 +59,9 @@ relu_driver: relu_driver.o relu_kernel.o identity_kernel.o
 zero_driver: zero_driver.o zero_kernel.o
 	$(CXX) $^ -o zero_driver
 
+unary_benchmarks_driver: unary_benchmarks_driver.o identity_kernel.o zero_kernel.o relu_kernel.o
+	$(CXX) $^ -o unary_benchmarks_driver
+
 
 identity_driver.o: identity_driver.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o identity_driver.o
@@ -67,6 +71,9 @@ relu_driver.o: relu_driver.cpp
 
 zero_driver.o: zero_driver.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o zero_driver.o
+
+unary_benchmarks_driver.o: unary_benchmarks_driver.cpp
+	$(CXX) -c $(CXXFLAGS) $^ -o unary_benchmarks_driver.o
 
 relu_kernel.o: relu_kernel.s
 	$(CXX) -c $(ASFLAGS) $^ -o relu_kernel.o

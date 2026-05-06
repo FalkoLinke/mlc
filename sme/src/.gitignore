@@ -1,5 +1,6 @@
 identity_driver
 relu_driver
 *.o
-
+zero_driver
+unary_benchmarks_driver
 
