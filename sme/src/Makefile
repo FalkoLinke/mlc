@@ -6,7 +6,7 @@ TOOLCHAIN ?= standard
 ifeq ($(TOOLCHAIN),standard)
 
 CXX = clang++
-CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+nosve+sme -O0
+CXXFLAGS = $(CXXFLAGS_COMMON) -fopenmp -march=armv9.2-a+nosve+sme -O0
 ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
 
 else
@@ -16,7 +16,7 @@ ifeq ($(TOOLCHAIN),homebrew)
 LLVM_PREFIX = /opt/homebrew/opt/llvm
 CXX = $(LLVM_PREFIX)/bin/clang++
 CC = $(LLVM_PREFIX)/bin/clang
-CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+nosve+sme -O3
+CXXFLAGS = $(CXXFLAGS_COMMON) -fopenmp -march=armv9.2-a+nosve+sme -O3
 ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
 
 else
@@ -37,7 +37,7 @@ endif
 
 
 
-all: identity_driver relu_driver gemm_driver_32_32_1 gemm_driver_32_32_512 gemm_driver_16_16 gemm_driver_512_32_512 gemm_driver_512_512_512
+all: identity_driver relu_driver gemm_driver_32_32_1 gemm_driver_32_32_512 gemm_driver_16_16 gemm_driver_512_32_512 gemm_driver_512_512_512 gemm_driver_16_16_multi
 
 
 
@@ -49,6 +49,7 @@ clean:
 	rm -f gemm_driver_16_16
 	rm -f gemm_driver_512_32_512
 	rm -f gemm_driver_512_512_512
+	rm -f gemm_driver_16_16_multi
 	rm -f *.o
 
 
@@ -73,8 +74,10 @@ gemm_driver_512_512_512: gemm_driver_512_512_512.o gemm_kernel_512_512_512.o
 	
 gemm_driver_16_16: gemm_driver_16_16.o gemm_kernel_16_16.o
 	$(CXX) $^ -o gemm_driver_16_16
-	
-	
+
+gemm_driver_16_16_multi: gemm_driver_16_16_multi.o gemm_kernel_16_16.o
+	$(CXX) $^ -fopenmp  -o gemm_driver_16_16_multi
+
 
 identity_driver.o: identity_driver.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o identity_driver.o
@@ -87,6 +90,9 @@ gemm_driver_32_32_1.o: gemm_driver_32_32_1.cpp
 
 gemm_driver_16_16.o: gemm_driver_16_16.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o gemm_driver_16_16.o
+
+gemm_driver_16_16_multi.o: gemm_driver_16_16_multi.cpp
+	$(CXX) -c $(CXXFLAGS) $^ -o gemm_driver_16_16_multi.o
 
 gemm_driver_32_32_512.o: gemm_driver_32_32_512.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o gemm_driver_32_32_512.o

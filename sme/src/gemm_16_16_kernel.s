@@ -28,31 +28,34 @@
 FUNCLABEL(gemm_16_16):
 
 
-    smstart
-    ptrue p0.s
+    //smstart
+    ptrue p0.s, vl16
 
     // K Variables loop counter in x29
-    mov x29, #512
+    mov x9, #512
     mov x7, x0
+    lsl x11, x3, #2
     mov x8, x1
+    lsl x12, x4, #2
 
     // load C
     mov w12, #0
     mov x6, x2
+    lsl x10, x5, #2
     
     .rept 4
     
     ldr za[w12, #0], [x6]
-    addvl x6, x6, #1
+    add x6, x6, x10
     add w12, w12, #4
     ldr za[w12, #0], [x6]
-    addvl x6, x6, #1
+    add x6, x6, x10
     add w12, w12, #4
     ldr za[w12, #0], [x6]
-    addvl x6, x6, #1
+    add x6, x6, x10
     add w12, w12, #4
     ldr za[w12, #0], [x6]
-    addvl x6, x6, #1
+    add x6, x6, x10
     add w12, w12, #4
 
     .endr
@@ -64,11 +67,11 @@ K_loop:
     ldr z2, [x8, #0, mul vl]
     fmopa za0.s, p0/m, p0/m, z2.s, z0.s
 
-    addvl x7, x7, #1
-    addvl x8, x8, #1
+    add x7, x7, x11
+    add x8, x8, x12
 
-    subs x29, x29, #1
-    cbnz x29, K_loop
+    subs x9, x9, #1
+    cbnz x9, K_loop
 
 
     // store Results
@@ -78,20 +81,20 @@ K_loop:
     .rept 4
 
     str za[w12, #0], [x6]
-    addvl x6, x6, #1
+    add x6, x6, x10
     add w12, w12, #4
     str za[w12, #0], [x6]
-    addvl x6, x6, #1
+    add x6, x6, x10
     add w12, w12, #4
     str za[w12, #0], [x6]
-    addvl x6, x6, #1
+    add x6, x6, x10
     add w12, w12, #4
     str za[w12, #0], [x6]
-    addvl x6, x6, #1
+    add x6, x6, x10
     add w12, w12, #4
 
     .endr
 
-    smstop
+    //smstop
     
     ret
