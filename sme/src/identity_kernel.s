@@ -83,6 +83,14 @@ void identity_16_16( float const * a,
 FUNCLABEL(identity_16_16):
     stp x29, x30, [sp, #-16]!
     mov fp, sp
+
+    cbz x4, handle_notrans
+    b handle_trans
+handle_notrans:
+    bl FUNCLABEL(identity_16_16_notrans)
+    ldp x29, x30, [sp], #16
+    ret
+handle_trans:
     smstart
 
     // select pointer offset values to apply to the B pointer
@@ -173,6 +181,43 @@ end01:
     ret
 
 
+
+
+
+
+
+
+
+
+
+
+FUNCLABEL(identity_16_16_notrans):
+    stp x29, x30, [sp, #-16]!
+    mov fp, sp
+
+    .rept 16
+    ldr x4, [x0, #0]
+    ldr x5, [x0, #8]
+    ldr x6, [x0, #16]
+    ldr x7, [x0, #24]
+    ldr x9, [x0, #32]
+    ldr x10, [x0, #40]
+    ldr x11, [x0, #48]
+    ldr x12, [x0, #56]
+    str x4, [x1, #0]
+    str x5, [x1, #8]
+    str x6, [x1, #16]
+    str x7, [x1, #24]
+    str x9, [x1, #32]
+    str x10, [x1, #40]
+    str x11, [x1, #48]
+    str x12, [x1, #56]
+    add x0, x0, x2, LSL #2
+    add x1, x1, x3, LSL #2
+    .endr
+
+    ldp x29, x30, [sp], #16
+    ret
 
 
 
