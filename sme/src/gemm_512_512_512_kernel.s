@@ -26,7 +26,7 @@
     .global FUNCLABEL(gemm_512_512_512)
 FUNCLABEL(gemm_512_512_512):
 
-#    str x19, [sp, #16]
+    //str x18, [sp, #16]
 
     smstart
     ptrue p0.s
@@ -153,6 +153,6 @@ K_loop:
 
     smstop
 
- #   ldr x19, [sp, #16]
+    //ldr x18, [sp, #16]
     
     ret
