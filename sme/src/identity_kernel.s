@@ -93,19 +93,12 @@ handle_notrans:
 handle_trans:
     smstart
 
-    // select pointer offset values to apply to the B pointer
-    cbz x4, skip02
     // offset values with transpose
     mov x13, #16
     mov x14, x3
     lsl x14, x14, #4
-    b skip03
-skip02:
-    // offset values without transpose
-    mov x13, x3
-    lsl x13, x13, #4
-    mov x14, #16
-skip03:
+
+    ptrue p0.s, VL4
 
     // perform copy
     mov x9, x0              // x9 and x10 point to A
@@ -125,8 +118,6 @@ loop02:
     mov x1, x12
 
 // identity_4_4_start
-    ptrue p0.s, VL4
-
     // load A
     ld1w z0.s, p0/z, [x0]
     add x0, x0, x2, LSL #2
@@ -136,9 +127,6 @@ loop02:
     add x0, x0, x2, LSL #2
     ld1w z3.s, p0/z, [x0]
     add x0, x0, x2, LSL #2
-
-    // skip transpose if necessary
-    cbz x4, skip04
 
     // perform transpose on 2x2 submatrices
     trn1 z4.s, z0.s, z1.s
@@ -152,7 +140,6 @@ loop02:
     trn2 z2.d, z4.d, z6.d
     trn2 z3.d, z5.d, z7.d
 
-skip04:
     // store result
     st1w z0.s, p0, [x1]
     add x1, x1, x3, LSL #2
