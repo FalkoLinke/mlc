@@ -93,7 +93,6 @@ handle_notrans:
 handle_trans:
     smstart
 
-    // x4, x7, x13, x14, x15
     add x13, x2, x2
     add x14, x13, x2
     add x7, x3, x3
@@ -110,10 +109,8 @@ loop01:
 
     mov x10, x9
     mov x12, x11
-    mov x6, #4
-loop02:
-    cbz x6, end02
 
+    .rept 4
     // perform submatrix transpose, writing to the correct target submatrix
     mov x0, x10
     mov x1, x12
@@ -146,9 +143,7 @@ loop02:
 
     add x12, x12, x3, LSL #4    // B pointer changes based on transpose flag
     add x10, x10, #16           // A pointer changes normally
-    subs x6, x6, #1
-    b loop02
-end02:
+    .endr
 
     add x11, x11, #16       // B pointer changes based on transpose flag
     add x9, x9, x2, LSL #4  // A pointer changes normally
