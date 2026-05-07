@@ -22,6 +22,9 @@ to the 16x16 matrix B. The matrix may optionally be transposed in the process if
 
 If no transpose is requested, performing the identity operations simply
 involves copying all of the data from A to B.
+We chose to implement the nontransposing identity operation using 
+load- and store-instructions into general purpose registers instead of 
+the SSVE registers.
 
 Our implementation for a transposing ``identity`` relies on the fact, that
 the following two commands may be used to transpose 2x2 FP32 matrices stored 
@@ -68,7 +71,8 @@ Zero
 
 The zero operation simply fills the target 16x16 matrix with zeroes.
 Our implementation is an unrolled version of a simple loop performing
-this process and does not use any SSVE instructions.
+this process using load- and store-instructions into general purpose registers
+and does not make use of SSVE instructions.
 
 
 
@@ -146,11 +150,11 @@ determine the number of bytes processed per second ``v`` as follows::
 When executing our benchmarks on the ``edward.inf-ra.uni-jena.de`` machine,
 we obtain the following results:
 
-* ``identity``: 0.83 GiBs
-* transposing ``identity``: 1.00 GiBs
-* ``zero``: 56.65 GiBs
-* ``relu``: 0.89 GiBs
-* transposing ``relu``: 1.48 GiBs
+* ``identity``: 35.3 GiBs
+* transposing ``identity``: 1.05 GiBs
+* ``zero``: 65.49 GiBs
+* ``relu``: 1.55 GiBs
+* transposing ``relu``: 0.99 GiBs
 
 
 
