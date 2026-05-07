@@ -146,11 +146,11 @@ determine the number of bytes processed per second ``v`` as follows::
 When executing our benchmarks on the ``edward.inf-ra.uni-jena.de`` machine,
 we obtain the following results:
 
-* ``identity``: 0.89 GiBs
-* transposing ``identity``: 1.06 GiBs
-* ``zero``: 70.44 GiBs
-* ``relu``: 0.96 GiBs
-* transposing ``relu``: 1.51 GiBs
+* ``identity``: 0.83 GiBs
+* transposing ``identity``: 1.00 GiBs
+* ``zero``: 56.65 GiBs
+* ``relu``: 0.89 GiBs
+* transposing ``relu``: 1.48 GiBs
 
 
 
