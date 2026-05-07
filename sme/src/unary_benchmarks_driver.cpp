@@ -29,6 +29,21 @@ void relu_16_16_trans_kernel(float const* a, float* b, int64_t ld_a, int64_t ld_
     relu_16_16(a, b, ld_a, ld_b, 1);
 }
 
+struct kernel_t {
+public:
+	kernel_func_t* const func;
+	std::string const name;
+
+	kernel_t(kernel_func_t* const func, std::string const name) : func(func), name(name) {
+
+	}
+
+	void call(float const* a, float* b, int64_t ld_a, int64_t ld_b) const {
+		return this->func(a, b, ld_a, ld_b);
+	}
+};
+
+#define MAKE_KERNEL(FUNC) (kernel_t( (FUNC), #FUNC ))
 
 
 
@@ -42,18 +57,19 @@ void relu_16_16_trans_kernel(float const* a, float* b, int64_t ld_a, int64_t ld_
 
 
 
-void benchmark_kernel(kernel_func_t* kernel) {
+
+void benchmark_kernel(kernel_t kernel) {
     int const reps = 1000000;
     float a[16*16];
     float b[16*16];
 
-
-    kernel(a, b, 16, 16);
+    kernel_func_t* kernel_func = kernel.func;
+    kernel_func(a, b, 16, 16);
 
     auto start = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < reps; i++) {
-        kernel(a, b, 16, 16);
+        kernel_func(a, b, 16, 16);
     }
     
     auto end = std::chrono::high_resolution_clock::now();
@@ -64,7 +80,12 @@ void benchmark_kernel(kernel_func_t* kernel) {
     double time_taken = duration.count();
     double gibs = 1e-9 * bytes_transferred / time_taken;
 
-    std::cout << "GiBs: " << gibs << std::endl;
+
+    std::cout << "=========================" << std::endl;
+    std::cout << kernel.name << ":" << std::endl;
+    std::cout << "\tDuration [s]: " << time_taken << std::endl;
+    std::cout << "\tGBytes transferred: " << bytes_transferred * 1e-9 << std::endl;
+    std::cout << "\tGiBs: " << gibs << std::endl;
 }
 
 
@@ -78,14 +99,14 @@ void benchmark_kernel(kernel_func_t* kernel) {
 
 
 int main() {
-    kernel_func_t* kernels[] = {
-        identity_16_16_kernel,
-        identity_16_16_trans_kernel,
-        zero_16_16_kernel,
-        relu_16_16_kernel,
-        relu_16_16_trans_kernel,
+    kernel_t kernels[] = {
+        MAKE_KERNEL(identity_16_16_kernel),
+        MAKE_KERNEL(identity_16_16_trans_kernel),
+        MAKE_KERNEL(zero_16_16_kernel),
+        MAKE_KERNEL(relu_16_16_kernel),
+        MAKE_KERNEL(relu_16_16_trans_kernel),
     };
-    size_t const kernels_count = sizeof(kernels) / sizeof(kernel_func_t*);
+    size_t const kernels_count = sizeof(kernels) / sizeof(kernel_t);
 
     for (size_t i = 0; i < kernels_count; i++) {
         benchmark_kernel(kernels[i]);
