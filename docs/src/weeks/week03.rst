@@ -116,20 +116,31 @@ GEMM
 ----
 
 
-Placeholder
+We implemented a General Matrix Multiply (GEMM) operation that computes :math:`C \leftarrow C + A \times B`.
+The GEMM implementation was developed incrementally, starting from a small microkernel 
+and scaling up to a full matrix multiplication using a block-based tiling approach.
 
+The 32x32 Microkernel
+^^^^^^^^^^^^^^^^^^^^^
 
+The core of our GEMM implementation is a 32x32 microkernel. Since the SME ZA array is partitioned 
+into four 32-bit tiles (``za0.s`` to ``za3.s``) for FP32 operations, a 32x32 matrix exactly 
+fills the entire ZA array.
 
+Scaling the K-Dimension
+^^^^^^^^^^^^^^^^^^^^^^^
 
+For the ``gemm_32_32_512`` kernel, we wrapped the outer product computation in a loop 
+over the K-dimension. The C matrix is loaded into the ZA array once, followed by 512 iterations 
+where vectors of A and B are loaded and accumulated via ``fmopa``.
 
+Tiling over M and N
+^^^^^^^^^^^^^^^^^^^
 
-
-
-
-
-
-
-
+We iterate over the N and M dimensions of the global matrix in steps of 32. 
+In each iteration, we calculate the appropriate memory offsets using the leading dimensions 
+(``ld_a``, ``ld_b``, ``ld_c``) to isolate a specific 32x32 block of C. We then execute the K-loop 
+to compute the partial results for this specific tile.
 
 
 
@@ -159,19 +170,22 @@ we obtain the following results:
 
 
 
-
-
 GEMM
 ^^^^^^^^^^^^^^^^
 
 
+BENCHMARK ERGEBNISSE.
 
+```
+double flops_per_call = 2.0 * M * N * K;
+double total_flops = flops_per_call * num_iterations;
+double gflops = (total_flops / 1e9) / duration;
+```
 
-
-
-
-
-
-
-
+When executing our benchmarks on the ``edward.inf-ra.uni-jena.de`` machine,
+we obtain the following results:
+* ``gemm_kernel_32_32_1 ``: 50.498 GFLOPS
+* ``gemm_kernel_32_32_512 ``: 1824.63 GFLOPS
+* ``gemm_kernel_512_32_512 ``: 1821.79 GFLOPS
+* ``gemm_kernel_512_512_512 ``: 1802.76 GFLOPS
 
