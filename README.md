@@ -22,7 +22,11 @@ The following executables are provided:
 - `unary_benchmarks_driver`: Executes the benchmarks for the unary primitives.
 - `identity_driver`: Debugging driver for the identity operation.
 - `zero_driver`: Debugging driver for the zero operation.
-- `relu_driver`: Debugging driver for the RELU operation.
+- `gemm_driver_32_32_1`: Exectues the gemm_32_32_1_kernel.s Kernel, verifies the results and benchmarks it.
+- `gemm_driver_32_32_512`: Exectues the gemm_driver_32_32_512.s Kernel, verifies the results and benchmarks it.
+- `gemm_driver_512_32_512`: Exectues the gemm_driver_512_32_512.s Kernel, verifies the results and benchmarks it.
+- `gemm_driver_512_512_512`: Exectues the gemm_driver_512_512_512.s Kernel, verifies the results and benchmarks it.
+
 
 
 
