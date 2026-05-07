@@ -93,10 +93,11 @@ handle_notrans:
 handle_trans:
     smstart
 
-    // offset values with transpose
-    mov x13, #16
-    mov x14, x3
-    lsl x14, x14, #4
+    // x4, x7, x13, x14, x15
+    add x13, x2, x2
+    add x14, x13, x2
+    add x7, x3, x3
+    add x15, x7, x3
 
     ptrue p0.s, VL4
 
@@ -120,13 +121,9 @@ loop02:
 // identity_4_4_start
     // load A
     ld1w z0.s, p0/z, [x0]
-    add x0, x0, x2, LSL #2
-    ld1w z1.s, p0/z, [x0]
-    add x0, x0, x2, LSL #2
-    ld1w z2.s, p0/z, [x0]
-    add x0, x0, x2, LSL #2
-    ld1w z3.s, p0/z, [x0]
-    add x0, x0, x2, LSL #2
+    ld1w z1.s, p0/z, [x0, x2, LSL #2]
+    ld1w z2.s, p0/z, [x0, x13, LSL #2]
+    ld1w z3.s, p0/z, [x0, x14, LSL #2]
 
     // perform transpose on 2x2 submatrices
     trn1 z4.s, z0.s, z1.s
@@ -142,22 +139,18 @@ loop02:
 
     // store result
     st1w z0.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z1.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z2.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z3.s, p0, [x1]
-    add x1, x1, x3, LSL #2
+    st1w z1.s, p0, [x1, x3, LSL #2]
+    st1w z2.s, p0, [x1, x7, LSL #2]
+    st1w z3.s, p0, [x1, x15, LSL #2]
 // identity_4_4_end
 
-    add x12, x12, x14       // B pointer changes based on transpose flag
-    add x10, x10, #16       // A pointer changes normally
+    add x12, x12, x3, LSL #4    // B pointer changes based on transpose flag
+    add x10, x10, #16           // A pointer changes normally
     subs x6, x6, #1
     b loop02
 end02:
 
-    add x11, x11, x13       // B pointer changes based on transpose flag
+    add x11, x11, #16       // B pointer changes based on transpose flag
     add x9, x9, x2, LSL #4  // A pointer changes normally
     subs x5, x5, #1
     b loop01
