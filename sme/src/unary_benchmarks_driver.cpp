@@ -77,14 +77,15 @@ void benchmark_kernel(kernel_t kernel) {
 
 
     double bytes_transferred = reps * 16 * 16 * sizeof(float);
+    double gib_transferred = bytes_transferred / 1073741824.0f;
     double time_taken = duration.count();
-    double gibs = 1e-9 * bytes_transferred / time_taken;
+    double gibs = gib_transferred / time_taken;
 
 
     std::cout << "=========================" << std::endl;
     std::cout << kernel.name << ":" << std::endl;
     std::cout << "\tDuration [s]: " << time_taken << std::endl;
-    std::cout << "\tGBytes transferred: " << bytes_transferred * 1e-9 << std::endl;
+    std::cout << "\tBytes transferred [GB]: " << bytes_transferred * 1e-9 << std::endl;
     std::cout << "\tGiBs: " << gibs << std::endl;
 }
 
