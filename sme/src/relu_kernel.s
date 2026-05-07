@@ -33,21 +33,21 @@ FUNCLABEL(relu_16_16):
     // perform the RELU inplace on B
     smstart
 
+    add x11, x3, x3
+    add x12, x11, x3
+
     mov x6, x1
 
     ptrue p0.b
     ptrue p1.s, VL4
 
     .rept 4
-    
+
     ld4w {z0.s, z1.s, z2.s, z3.s}, p1/z, [x1]
-    add x1, x1, x3, LSL #2  
-    ld4w {z4.s, z5.s, z6.s, z7.s}, p1/z, [x1]
-    add x1, x1, x3, LSL #2
-    ld4w {z16.s, z17.s, z18.s, z19.s}, p1/z, [x1]
-    add x1, x1, x3, LSL #2
-    ld4w {z20.s, z21.s, z22.s, z23.s}, p1/z, [x1]
-    add x1, x1, x3, LSL #2
+    ld4w {z4.s, z5.s, z6.s, z7.s}, p1/z, [x1, x3, LSL #2]
+    ld4w {z16.s, z17.s, z18.s, z19.s}, p1/z, [x1, x11, LSL #2]
+    ld4w {z20.s, z21.s, z22.s, z23.s}, p1/z, [x1, x12, LSL #2]
+    add x1, x1, x3, LSL #4
 
     fmax z0.s, p0/m, z0.s, #0.0
     fmax z1.s, p0/m, z1.s, #0.0
@@ -67,13 +67,10 @@ FUNCLABEL(relu_16_16):
     fmax z23.s, p0/m, z23.s, #0.0
 
     st4w {z0.s, z1.s, z2.s, z3.s}, p1, [x6]
-    add x6, x6, x3, LSL #2
-    st4w {z4.s, z5.s, z6.s, z7.s}, p1, [x6]
-    add x6, x6, x3, LSL #2
-    st4w {z16.s, z17.s, z18.s, z19.s}, p1, [x6]
-    add x6, x6, x3, LSL #2
-    st4w {z20.s, z21.s, z22.s, z23.s}, p1, [x6]
-    add x6, x6, x3, LSL #2
+    st4w {z4.s, z5.s, z6.s, z7.s}, p1, [x6, x3, LSL #2]
+    st4w {z16.s, z17.s, z18.s, z19.s}, p1, [x6, x11, LSL #2]
+    st4w {z20.s, z21.s, z22.s, z23.s}, p1, [x6, x12, LSL #2]
+    add x6, x6, x3, LSL #4
 
     .endr
 
