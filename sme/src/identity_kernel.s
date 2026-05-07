@@ -132,16 +132,16 @@ loop02:
     trn2 z7.s, z2.s, z3.s
 
     // transpose matrix of submatrices
-    trn1 z0.d, z4.d, z6.d
-    trn1 z1.d, z5.d, z7.d
-    trn2 z2.d, z4.d, z6.d
-    trn2 z3.d, z5.d, z7.d
+    trn1 z16.d, z4.d, z6.d
+    trn1 z17.d, z5.d, z7.d
+    trn2 z18.d, z4.d, z6.d
+    trn2 z19.d, z5.d, z7.d
 
     // store result
-    st1w z0.s, p0, [x1]
-    st1w z1.s, p0, [x1, x3, LSL #2]
-    st1w z2.s, p0, [x1, x7, LSL #2]
-    st1w z3.s, p0, [x1, x15, LSL #2]
+    st1w z16.s, p0, [x1]
+    st1w z17.s, p0, [x1, x3, LSL #2]
+    st1w z18.s, p0, [x1, x7, LSL #2]
+    st1w z19.s, p0, [x1, x15, LSL #2]
 // identity_4_4_end
 
     add x12, x12, x3, LSL #4    // B pointer changes based on transpose flag
