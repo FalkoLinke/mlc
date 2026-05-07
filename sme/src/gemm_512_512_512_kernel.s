@@ -26,6 +26,7 @@
     .global FUNCLABEL(gemm_512_512_512)
 FUNCLABEL(gemm_512_512_512):
 
+#    str x19, [sp, #16]
 
     smstart
     ptrue p0.s
@@ -34,7 +35,7 @@ FUNCLABEL(gemm_512_512_512):
     
     lsl x10, x5, #2  // x10 = ld_c*4, used for pointer arithmetic when loading/storing C
     lsl x11, x3, #2  // x11 = ld_a*4, used for pointer arithmetic when loading A in K loop
-    lsl x16, x2, #2  // x16 = ld_b*4, used for pointer arithmetic when loading B in K loop
+    lsl x17, x4, #2  // x16 = ld_b*4, used for pointer arithmetic when loading B in K loop
 
     // N Variables loop counter in x16
     mov x16, #0
@@ -45,6 +46,8 @@ M_loop:
     // load C
     mov x6, x2
     add x6, x6, x15, lsl #2 // x15*4 bytes weiter springen, zum richtigen M streifen
+    mul x14, x16, x5
+    add x6, x6, x14, lsl #2 // zum richtigen N streifen
     mov w12, #0
     mov w13, #2
     
@@ -75,6 +78,7 @@ M_loop:
     mov x7, x0
     mov x8, x1
     add x7, x7, x15, lsl #2 // x15*4 bytes weiter springen, zum richtigen M streifen
+    add x8, x8, x16, lsl #2 //  springen, zum richtigen N streifen
 
     // K Variables loop counter in x29
     mov x14, #512
@@ -99,7 +103,7 @@ K_loop:
     // move to the next K tile
     // A is column-major, so we move in K dimension by adding ld_a (x3) to the pointer
     add x7, x7, x11 // x11 = ld_a*4, move to the next K tile for A
-    addvl x8, x8, #2
+    add x8, x8, x17 // x17 = ld_b*4, move to the next K tile for B
 
     subs x14, x14, #1
     cbnz x14, K_loop
@@ -108,6 +112,8 @@ K_loop:
     // store the results back to C
     mov x6, x2
     add x6, x6, x15, lsl #2 // x15*4 bytes weiter springen, zum richtigen M streifen
+    mul x14, x16, x5
+    add x6, x6, x14, lsl #2 // zum richtigen N streifen
     mov w12, #0
     mov w13, #2
     
@@ -142,9 +148,11 @@ K_loop:
 
     // N Tiles check
     add x16, x16, x9, lsl #1 // processed elements in N dimension, x9 floats per tile, we process 2 tiles (32*2=64 floats) at a time
-    cmp x15, x2
-    b.ne M_loop
+    cmp x16, x4
+    b.ne N_loop
 
     smstop
+
+ #   ldr x19, [sp, #16]
     
     ret
