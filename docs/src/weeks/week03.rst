@@ -112,7 +112,7 @@ GEMM
 ----
 
 
-
+Placeholder
 
 
 
@@ -131,6 +131,37 @@ GEMM
 
 Benchmarks
 ----------
+
+
+Unary Primitives
+^^^^^^^^^^^^^^^^
+
+We determine the performance of our implementations, by repeatedly executing
+a given kernel on a contiguous 16x16 FP32 input matrix and a contiguous 16x16 FP32 
+output matrix while measuring the time taken ``t`` for all repetitions.
+If we let ``s`` be the total number of bytes processed by the kernel, then we
+determine the number of bytes processed per second ``v`` as follows::
+    v = s / t
+
+When executing our benchmarks on the ``edward.inf-ra.uni-jena.de`` machine,
+we obtain the following results:
+
+* ``identity``: 0.89 GiBs
+* transposing ``identity``: 1.06 GiBs
+* ``zero``: 70.44 GiBs
+* ``relu``: 0.96 GiBs
+* transposing ``relu``: 1.51 GiBs
+
+
+
+
+
+
+GEMM
+^^^^^^^^^^^^^^^^
+
+
+
 
 
 
