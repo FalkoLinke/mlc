@@ -38,6 +38,11 @@ public:
 
 
 
+void fill_const(float* buffer, size_t const size, float const value) {
+    for (size_t i = 0; i < size; i++) {
+        buffer[i] = value;
+    }
+}
 
 void fill_indices(float *buffer, size_t const size) {
     for (size_t i = 0; i < size; i++) {
@@ -233,6 +238,102 @@ bool test06() {
     return result;
 } 
 
+bool test07() {
+    int const rows = 512;
+    float a[rows * rows];
+    float b[rows * rows];
+
+    fill_indices(a, rows * rows);
+    fill_indices(b, rows * rows);
+
+    float* a_sub = a + rows / 4 + rows / 4 * rows;
+    float* b_sub = b + rows / 4 + rows / 4 * rows;
+    zero_16_16(a_sub, rows);
+    ref_zero_16_16(b_sub, rows);
+
+    bool result = mats_equal(a, b, rows, rows);
+    return result;
+}
+
+bool test08() {
+    int const rows = 512;
+    float a[rows * rows];
+    float b[rows * rows];
+    float exp[rows * rows];
+
+    fill_indices(a, rows * rows);
+    fill_const(b, rows * rows, -5.0);
+    fill_const(exp, rows * rows, -5.0);
+
+    int sub_off = rows / 4 + rows / 4 * rows;
+    identity_16_16(a + sub_off, b + sub_off, rows, rows, 0);
+    ref_identity_16_16(a + sub_off, exp + sub_off, rows, rows, 0);
+
+    bool result = mats_equal(b, exp, rows, rows);
+    return result;
+}
+
+bool test09() {
+    int const rows = 512;
+    float a[rows * rows];
+    float b[rows * rows];
+    float exp[rows * rows];
+
+    fill_indices(a, rows * rows);
+    fill_const(b, rows * rows, -5.0);
+    fill_const(exp, rows * rows, -5.0);
+
+    int sub_off = rows / 4 + rows / 4 * rows;
+    identity_16_16(a + sub_off, b + sub_off, rows, rows, 1);
+    ref_identity_16_16(a + sub_off, exp + sub_off, rows, rows, 1);
+
+    bool result = mats_equal(b, exp, rows, rows);
+    return result;
+}
+
+bool test10() {
+    int const rows = 512;
+    int sub_off = rows / 4 + rows / 4 * rows;
+
+    float a[rows * rows];
+    float b[rows * rows];
+    float exp[rows * rows];
+
+    fill_indices(a, rows * rows);
+    fill_const(b, rows * rows, -5.0);
+    fill_const(exp, rows * rows, -5.0);
+    for (int i = 0; i < 16; i++) {
+        (a + sub_off)[i*16] = -1.0;
+    }
+
+    relu_16_16(a + sub_off, b + sub_off, rows, rows, 0);
+    ref_relu_16_16(a + sub_off, exp + sub_off, rows, rows, 0);
+
+    bool result = mats_equal(b, exp, rows, rows);
+    return result;
+} 
+
+bool test11() {
+    int const rows = 512;
+    int sub_off = rows / 4 + rows / 4 * rows;
+    
+    float a[rows * rows];
+    float b[rows * rows];
+    float exp[rows * rows];
+
+    fill_indices(a, rows * rows);
+    fill_const(b, rows * rows, -5.0);
+    fill_const(exp, rows * rows, -5.0);
+    for (int i = 0; i < 16; i++) {
+        (a + sub_off)[i*16] = -1.0;
+    }
+
+    relu_16_16(a + sub_off, b + sub_off, rows, rows, 1);
+    ref_relu_16_16(a + sub_off, exp + sub_off, rows, rows, 1);
+
+    bool result = mats_equal(b, exp, rows, rows);
+    return result;
+} 
 
 
 
@@ -259,6 +360,11 @@ int main() {
         MAKE_TEST(test04),
         MAKE_TEST(test05),
         MAKE_TEST(test06),
+        MAKE_TEST(test07),
+        MAKE_TEST(test08),
+        MAKE_TEST(test09),
+        MAKE_TEST(test10),
+        MAKE_TEST(test11),
 	};
 	int tests_count = sizeof(tests) / sizeof(unit_test_t);
 
