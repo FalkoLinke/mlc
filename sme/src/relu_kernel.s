@@ -37,10 +37,9 @@ FUNCLABEL(relu_16_16):
 
     ptrue p0.b
     ptrue p1.s, VL4
-    mov x5, #4
-loop01:
-    cbz x5, end01
 
+    .rept 4
+    
     ld4w {z0.s, z1.s, z2.s, z3.s}, p1/z, [x1]
     add x1, x1, x3, LSL #2  
     ld4w {z4.s, z5.s, z6.s, z7.s}, p1/z, [x1]
@@ -76,9 +75,7 @@ loop01:
     st4w {z20.s, z21.s, z22.s, z23.s}, p1, [x6]
     add x6, x6, x3, LSL #2
 
-    subs x5, x5, #1
-    b loop01
-end01:
+    .endr
 
     smstop
     ldp x29, x30, [sp], #16
