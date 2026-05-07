@@ -84,19 +84,21 @@ FUNCLABEL(identity_16_16):
     stp x29, x30, [sp, #-16]!
     mov fp, sp
 
-    // select pointer offset values to apply to the B pointer
-    cbz x4, skip02
-    // offset values with transpose
-    mov x13, #16
-    mov x14, x3
-    lsl x14, x14, #4
-    b skip03
-skip02:
-    // offset values without transpose
-    mov x13, x3
-    lsl x13, x13, #4
-    mov x14, #16
-skip03:
+    cbz x4, handle_notrans
+    b handle_trans
+handle_notrans:
+    bl FUNCLABEL(identity_16_16_notrans)
+    ldp x29, x30, [sp], #16
+    ret
+handle_trans:
+    smstart
+
+    add x13, x2, x2
+    add x14, x13, x2
+    add x7, x3, x3
+    add x15, x7, x3
+
+    ptrue p0.s, VL4
 
     // perform copy
     mov x9, x0              // x9 and x10 point to A
@@ -107,31 +109,90 @@ loop01:
 
     mov x10, x9
     mov x12, x11
-    mov x6, #4
-loop02:
-    cbz x6, end02
 
+    .rept 4
     // perform submatrix transpose, writing to the correct target submatrix
     mov x0, x10
     mov x1, x12
-    bl FUNCLABEL(identity_4_4)
 
-    add x12, x12, x14       // B pointer changes based on transpose flag
-    add x10, x10, #16       // A pointer changes normally
-    subs x6, x6, #1
-    b loop02
-end02:
+// identity_4_4_start
+    // load A
+    ld1w z0.s, p0/z, [x0]
+    ld1w z1.s, p0/z, [x0, x2, LSL #2]
+    ld1w z2.s, p0/z, [x0, x13, LSL #2]
+    ld1w z3.s, p0/z, [x0, x14, LSL #2]
 
-    add x11, x11, x13       // B pointer changes based on transpose flag
+    // perform transpose on 2x2 submatrices
+    trn1 z4.s, z0.s, z1.s
+    trn2 z5.s, z0.s, z1.s
+    trn1 z6.s, z2.s, z3.s
+    trn2 z7.s, z2.s, z3.s
+
+    // transpose matrix of submatrices
+    trn1 z16.d, z4.d, z6.d
+    trn1 z17.d, z5.d, z7.d
+    trn2 z18.d, z4.d, z6.d
+    trn2 z19.d, z5.d, z7.d
+
+    // store result
+    st1w z16.s, p0, [x1]
+    st1w z17.s, p0, [x1, x3, LSL #2]
+    st1w z18.s, p0, [x1, x7, LSL #2]
+    st1w z19.s, p0, [x1, x15, LSL #2]
+// identity_4_4_end
+
+    add x12, x12, x3, LSL #4    // B pointer changes based on transpose flag
+    add x10, x10, #16           // A pointer changes normally
+    .endr
+
+    add x11, x11, #16       // B pointer changes based on transpose flag
     add x9, x9, x2, LSL #4  // A pointer changes normally
     subs x5, x5, #1
     b loop01
 end01:
 
+    smstop
     ldp x29, x30, [sp], #16
     ret
 
 
+
+
+
+
+
+
+
+
+
+
+FUNCLABEL(identity_16_16_notrans):
+    stp x29, x30, [sp, #-16]!
+    mov fp, sp
+
+    .rept 16
+    ldr x4, [x0, #0]
+    ldr x5, [x0, #8]
+    ldr x6, [x0, #16]
+    ldr x7, [x0, #24]
+    ldr x9, [x0, #32]
+    ldr x10, [x0, #40]
+    ldr x11, [x0, #48]
+    ldr x12, [x0, #56]
+    add x0, x0, x2, LSL #2
+    str x4, [x1, #0]
+    str x5, [x1, #8]
+    str x6, [x1, #16]
+    str x7, [x1, #24]
+    str x9, [x1, #32]
+    str x10, [x1, #40]
+    str x11, [x1, #48]
+    str x12, [x1, #56]
+    add x1, x1, x3, LSL #2
+    .endr
+
+    ldp x29, x30, [sp], #16
+    ret
 
 
 
