@@ -83,6 +83,7 @@ void identity_16_16( float const * a,
 FUNCLABEL(identity_16_16):
     stp x29, x30, [sp, #-16]!
     mov fp, sp
+    smstart
 
     // select pointer offset values to apply to the B pointer
     cbz x4, skip02
@@ -114,7 +115,46 @@ loop02:
     // perform submatrix transpose, writing to the correct target submatrix
     mov x0, x10
     mov x1, x12
-    bl FUNCLABEL(identity_4_4)
+
+// identity_4_4_start
+    ptrue p0.s, VL4
+
+    // load A
+    ld1w z0.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
+    ld1w z1.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
+    ld1w z2.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
+    ld1w z3.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
+
+    // skip transpose if necessary
+    cbz x4, skip04
+
+    // perform transpose on 2x2 submatrices
+    trn1 z4.s, z0.s, z1.s
+    trn2 z5.s, z0.s, z1.s
+    trn1 z6.s, z2.s, z3.s
+    trn2 z7.s, z2.s, z3.s
+
+    // transpose matrix of submatrices
+    trn1 z0.d, z4.d, z6.d
+    trn1 z1.d, z5.d, z7.d
+    trn2 z2.d, z4.d, z6.d
+    trn2 z3.d, z5.d, z7.d
+
+skip04:
+    // store result
+    st1w z0.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z1.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z2.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z3.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+// identity_4_4_end
 
     add x12, x12, x14       // B pointer changes based on transpose flag
     add x10, x10, #16       // A pointer changes normally
@@ -128,6 +168,7 @@ end02:
     b loop01
 end01:
 
+    smstop
     ldp x29, x30, [sp], #16
     ret
 
