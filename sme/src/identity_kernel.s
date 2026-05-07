@@ -191,6 +191,7 @@ FUNCLABEL(identity_16_16_notrans):
     ldr x10, [x0, #40]
     ldr x11, [x0, #48]
     ldr x12, [x0, #56]
+    add x0, x0, x2, LSL #2
     str x4, [x1, #0]
     str x5, [x1, #8]
     str x6, [x1, #16]
@@ -199,7 +200,6 @@ FUNCLABEL(identity_16_16_notrans):
     str x10, [x1, #40]
     str x11, [x1, #48]
     str x12, [x1, #56]
-    add x0, x0, x2, LSL #2
     add x1, x1, x3, LSL #2
     .endr
 
