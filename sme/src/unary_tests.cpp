@@ -38,18 +38,39 @@ public:
 
 
 
+
+
+/**
+ * @brief Fills the buffer with the given value. 
+ * @param buffer    Pointer to the buffer to fill.
+ * @param size      The number of floats in the buffer.
+ * @param value     The value to set each entry of the buffer to.
+ **/
 void fill_const(float* buffer, size_t const size, float const value) {
     for (size_t i = 0; i < size; i++) {
         buffer[i] = value;
     }
 }
 
+/**
+ * @brief Sets each entry of the buffer to it's index. 
+ * @param buffer    Pointer to the buffer to fill.
+ * @param size      The number of floats in the buffer.
+ **/
 void fill_indices(float *buffer, size_t const size) {
     for (size_t i = 0; i < size; i++) {
         buffer[i] = (float)i;
     }
 }
 
+/**
+ * @brief Returns `true` if the two matrices are equal. 
+ * @param a         The first matrix.
+ * @param b         The second matrix.
+ * @param m         The number of rows of a and b.
+ * @param n         The number of columns of a and b.
+ * @return          `true` if all elements are equal, `false` otherwise.
+ **/
 bool mats_equal(float const* a, float const* b, int m, int n) {
     for (int r = 0; r < m; r++) {
         for (int c = 0; c < n; c++) {
@@ -79,7 +100,14 @@ bool mats_equal(float const* a, float const* b, int m, int n) {
 
 
 
-
+/**
+ * @brief Reference implementation for an `identity` operation with m=16 and n=16.
+ * @param a       Pointer to column-major matrix A.
+ * @param b       Pointer to matrix B.
+ * @param ld_a    Leading dimension of A.
+ * @param ld_b    Leading dimension of B.
+ * @param trans_b Column-major B if 0, row-major B if 1. 
+ **/
 void ref_identity_16_16(float const* a, float *b, int64_t ld_a, int64_t ld_b, int32_t trans_b) {
     int off_a_outer = ld_a;
     int off_a_inner = 1;
@@ -105,6 +133,11 @@ void ref_identity_16_16(float const* a, float *b, int64_t ld_a, int64_t ld_b, in
     }
 }
 
+/**
+ * @brief Reference implementation for the `zero` operation.
+ * @param a    Pointer to column-major matrix A.
+ * @param ld_a Leading dimension of A.
+ **/
 void ref_zero_16_16(float* a, int64_t ld_a) {
     for (int c = 0; c < 16; c++) {
         for (int r = 0; r < 16; r++) {
@@ -114,6 +147,14 @@ void ref_zero_16_16(float* a, int64_t ld_a) {
     }
 }
 
+/*
+* @brief Reference implementation for the `RELU` operation.
+* @param a       Pointer to column-major matrix A.
+* @param b       Pointer to matrix B.
+* @param ld_a    Leading dimension of A.
+* @param ld_b    Leading dimension of B.
+* @param trans_b Column-major B if 0, row-major B if 1. 
+**/
 void ref_relu_16_16(float const* a, float* b, int64_t ld_a, int64_t ld_b, int32_t trans_b) {
     ref_identity_16_16(a, b, ld_a, ld_b, trans_b);
 
