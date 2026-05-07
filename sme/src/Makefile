@@ -79,6 +79,7 @@ gemm_driver_16_16: gemm_driver_16_16.o gemm_kernel_16_16.o
 
 gemm_driver_16_16_multi: gemm_driver_16_16_multi.o gemm_kernel_16_16.o
 	$(CXX) $^ -fopenmp  -o gemm_driver_16_16_multi
+
 zero_driver: zero_driver.o zero_kernel.o
 	$(CXX) $^ -o zero_driver
 
@@ -87,7 +88,6 @@ unary_benchmarks_driver: unary_benchmarks_driver.o identity_kernel.o zero_kernel
 
 unary_tests: unary_tests.o identity_kernel.o zero_kernel.o relu_kernel.o
 	$(CXX) $^ -o unary_tests
-
 
 identity_driver.o: identity_driver.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o identity_driver.o
