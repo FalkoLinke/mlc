@@ -21,7 +21,7 @@ fi
 "$OBJCOPY" -O binary -j .text tmp.o tmp.bin
 if [ $? -ne 0 ]; then
     echo "Could not extract instruction words."
-    rm tmp.0
+    rm tmp.o
     exit 3
 fi
 
