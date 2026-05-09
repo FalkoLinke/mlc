@@ -31,7 +31,7 @@ endif
 
 
 
-all: kernel_examples.out main.out
+all: kernel_examples.out main.out instgen_examples.out
 
 clean:
 	rm -f *.bin
@@ -46,3 +46,7 @@ kernel_examples.out: kernel_examples.cpp Kernel.cpp
 
 main.out: main.cpp Kernel.cpp KernelFactory.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
+
+instgen_examples.out: instgen_examples.cpp InstGen.cpp
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
