@@ -124,6 +124,13 @@ class mini_jit::InstGen {
       d2 = 0x40400000
     } arr_spec_t;
 
+    //! streaming SVE mode options
+    typedef enum : uint32_t {
+      sm = 0x1,
+      za = 0x2,
+      smza = 0x3,
+    } ssve_spec_t;
+
     /**
      * @brief Generates a CBNZ instruction.
      *
@@ -134,6 +141,12 @@ class mini_jit::InstGen {
      **/
     static uint32_t base_br_cbnz( gpr_t   reg,
                                   int32_t imm19 );
+
+    static uint32_t base_ret( gpr_t reg = gpr_t::x30 );
+
+    static uint32_t base_smstart( ssve_spec_t spec = ssve_spec_t::smza );
+
+    static uint32_t base_smstop( ssve_spec_t spec = ssve_spec_t::smza );
 
     /**
      * @brief Generates an FMLA (vector) instruction.

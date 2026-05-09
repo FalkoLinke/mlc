@@ -39,6 +39,33 @@ uint32_t mini_jit::InstGen::base_br_cbnz( gpr_t   reg,
   return l_ins;
 }
 
+uint32_t mini_jit::InstGen::base_ret( gpr_t reg ) {
+  uint32_t ins = 0xd65f0000;
+
+  uint32_t reg_id = reg & 0x1f;
+  ins |= reg_id << 5;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::base_smstart( ssve_spec_t spec ) {
+  uint32_t ins = 0xD503417F;
+
+  uint32_t spec_id = spec & 0x3;
+  ins |= spec_id << 9;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::base_smstop( ssve_spec_t spec ) {
+  uint32_t ins = 0xD503407F;
+
+  uint32_t spec_id = spec & 0x3;
+  ins |= spec_id << 9;
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::neon_dp_fmla_vector( simd_fp_t  reg_dest,
                                                  simd_fp_t  reg_src1,
                                                  simd_fp_t  reg_src2,

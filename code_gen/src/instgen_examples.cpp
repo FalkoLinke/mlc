@@ -61,5 +61,13 @@ int main() {
   l_str = l_gen.to_string_bin( l_ins );
   std::cout << " " << l_str << std::endl;
 
+  // ret
+  std::cout << "ret" << std::endl;
+  l_ins = l_gen.base_ret();
+  l_str = l_gen.to_string_hex( l_ins );
+  std::cout << " " << l_str << std::endl;
+  l_str = l_gen.to_string_bin( l_ins );
+  std::cout << " " << l_str << std::endl;
+
   return EXIT_SUCCESS;
 }
