@@ -6,7 +6,7 @@ TOOLCHAIN ?= standard
 ifeq ($(TOOLCHAIN),standard)
 
 CXX = clang++
-CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+nosve+sme -O0
+CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+sme -O0
 ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
 
 else
@@ -16,7 +16,7 @@ ifeq ($(TOOLCHAIN),homebrew)
 LLVM_PREFIX = /opt/homebrew/opt/llvm
 CXX = $(LLVM_PREFIX)/bin/clang++
 CC = $(LLVM_PREFIX)/bin/clang
-CXXFLAGS = $(CXXFLAGS_COMMON) -fopenmp -march=armv9.2-a+nosve+sme -O3
+CXXFLAGS = $(CXXFLAGS_COMMON) -fopenmp -march=armv9.2-a+sme -O0
 ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
 
 else
