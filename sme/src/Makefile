@@ -6,7 +6,7 @@ TOOLCHAIN ?= standard
 ifeq ($(TOOLCHAIN),standard)
 
 CXX = clang++
-CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+nosve+sme -O0
+CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+nosve+sme -O3
 ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
 
 else
