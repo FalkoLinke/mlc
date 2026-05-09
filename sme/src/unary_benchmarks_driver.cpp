@@ -6,6 +6,11 @@
 #include "relu_kernel.h"
 
 
+int counter = 0;
+
+
+
+
 /**
  * @brief       The function signature of a unary operation kernel.
  * @param a     The source matrix.
@@ -95,7 +100,7 @@ public:
  * the GiBs metric, along with other benchmark results.
  */
 void benchmark_kernel(kernel_t kernel) {
-    int const reps = 1000000;
+    int const reps = 10000000;
     float a[16*16];
     float b[16*16];
 
@@ -106,14 +111,14 @@ void benchmark_kernel(kernel_t kernel) {
 
     for (int i = 0; i < reps; i++) {
         kernel_func(a, b, 16, 16);
+        counter += 1;
     }
     
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
 
 
-    double bytes_transferred = reps * 16 * 16 * sizeof(float);
-    double gib_transferred = bytes_transferred / 1073741824.0f;
+    double gib_transferred = (reps / 1073741824.0f) * (16 * 16 * sizeof(float));
     double time_taken = duration.count();
     double gibs = gib_transferred / time_taken;
 
@@ -121,7 +126,7 @@ void benchmark_kernel(kernel_t kernel) {
     std::cout << "=========================" << std::endl;
     std::cout << kernel.name << ":" << std::endl;
     std::cout << "\tDuration [s]: " << time_taken << std::endl;
-    std::cout << "\tBytes transferred [GB]: " << bytes_transferred * 1e-9 << std::endl;
+    std::cout << "\tBytes transferred [GiB]: " << gib_transferred << std::endl;
     std::cout << "\tGiBs: " << gibs << std::endl;
 }
 
@@ -149,5 +154,7 @@ int main() {
         benchmark_kernel(kernels[i]);
     }
 
+
+    std::cerr << counter << std::endl;
     return 0;
 }

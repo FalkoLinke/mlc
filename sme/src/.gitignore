@@ -4,4 +4,11 @@ relu_driver
 zero_driver
 unary_benchmarks_driver
 unary_tests
+sve_stats
+gemm_driver_16_16
+gemm_driver_32_32_1
+gemm_driver_32_32_512
+gemm_driver_512_32_512
+gemm_driver_512_512_512
+
 

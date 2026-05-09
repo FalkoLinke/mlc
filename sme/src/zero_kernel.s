@@ -16,18 +16,20 @@ void zero_16_16( float* a,
 */
     .global FUNCLABEL(zero_16_16)
 FUNCLABEL(zero_16_16):
-    mov x2, #0
+    smstart
+    fmov z0.s, #0.0
+    ptrue p0.s
     
-    .rept 16
-    str x2, [x0, #0]
-    str x2, [x0, #8]
-    str x2, [x0, #16]
-    str x2, [x0, #24]
-    str x2, [x0, #32]
-    str x2, [x0, #40]
-    str x2, [x0, #48]
-    str x2, [x0, #56]
-    add x0, x0, x1, LSL #2
-    .endr
+    mov x2, #16
+zero_16_16_loop01:
+    cbz x2, zero_16_16_end01
+    
+    st1w z0.s, p0, [x0]
 
+    add x0, x0, x1, LSL #2
+    subs x2, x2, #1
+    b zero_16_16_loop01
+zero_16_16_end01:
+
+    smstop
     ret

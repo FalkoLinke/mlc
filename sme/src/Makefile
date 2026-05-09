@@ -6,7 +6,7 @@ TOOLCHAIN ?= standard
 ifeq ($(TOOLCHAIN),standard)
 
 CXX = clang++
-CXXFLAGS = $(CXXFLAGS_COMMON) -fopenmp -march=armv9.2-a+nosve+sme -O0
+CXXFLAGS = $(CXXFLAGS_COMMON) -march=armv9.2-a+nosve+sme -O0
 ASFLAGS = $(CXXFLAGS) -x assembler-with-cpp
 
 else
@@ -37,7 +37,7 @@ endif
 
 
 
-all: identity_driver relu_driver zero_driver unary_benchmarks_driver unary_tests gemm_driver_32_32_1 gemm_driver_32_32_512 gemm_driver_16_16 gemm_driver_512_32_512 gemm_driver_512_512_512 gemm_driver_16_16_multi
+all: identity_driver relu_driver zero_driver unary_benchmarks_driver unary_tests gemm_driver_32_32_1 gemm_driver_32_32_512 gemm_driver_16_16 gemm_driver_512_32_512 gemm_driver_512_512_512 gemm_driver_16_16_multi sve_stats
 
 
 clean:
@@ -52,9 +52,12 @@ clean:
 	rm -f zero_driver
 	rm -f unary_benchmarks_driver
 	rm -f unary_tests
+	rm -f sve_stats
 	rm -f *.o
 
 
+sve_stats: sve_stats.o
+	$(CXX) $^ -o sve_stats
 
 identity_driver: identity_driver.o identity_kernel.o
 	$(CXX) $^ -o identity_driver
@@ -88,6 +91,9 @@ unary_benchmarks_driver: unary_benchmarks_driver.o identity_kernel.o zero_kernel
 
 unary_tests: unary_tests.o identity_kernel.o zero_kernel.o relu_kernel.o
 	$(CXX) $^ -o unary_tests
+
+sve_stats.o: sve_stats.cpp
+	$(CXX) -c $(CXXFLAGS) $^ -o sve_stats.o
 
 identity_driver.o: identity_driver.cpp
 	$(CXX) -c $(CXXFLAGS) $^ -o identity_driver.o
