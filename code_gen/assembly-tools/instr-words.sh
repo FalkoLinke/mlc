@@ -19,6 +19,11 @@ if [ $? -ne 0 ]; then
 fi
 
 "$OBJCOPY" -O binary -j .text tmp.o tmp.bin
+if [ $? -ne 0 ]; then
+    echo "Could not extract instruction words."
+    rm tmp.0
+    exit 3
+fi
 
 xxd -e -c 4 tmp.bin | sed 's/^[0-9,a-f,A-F]*\:[ ]//' | sed 's/^\(.\{8\}\).*/\1/'
 
