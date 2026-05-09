@@ -46,29 +46,50 @@ relu_16_16_trans:
 
     ptrue p0.s
     mov w12, #0
-    mov x5, #16
+    mov x5, #4
 relu_16_16_loop02:
     cbz x5, relu_16_16_loop02_end
 
     ld1w z0.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
     fmax z0.s, p0/m, z0.s, #0.0
     mov za0h.s[w12, 0], p0/m, z0.s
 
-    add w12, w12, #1
+    ld1w z1.s, p0/z, [x0]
     add x0, x0, x2, LSL #2
+    fmax z1.s, p0/m, z1.s, #0.0
+    mov za0h.s[w12, 1], p0/m, z1.s
+    
+    ld1w z2.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
+    fmax z2.s, p0/m, z2.s, #0.0
+    mov za0h.s[w12, 2], p0/m, z2.s
+    
+    ld1w z3.s, p0/z, [x0]
+    add x0, x0, x2, LSL #2
+    fmax z3.s, p0/m, z3.s, #0.0
+    mov za0h.s[w12, 3], p0/m, z3.s
+
+    add w12, w12, #4
     subs x5, x5, #1
     b relu_16_16_loop02
 relu_16_16_loop02_end:
 
     mov w12, #0
-    mov x5, #16
+    mov x5, #4
 relu_16_16_loop03:
     cbz x5, relu_16_16_loop03_end
 
     st1w za0v.s[w12, 0], p0, [x1]
-
-    add w12, w12, #1
     add x1, x1, x3, LSL #2
+    st1w za0v.s[w12, 1], p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w za0v.s[w12, 2], p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w za0v.s[w12, 3], p0, [x1]
+    add x1, x1, x3, LSL #2
+
+    add w12, w12, #4
     subs x5, x5, #1
     b relu_16_16_loop03
 relu_16_16_loop03_end:
