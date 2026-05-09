@@ -83,6 +83,7 @@ void identity_16_16( float const * a,
 FUNCLABEL(identity_16_16):
     stp x29, x30, [sp, #-16]!
     mov fp, sp
+    smstart
 
     cbz x4, identity_16_16_notrans
     b identity_16_16_trans
@@ -111,7 +112,7 @@ identity_16_16_trans:
 identity_16_16_loop02:
     cbz x5, identity_16_16_loop02_end
 
-    ld1w z0.s, p0/z, [x0]
+    ld1w za0h.s[w12, 0], p0/z, [x0]
 
     add w12, w12, #1
     add x0, x0, x2, LSL #2
@@ -124,7 +125,7 @@ identity_16_16_loop02_end:
 identity_16_16_loop03:
     cbz x5, identity_16_16_loop03_end
 
-    st1w z0.s, p0, [x1]
+    st1w za0v.s[w12, 0], p0, [x1]
 
     add w12, w12, #1
     add x1, x1, x3, LSL #2
@@ -133,6 +134,7 @@ identity_16_16_loop03:
 identity_16_16_loop03_end:
 
 identity_16_16_ret:
+    smstop
     ldp x29, x30, [sp], #16
     ret
 
