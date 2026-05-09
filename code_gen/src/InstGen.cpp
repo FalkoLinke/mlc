@@ -20,6 +20,32 @@ std::string mini_jit::InstGen::to_string_bin( uint32_t inst ) {
   return l_res;
 }
 
+uint32_t mini_jit::InstGen::base_add( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1) {
+  uint32_t ins = 0x11000000;
+
+  ins |= (rd & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (imm12 & 0xfff) << 10;
+  ins |= (flags1 & 0x1) << 29;
+  ins |= (rd & 0x20) << (32-6);
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1) {
+  uint32_t ins = 0x0b000000;
+
+  ins |= (rd & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (shift6 & 0x3f) << 10;
+  ins |= (rm & 0x1f) << 16;
+  ins |= (sk & 0x3) << 22;
+  ins |= (flags1 & 0x1) << 29;
+  ins |= (rd & 0x20) << (32-6);
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::base_br_cbnz( gpr_t   reg,
                                           int32_t imm19 ) {
   uint32_t l_ins = 0x35000000;
@@ -39,11 +65,52 @@ uint32_t mini_jit::InstGen::base_br_cbnz( gpr_t   reg,
   return l_ins;
 }
 
+uint32_t mini_jit::InstGen::base_movz( gpr_t rd, uint32_t imm16, uint32_t shift2 ) {
+  uint32_t ins = 0x52800000;
+
+  uint32_t rd_id = rd & 0x1f;
+  ins |= rd_id;
+
+  uint32_t sf = rd & 0x20;
+  ins |= sf << (32-6);
+
+  uint32_t hw = shift2 & 0x3;
+  ins |= hw << 21;
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::base_ret( gpr_t reg ) {
   uint32_t ins = 0xd65f0000;
 
   uint32_t reg_id = reg & 0x1f;
   ins |= reg_id << 5;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::base_sub( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1) {
+  uint32_t ins = 0x51000000;
+
+  ins |= (rd & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (imm12 & 0xfff) << 10;
+  ins |= (flags1 & 0x1) << 29;
+  ins |= (rd & 0x20) << (32-6);
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1) {
+  uint32_t ins = 0x4b000000;
+
+  ins |= (rd & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (shift6 & 0x3f) << 10;
+  ins |= (rm & 0x1f) << 16;
+  ins |= (sk & 0x3) << 22;
+  ins |= (flags1 & 0x1) << 29;
+  ins |= (rd & 0x20) << (32-6);
 
   return ins;
 }

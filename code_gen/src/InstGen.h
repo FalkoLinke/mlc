@@ -131,6 +131,16 @@ class mini_jit::InstGen {
       smza = 0x3,
     } ssve_spec_t;
 
+    typedef enum : uint32_t {
+      lsl = 0x0,
+      lsr = 0x1,
+      asr = 0x2,
+    } shift_kind_t;
+
+    static uint32_t base_add( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1);
+
+    static uint32_t base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1);
+
     /**
      * @brief Generates a CBNZ instruction.
      *
@@ -142,7 +152,13 @@ class mini_jit::InstGen {
     static uint32_t base_br_cbnz( gpr_t   reg,
                                   int32_t imm19 );
 
+    static uint32_t base_movz( gpr_t rd, uint32_t imm16, uint32_t shift2 = 0x0);
+
     static uint32_t base_ret( gpr_t reg = gpr_t::x30 );
+
+    static uint32_t base_sub( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1);
+
+    static uint32_t base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1);
 
     static uint32_t base_smstart( ssve_spec_t spec = ssve_spec_t::smza );
 
