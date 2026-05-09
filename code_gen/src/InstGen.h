@@ -117,6 +117,52 @@ class mini_jit::InstGen {
       v31 = 31
     } simd_fp_t;
 
+    typedef enum : uint32_t {
+      p0 = 0,
+      p1 = 1,
+      p2 = 2,
+      p3 = 3,
+      p4 = 4,
+      p5 = 5,
+      p6 = 6,
+      p7 = 7,
+      p8 = 8,
+      p9 = 9,
+      p10 = 10,
+      p11 = 11,
+      p12 = 12,
+      p13 = 13,
+      p14 = 14,
+      p15 = 15,
+    } pr_t;
+
+    typedef enum : uint32_t {
+      pow2 = 0,
+      vl1 = 1,
+      vl2 = 2,
+      vl3 = 3,
+      vl4 = 4,
+      vl5 = 5,
+      vl6 = 6,
+      vl7 = 7,
+      vl8 = 8,
+      vl16 = 9,
+      vl32 = 10,
+      vl64 = 11,
+      vl128 = 12,
+      vl256 = 13,
+      mul4 = 29,
+      mul3 = 30,
+      all = 31,
+    } pr_pattern_t;
+
+    typedef enum : uint32_t {
+      b = 0b00,
+      h = 0b01,
+      s = 0b10,
+      d = 0b11,
+    } sve_size_t;
+
     //! arrangement specifiers
     typedef enum : uint32_t {
       s2 = 0x0,
@@ -178,6 +224,14 @@ class mini_jit::InstGen {
                                          simd_fp_t   reg_src1,
                                          simd_fp_t   reg_src2,
                                          arr_spec_t  arr_spec );
+
+
+
+
+
+    static uint32_t ssve_pfalse( pr_t pd );
+
+    static uint32_t ssve_ptrue( pr_t pd, sve_size_t sz, pr_pattern_t pattern = pr_pattern_t::all, uint32_t flags1);
 
     /**
      * @brief Converts the given instruction to a hex string.

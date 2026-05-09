@@ -157,3 +157,22 @@ uint32_t mini_jit::InstGen::neon_dp_fmla_vector( simd_fp_t  reg_dest,
 
   return l_ins;
 }
+
+uint32_t mini_jit::InstGen::ssve_pfalse( pr_t pd ) {
+  uint32_t ins = 0x2518e400;
+
+  ins |= (pd & 0xf);
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::ssve_ptrue( pr_t pd, sve_size_t sz, pr_pattern_t pattern, uint32_t flags1) {
+  uint32_t ins = 0x2518e000;
+
+  ins |= (pd & 0xf);
+  ins |= (pattern & 0x1f) << 5;
+  ins |= (flags1 & 0x1) << 16;
+  ins |= (sz & 0x3) << 22;
+
+  return ins;
+}
