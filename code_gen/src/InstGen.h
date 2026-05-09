@@ -81,6 +81,25 @@ class mini_jit::InstGen {
       sp  = 64+32+31
     } gpr_t;
 
+    typedef enum : uint32_t {
+      eq = 0,
+      ne = 1,
+      cs = 2,
+      cc = 3,
+      mi = 4,
+      pl = 5,
+      vs = 6,
+      vc = 7,
+      hi = 8,
+      ls = 9,
+      ge = 10,
+      lt = 11,
+      gt = 12,
+      le = 13,
+      al = 14,
+      nv = 15,
+    } br_cond_t;
+
     //! simd&fp registers
     typedef enum : uint32_t {
       v0  =  0,
@@ -187,6 +206,10 @@ class mini_jit::InstGen {
 
     static uint32_t base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1);
 
+    static uint32_t base_b( int32_t imm26 );
+
+    static uint32_t base_b_cond( int32_t imm19, br_cond_t cond );
+
     /**
      * @brief Generates a CBNZ instruction.
      *
@@ -197,6 +220,8 @@ class mini_jit::InstGen {
      **/
     static uint32_t base_br_cbnz( gpr_t   reg,
                                   int32_t imm19 );
+
+    static uint32_t base_cbz( gpr_t rt, int32_t imm19);
 
     static uint32_t base_movz( gpr_t rd, uint32_t imm16, uint32_t shift2 = 0x0);
 
