@@ -41,7 +41,7 @@ clean:
 
 
 
-kernel_examples.out: kernel_examples.cpp Kernel.cpp
+kernel_examples.out: kernel_examples.cpp Kernel.cpp InstGen.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 main.out: main.cpp Kernel.cpp KernelFactory.cpp

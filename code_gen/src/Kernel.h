@@ -28,15 +28,13 @@ struct mini_jit::BranchRef {
     //! the place in the instruction to insert the offset at
     uint32_t const offs_shift;
 
-    BranchRef(uint32_t const idx, std::string const label, uint32_t offs_bits, uint32_t offs_shift) : idx(idx), label(label), offs_bits(offs_bits), offs_shift(offs_shift) {
-
-    }
+    BranchRef(uint32_t const idx, std::string const label, uint32_t offs_bits, uint32_t offs_shift);
 
     ~BranchRef() = default;
 
-    BranchRef( BranchRef const & ) = delete;
+    BranchRef( BranchRef const & ) = default;
     BranchRef & operator=( BranchRef const & ) = delete;
-    BranchRef( BranchRef && ) noexcept = delete;
+    BranchRef( BranchRef && ) noexcept = default;
     BranchRef & operator=( BranchRef && ) noexcept = delete;
 };
 
@@ -57,6 +55,8 @@ class mini_jit::Kernel {
 
     //! unresolved branch instructions
     std::map<std::string, std::vector<BranchRef>> unresolved_branches;
+
+    void resolve_branch( BranchRef branch );
 
     /**
      * Allocates memory through POSIX mmap.
@@ -110,6 +110,10 @@ class mini_jit::Kernel {
      * @param ins instruction which is added.
      **/
     void add_instr( uint32_t ins );
+
+    void add_branch( uint32_t ins, std::string label, uint32_t offs_bits, uint32_t offs_shift );
+
+    void add_label( std::string label );
 
     /**
      * Gets the size of the code buffer.

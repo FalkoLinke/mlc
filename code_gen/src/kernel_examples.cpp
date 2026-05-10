@@ -1,5 +1,8 @@
 #include "Kernel.h"
+#include "InstGen.h"
 #include <iostream>
+
+using mini_jit::InstGen;
 
 /**
  * @brief Kernel that returns 5.
@@ -78,6 +81,32 @@ void example_3() {
   std::cout << "  result: " << l_func() << std::endl;
 }
 
+void example_4() {
+  std::cout << "example_4" << std::endl;
+
+  mini_jit::Kernel l_kernel;
+  mini_jit::InstGen l_instgen;
+
+  l_kernel.add_instr( l_instgen.base_movz( InstGen::gpr_t::x0, 0 ));
+  l_kernel.add_instr( l_instgen.base_movz( InstGen::gpr_t::x1, 16 ));
+  l_kernel.add_label("loop01");
+  l_kernel.add_branch( l_instgen.base_cbz(InstGen::gpr_t::x1, 0), "end01", 19, 5);
+
+  l_kernel.add_instr( l_instgen.base_add(InstGen::gpr_t::x0, InstGen::gpr_t::x0, 4));
+
+  l_kernel.add_instr( l_instgen.base_sub(InstGen::gpr_t::x1, InstGen::gpr_t::x1, 1));
+  l_kernel.add_branch( l_instgen.base_b(0), "loop01", 26, 0);
+  l_kernel.add_label("end01");
+  l_kernel.add_instr( l_instgen.base_ret() );
+
+  l_kernel.write( "example_4.bin" );
+  l_kernel.set_kernel();
+
+  int64_t (* l_func)() = nullptr;
+  l_func = (int64_t (*)()) l_kernel.get_kernel();
+  std::cout << "  result: " << l_func() << std::endl;
+}
+
 int main() {
   std::cout << "###########################" << std::endl;
   std::cout << "### welcome to mini_jit ###" << std::endl;
@@ -87,6 +116,7 @@ int main() {
   example_1( 25 );
   example_2();
   example_3();
+  example_4();
 
   return 0;
 }
