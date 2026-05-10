@@ -44,7 +44,7 @@ clean:
 kernel_examples.out: kernel_examples.cpp Kernel.cpp InstGen.cpp BranchRef.cpp LabeledBranch.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-main.out: main.cpp Kernel.cpp KernelFactory.cpp BranchRef.cpp LabeledBranch.cpp
+main.out: main.cpp Kernel.cpp KernelFactory.cpp BranchRef.cpp LabeledBranch.cpp InstGen.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 instgen_examples.out: instgen_examples.cpp InstGen.cpp BranchRef.cpp LabeledBranch.cpp

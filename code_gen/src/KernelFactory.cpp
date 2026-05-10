@@ -1,7 +1,13 @@
 #include "KernelFactory.h"
+#include "InstGen.h"
 
 using mini_jit::KernelFactory;
 using mini_jit::Kernel;
+using mini_jit::InstGen;
+
+using gpr_t = InstGen::gpr_t;
+using pr_t = InstGen::pr_t;
+using sve_size_t = InstGen::sve_size_t;
 
 KernelFactory::IdentityKernel KernelFactory::generate_identity_16_16(Kernel& kernel) {
     kernel.add_instr( 0xa9bf7bfd );
@@ -62,6 +68,7 @@ KernelFactory::IdentityKernel KernelFactory::generate_identity_16_16(Kernel& ker
 
 
 KernelFactory::ZeroKernel KernelFactory::generate_zero_16_16(Kernel& kernel) {
+    /*
     kernel.add_instr( 0xd503477f );
     kernel.add_instr( 0xc00800ff );
     kernel.add_instr( 0x5280000c );
@@ -74,6 +81,28 @@ KernelFactory::ZeroKernel KernelFactory::generate_zero_16_16(Kernel& kernel) {
     kernel.add_instr( 0x17fffffc );
     kernel.add_instr( 0xd503467f );
     kernel.add_instr( 0xd65f03c0 );
+    */
+
+    InstGen ig;
+
+    kernel.add_instr(ig.base_smstart());
+    kernel.add_instr(ig.sme_zero(~0));
+    kernel.add_instr(ig.base_movz(gpr_t::w12, 0));
+    kernel.add_instr(ig.ssve_ptrue(pr_t::p0, sve_size_t::s));
+
+    kernel.add_instr(ig.base_movz(gpr_t::x2, 16));
+    kernel.add_label("loop01");
+    kernel.add_branch(ig.base_cbz(gpr_t::x2, "end01"));
+
+    kernel.add_instr(ig.sme_st1w(0, InstGen::sme_hv_kind_t::horz, gpr_t::w12, 0, pr_t::p0, gpr_t::x0, gpr_t::xzr));
+
+    kernel.add_instr(ig.base_add(gpr_t::x0, gpr_t::x0, gpr_t::x1, InstGen::shift_kind_t::lsl, 2));
+    kernel.add_instr(ig.base_sub(gpr_t::x2, gpr_t::x2, 1));
+    kernel.add_branch(ig.base_b("loop01"));
+    kernel.add_label("end01");
+
+    kernel.add_instr(ig.base_smstop());
+    kernel.add_instr(ig.base_ret());
 
     kernel.set_kernel();
     ZeroKernel result = (ZeroKernel)kernel.get_kernel();
