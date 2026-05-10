@@ -316,6 +316,7 @@ class mini_jit::InstGen {
 
 
 
+    static uint32_t sve_fmax( sve_zr_t zt, sve_size_t sz, pr_t pg, uint32_t const1);
 
     static uint32_t sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, uint32_t imm4);
 
@@ -328,6 +329,8 @@ class mini_jit::InstGen {
     static uint32_t sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, uint32_t imm4);
 
     static uint32_t sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, gpr_t rm);
+
+    static uint32_t sme_mov_s( uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg, sve_zr_t zn);
 
     static uint32_t sme_ld1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm);
 

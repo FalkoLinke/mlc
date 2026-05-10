@@ -254,6 +254,18 @@ uint32_t mini_jit::InstGen::neon_dp_fmla_vector( simd_fp_t  reg_dest,
   return l_ins;
 }
 
+uint32_t mini_jit::InstGen::sve_fmax( sve_zr_t zt, sve_size_t sz, pr_t pg, uint32_t const1) {
+  uint32_t ins = 0x651e8000;
+
+  ins |= (zt & 0x1f);
+  ins |= (const1 & 0x1) << 5;
+  ins |= (pg & 0x7) << 10;
+  ins |= (sz & 0x3) << 22;
+
+  return ins;
+}
+
+
 uint32_t mini_jit::InstGen::sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, uint32_t imm4) {
   uint32_t ins = 0xa540a000;
 
@@ -315,6 +327,19 @@ uint32_t mini_jit::InstGen::sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t
   ins |= (pg & 0x7) << 10;
   ins |= (rm & 0x1f) << 16;
   ins |= (sz & 0x1) << 21;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sme_mov_s( uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg, sve_zr_t zn) {
+  uint32_t ins = 0xc0800000;
+
+  ins |= (offs2 & 0x3);
+  ins |= (za_tile2 & 0x3) << 2;
+  ins |= (zn & 0x1f) << 5;
+  ins |= (pg & 0x7) << 10;
+  ins |= (rs & 0x3) << 13;
+  ins |= (hv & 0x1) << 15;
 
   return ins;
 }
