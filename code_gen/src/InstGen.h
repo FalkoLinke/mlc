@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string>
 
+#include "LabeledBranch.h"
+
 namespace mini_jit {
   class InstGen;
 }
@@ -213,7 +215,11 @@ class mini_jit::InstGen {
 
     static uint32_t base_b( int32_t imm26 );
 
+    static LabeledBranch base_b( std::string label );
+
     static uint32_t base_b_cond( int32_t imm19, br_cond_t cond );
+
+    static LabeledBranch base_b_cond( std::string label, br_cond_t cond );
 
     /**
      * @brief Generates a CBNZ instruction.
@@ -226,7 +232,11 @@ class mini_jit::InstGen {
     static uint32_t base_br_cbnz( gpr_t   reg,
                                   int32_t imm19 );
 
+    static LabeledBranch base_br_cbnz( gpr_t reg, std::string label );
+
     static uint32_t base_cbz( gpr_t rt, int32_t imm19);
+
+    static LabeledBranch base_cbz( gpr_t rt, std::string label );
 
     static uint32_t base_movz( gpr_t rd, uint32_t imm16, uint32_t shift2 = 0x0);
 

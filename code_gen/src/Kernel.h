@@ -3,40 +3,16 @@
 #include <vector>
 #include <map>
 
+#include "LabeledBranch.h"
+#include "BranchRef.h"
+
 #ifndef MINI_JIT_KERNEL_H
 #define MINI_JIT_KERNEL_H
 
 namespace mini_jit {
-  struct BranchRef;
   class Kernel;
 }
 
-
-struct mini_jit::BranchRef {
-  private:
-
-  public:
-    //! the index of the instruction in the kernel
-    uint32_t const idx;
-
-    //! the label to be resolved
-    std::string const label;
-
-    //! the number of bits allowed for the offset
-    uint32_t const offs_bits;
-
-    //! the place in the instruction to insert the offset at
-    uint32_t const offs_shift;
-
-    BranchRef(uint32_t const idx, std::string const label, uint32_t offs_bits, uint32_t offs_shift);
-
-    ~BranchRef() = default;
-
-    BranchRef( BranchRef const & ) = default;
-    BranchRef & operator=( BranchRef const & ) = delete;
-    BranchRef( BranchRef && ) noexcept = default;
-    BranchRef & operator=( BranchRef && ) noexcept = delete;
-};
 
 
 class mini_jit::Kernel {
@@ -111,7 +87,7 @@ class mini_jit::Kernel {
      **/
     void add_instr( uint32_t ins );
 
-    void add_branch( uint32_t ins, std::string label, uint32_t offs_bits, uint32_t offs_shift );
+    void add_branch( LabeledBranch branch );
 
     void add_label( std::string label );
 

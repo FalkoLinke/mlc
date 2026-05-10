@@ -90,12 +90,12 @@ void example_4() {
   l_kernel.add_instr( l_instgen.base_movz( InstGen::gpr_t::x0, 0 ));
   l_kernel.add_instr( l_instgen.base_movz( InstGen::gpr_t::x1, 16 ));
   l_kernel.add_label("loop01");
-  l_kernel.add_branch( l_instgen.base_cbz(InstGen::gpr_t::x1, 0), "end01", 19, 5);
+  l_kernel.add_branch( l_instgen.base_cbz(InstGen::gpr_t::x1, "end01"));
 
   l_kernel.add_instr( l_instgen.base_add(InstGen::gpr_t::x0, InstGen::gpr_t::x0, 4));
 
   l_kernel.add_instr( l_instgen.base_sub(InstGen::gpr_t::x1, InstGen::gpr_t::x1, 1));
-  l_kernel.add_branch( l_instgen.base_b(0), "loop01", 26, 0);
+  l_kernel.add_branch( l_instgen.base_b("loop01"));
   l_kernel.add_label("end01");
   l_kernel.add_instr( l_instgen.base_ret() );
 

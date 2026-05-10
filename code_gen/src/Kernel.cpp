@@ -6,10 +6,7 @@
 #include <cstring>
 #include <string>
 
-
-mini_jit::BranchRef::BranchRef(uint32_t const idx, std::string const label, uint32_t offs_bits, uint32_t offs_shift) : idx(idx), label(label), offs_bits(offs_bits), offs_shift(offs_shift) {
-
-}
+#include "BranchRef.h"
 
 
 
@@ -31,17 +28,19 @@ void mini_jit::Kernel::add_instr( uint32_t ins ) {
   m_buffer.push_back( ins );
 }
 
-void mini_jit::Kernel::add_branch( uint32_t ins, std::string label, uint32_t offs_bits, uint32_t offs_shift ) {
-  uint32_t offs_mask = (0x1 << offs_bits) - 1;
-  ins &= ~(offs_mask << offs_shift);
+void mini_jit::Kernel::add_branch( LabeledBranch branch ) {
+  uint32_t ins = branch.ins;
+
+  uint32_t offs_mask = (0x1 << branch.offs_bits) - 1;
+  ins &= ~(offs_mask << branch.offs_shift);
   m_buffer.push_back( ins );
 
-  BranchRef branch(m_buffer.size()-1, label, offs_bits, offs_shift);
+  BranchRef branchRef(m_buffer.size()-1, branch.label, branch.offs_bits, branch.offs_shift);
 
-  if (label_indices.find(label) != label_indices.end()) {
-    resolve_branch(branch);
+  if (label_indices.find(branch.label) != label_indices.end()) {
+    resolve_branch(branchRef);
   } else {
-    unresolved_branches[label].push_back( branch );
+    unresolved_branches[branch.label].push_back( branchRef );
   }
 }
 

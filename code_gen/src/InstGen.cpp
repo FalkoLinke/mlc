@@ -54,6 +54,10 @@ uint32_t mini_jit::InstGen::base_b( int32_t imm26 ) {
   return ins;
 }
 
+mini_jit::LabeledBranch mini_jit::InstGen::base_b( std::string label ) {
+  return LabeledBranch(base_b(0), label, 26, 0);
+}
+
 uint32_t mini_jit::InstGen::base_b_cond( int32_t imm19, br_cond_t cond ) {
   uint32_t ins = 0x54000000;
 
@@ -61,6 +65,10 @@ uint32_t mini_jit::InstGen::base_b_cond( int32_t imm19, br_cond_t cond ) {
   ins |= (imm19 & 0x3ffff) << 5;
 
   return ins;
+}
+
+mini_jit::LabeledBranch mini_jit::InstGen::base_b_cond( std::string label, br_cond_t cond ) {
+  return LabeledBranch(base_b_cond(0, cond), label, 19, 5);
 }
 
 uint32_t mini_jit::InstGen::base_br_cbnz( gpr_t   reg,
@@ -82,6 +90,10 @@ uint32_t mini_jit::InstGen::base_br_cbnz( gpr_t   reg,
   return l_ins;
 }
 
+mini_jit::LabeledBranch mini_jit::InstGen::base_br_cbnz( gpr_t reg, std::string label ) {
+  return LabeledBranch(base_br_cbnz(reg, 0), label, 19, 5);
+}
+
 uint32_t mini_jit::InstGen::base_cbz( gpr_t rt, int32_t imm19) {
   uint32_t ins = 0x34000000;
 
@@ -90,6 +102,10 @@ uint32_t mini_jit::InstGen::base_cbz( gpr_t rt, int32_t imm19) {
   ins |= (rt & 0x20) << (32-6);
 
   return ins;
+}
+
+mini_jit::LabeledBranch mini_jit::InstGen::base_cbz( gpr_t rt, std::string label ) {
+  return LabeledBranch(base_cbz(rt, 0), label, 19, 5);
 }
 
 uint32_t mini_jit::InstGen::base_movz( gpr_t rd, uint32_t imm16, uint32_t shift2 ) {
