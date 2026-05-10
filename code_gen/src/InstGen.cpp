@@ -111,7 +111,7 @@ mini_jit::LabeledBranch mini_jit::InstGen::base_cbz( gpr_t rt, std::string label
 uint32_t mini_jit::InstGen::base_ldp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode) {
   uint32_t ins = 0x28400000;
 
-  uint32_t imm7 = imm >> (rt1 & 0x20 == 0 ? 2 : 3);
+  uint32_t imm7 = imm >> (((rt1 & 0x20) == 0) ? 2 : 3);
 
   ins |= (rt1 & 0x1f);
   ins |= (rn & 0x1f) << 5;
@@ -199,7 +199,7 @@ uint32_t mini_jit::InstGen::base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t
 uint32_t mini_jit::InstGen::base_stp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode) {
   uint32_t ins = 0x28000000;
 
-  uint32_t imm7 = imm >> (rt1 & 0x20 == 0 ? 2 : 3);
+  uint32_t imm7 = imm >> (((rt1 & 0x20) == 0) ? 2 : 3);
 
   ins |= (rt1 & 0x1f);
   ins |= (rn & 0x1f) << 5;
