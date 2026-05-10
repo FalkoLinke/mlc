@@ -11,16 +11,16 @@ using mini_jit::KernelFactory;
 int main() {
     Kernel kernel;
     KernelFactory factory;
-    KernelFactory::IdentityKernel identity_16_16 = factory.generate_identity_16_16(kernel);
+    KernelFactory::ReluKernel relu_16_16 = factory.generate_relu_16_16(kernel);
     kernel.write("test.bin");
 
     float a[16*16];
     float b[16*16];
     for (int i = 0; i < 16*16; i++) {
-        a[i] = /*(i % 2 == 0 ? -1.0 : 1.0) * */(float)i;
+        a[i] = (i % 2 == 0 ? -1.0 : 1.0) * (float)i;
     }
 
-    identity_16_16(a, b, 16, 16, 1);
+    relu_16_16(a, b, 16, 16, 1);
 
     for (int r = 0; r < 16; r++) {
         for (int c = 0; c < 16; c++) {
