@@ -102,6 +102,12 @@ class mini_jit::InstGen {
       nv = 15,
     } br_cond_t;
 
+    typedef enum : uint32_t {
+      post_index = 1,
+      pre_index = 3,
+      signed_offset = 2,
+    } addr_mode_t;
+
     //! simd&fp registers
     typedef enum : uint32_t {
       v0  =  0,
@@ -238,9 +244,17 @@ class mini_jit::InstGen {
 
     static LabeledBranch base_cbz( gpr_t rt, std::string label );
 
+    static uint32_t base_ldp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
+
+    static uint32_t base_mov( gpr_t rd, gpr_t rm );
+
     static uint32_t base_movz( gpr_t rd, uint32_t imm16, uint32_t shift2 = 0x0);
 
+    static uint32_t base_orr( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t imm6 = 0x0);
+
     static uint32_t base_ret( gpr_t reg = gpr_t::x30 );
+
+    static uint32_t base_stp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
     static uint32_t base_sub( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1 = 0x0);
 

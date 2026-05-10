@@ -108,6 +108,29 @@ mini_jit::LabeledBranch mini_jit::InstGen::base_cbz( gpr_t rt, std::string label
   return LabeledBranch(base_cbz(rt, 0), label, 19, 5);
 }
 
+uint32_t mini_jit::InstGen::base_ldp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode) {
+  uint32_t ins = 0x28400000;
+
+  uint32_t imm7 = imm >> (rt1 & 0x20 == 0 ? 2 : 3);
+
+  ins |= (rt1 & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (rt2 & 0x1f) << 10;
+  ins |= (imm7 & 0x7f) << 15;
+  ins |= (addr_mode & 0x3) << 23;
+  ins |= (rt1 & 0x20) << (32-6);
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::base_mov( gpr_t rd, gpr_t rm ) {
+  if (rd == gpr_t::sp || rm == gpr_t :: sp) {
+    return base_add(rd, rm, 0);
+  } else {
+    return base_orr(rd, gpr_t::xzr, rm);
+  }
+}
+
 uint32_t mini_jit::InstGen::base_movz( gpr_t rd, uint32_t imm16, uint32_t shift2 ) {
   uint32_t ins = 0x52800000;
 
@@ -121,6 +144,19 @@ uint32_t mini_jit::InstGen::base_movz( gpr_t rd, uint32_t imm16, uint32_t shift2
 
   uint32_t hw = shift2 & 0x3;
   ins |= hw << 21;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::base_orr( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk, uint32_t imm6) {
+  uint32_t ins = 0x2a000000;
+
+  ins |= (rd & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (imm6 & 0x3f) << 10;
+  ins |= (rm & 0x1f) << 16;
+  ins |= (sk & 0x3) << 22;
+  ins |= (rm & 0x20) << (32-6);
 
   return ins;
 }
@@ -156,6 +192,21 @@ uint32_t mini_jit::InstGen::base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t
   ins |= (sk & 0x3) << 22;
   ins |= (flags1 & 0x1) << 29;
   ins |= (rd & 0x20) << (32-6);
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::base_stp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode) {
+  uint32_t ins = 0x28000000;
+
+  uint32_t imm7 = imm >> (rt1 & 0x20 == 0 ? 2 : 3);
+
+  ins |= (rt1 & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (rt2 & 0x1f) << 10;
+  ins |= (imm7 & 0x7f) << 15;
+  ins |= (addr_mode & 0x3) << 23;
+  ins |= (rt1 & 0x20) << (32-6);
 
   return ins;
 }
