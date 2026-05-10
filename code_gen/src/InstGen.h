@@ -202,6 +202,11 @@ class mini_jit::InstGen {
       asr = 0x2,
     } shift_kind_t;
 
+    typedef enum : uint32_t {
+      h = 0,
+      v = 1,
+    } sme_hv_kind_t;
+
     static uint32_t base_add( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1);
 
     static uint32_t base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1);
@@ -257,6 +262,12 @@ class mini_jit::InstGen {
     static uint32_t ssve_pfalse( pr_t pd );
 
     static uint32_t ssve_ptrue( pr_t pd, sve_size_t sz, pr_pattern_t pattern = pr_pattern_t::all, uint32_t flags1);
+
+    static uint32_t sme_ld1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm);
+
+    static uint32_t sme_st1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm);
+
+    static uint32_t sme_zero( uint32_t mask8 );
 
     /**
      * @brief Converts the given instruction to a hex string.

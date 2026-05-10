@@ -203,3 +203,39 @@ uint32_t mini_jit::InstGen::ssve_ptrue( pr_t pd, sve_size_t sz, pr_pattern_t pat
 
   return ins;
 }
+
+uint32_t mini_jit::InstGen::sme_ld1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm) {
+  uint32_t ins = 0xe0800000;
+
+  ins |= (offs2 & 0x3);
+  ins |= (za_tile2 & 0x3) << 2;
+  ins |= (rn & 0x1f) << 5;
+  ins |= (pg3 & 0x7) << 10;
+  ins |= (rs & 0x3) << 13;
+  ins |= (hv & 0x1) << 15;
+  ins |= (rm & 0x1f) << 16;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sme_st1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm) {
+  uint32_t ins = 0xe0a00000;
+
+  ins |= (offs2 & 0x3);
+  ins |= (za_tile2 & 0x3) << 2;
+  ins |= (rn & 0x1f) << 5;
+  ins |= (pg3 & 0x7) << 10;
+  ins |= (rs & 0x3) << 13;
+  ins |= (hv & 0x1) << 15;
+  ins |= (rm & 0x1f) << 16;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sme_zero( uint32_t mask8 ) {
+  uint32_t ins = 0xc0080000;
+
+  ins |= (mask8 & 0xff);
+
+  return ins;
+}
