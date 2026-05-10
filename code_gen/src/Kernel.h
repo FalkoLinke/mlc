@@ -1,13 +1,45 @@
 #include <cstdint>
 #include <cstddef>
 #include <vector>
+#include <map>
 
 #ifndef MINI_JIT_KERNEL_H
 #define MINI_JIT_KERNEL_H
 
 namespace mini_jit {
+  struct BranchRef;
   class Kernel;
 }
+
+
+struct mini_jit::BranchRef {
+  private:
+
+  public:
+    //! the index of the instruction in the kernel
+    uint32_t const idx;
+
+    //! the label to be resolved
+    std::string const label;
+
+    //! the number of bits allowed for the offset
+    uint32_t const offs_bits;
+
+    //! the place in the instruction to insert the offset at
+    uint32_t const offs_shift;
+
+    BranchRef(uint32_t const idx, std::string const label, uint32_t offs_bits, uint32_t offs_shift) : idx(idx), label(label), offs_bits(offs_bits), offs_shift(offs_shift) {
+
+    }
+
+    ~BranchRef() = default;
+
+    BranchRef( BranchRef const & ) = delete;
+    BranchRef & operator=( BranchRef const & ) = delete;
+    BranchRef( BranchRef && ) noexcept = delete;
+    BranchRef & operator=( BranchRef && ) noexcept = delete;
+};
+
 
 class mini_jit::Kernel {
   private:
@@ -19,6 +51,12 @@ class mini_jit::Kernel {
 
     //! executable kernel
     void * m_kernel = nullptr;
+
+    //! labeled instruction indices
+    std::map<std::string, uint32_t> label_indices;
+
+    //! unresolved branch instructions
+    std::map<std::string, std::vector<BranchRef>> unresolved_branches;
 
     /**
      * Allocates memory through POSIX mmap.

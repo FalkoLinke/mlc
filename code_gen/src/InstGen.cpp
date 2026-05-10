@@ -32,7 +32,7 @@ uint32_t mini_jit::InstGen::base_add( gpr_t rd, gpr_t rn, uint32_t imm12, uint32
   return ins;
 }
 
-uint32_t mini_jit::InstGen::base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1) {
+uint32_t mini_jit::InstGen::base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk, uint32_t shift6, uint32_t flags1) {
   uint32_t ins = 0x0b000000;
 
   ins |= (rd & 0x1f);
@@ -98,6 +98,8 @@ uint32_t mini_jit::InstGen::base_movz( gpr_t rd, uint32_t imm16, uint32_t shift2
   uint32_t rd_id = rd & 0x1f;
   ins |= rd_id;
 
+  ins |= (imm16 & 0xffff) << 5;
+
   uint32_t sf = rd & 0x20;
   ins |= sf << (32-6);
 
@@ -128,7 +130,7 @@ uint32_t mini_jit::InstGen::base_sub( gpr_t rd, gpr_t rn, uint32_t imm12, uint32
   return ins;
 }
 
-uint32_t mini_jit::InstGen::base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1) {
+uint32_t mini_jit::InstGen::base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk, uint32_t shift6, uint32_t flags1) {
   uint32_t ins = 0x4b000000;
 
   ins |= (rd & 0x1f);

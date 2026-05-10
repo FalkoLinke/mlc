@@ -203,13 +203,13 @@ class mini_jit::InstGen {
     } shift_kind_t;
 
     typedef enum : uint32_t {
-      h = 0,
-      v = 1,
+      horz = 0,
+      vert = 1,
     } sme_hv_kind_t;
 
-    static uint32_t base_add( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1);
+    static uint32_t base_add( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1 = 0x0);
 
-    static uint32_t base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1);
+    static uint32_t base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1 = 0x0);
 
     static uint32_t base_b( int32_t imm26 );
 
@@ -232,9 +232,9 @@ class mini_jit::InstGen {
 
     static uint32_t base_ret( gpr_t reg = gpr_t::x30 );
 
-    static uint32_t base_sub( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1);
+    static uint32_t base_sub( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1 = 0x0);
 
-    static uint32_t base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1);
+    static uint32_t base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1 = 0x0);
 
     static uint32_t base_smstart( ssve_spec_t spec = ssve_spec_t::smza );
 
@@ -261,7 +261,7 @@ class mini_jit::InstGen {
 
     static uint32_t ssve_pfalse( pr_t pd );
 
-    static uint32_t ssve_ptrue( pr_t pd, sve_size_t sz, pr_pattern_t pattern = pr_pattern_t::all, uint32_t flags1);
+    static uint32_t ssve_ptrue( pr_t pd, sve_size_t sz, pr_pattern_t pattern = pr_pattern_t::all, uint32_t flags1 = 0x0);
 
     static uint32_t sme_ld1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm);
 
