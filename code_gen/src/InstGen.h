@@ -145,6 +145,41 @@ class mini_jit::InstGen {
     } simd_fp_t;
 
     typedef enum : uint32_t {
+      z0 = 0,
+      z1 = 1,
+      z2 = 2,
+      z3 = 3,
+      z4 = 4,
+      z5 = 5,
+      z6 = 6,
+      z7 = 7,
+      z8 = 8,
+      z9 = 9,
+      z10 = 10,
+      z11 = 11,
+      z12 = 12,
+      z13 = 13,
+      z14 = 14,
+      z15 = 15,
+      z16 = 16,
+      z17 = 17,
+      z18 = 18,
+      z19 = 19,
+      z20 = 20,
+      z21 = 21,
+      z22 = 22,
+      z23 = 23,
+      z24 = 24,
+      z25 = 25,
+      z26 = 26,
+      z27 = 27,
+      z28 = 28,
+      z29 = 29,
+      z30 = 30,
+      z31 = 31,
+    } sve_zr_t;
+
+    typedef enum : uint32_t {
       p0 = 0,
       p1 = 1,
       p2 = 2,
@@ -282,10 +317,17 @@ class mini_jit::InstGen {
 
 
 
+    static uint32_t sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, uint32_t imm4);
+
+    static uint32_t sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, gpr_t rm);
 
     static uint32_t ssve_pfalse( pr_t pd );
 
     static uint32_t ssve_ptrue( pr_t pd, sve_size_t sz, pr_pattern_t pattern = pr_pattern_t::all, uint32_t flags1 = 0x0);
+
+    static uint32_t sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, uint32_t imm4);
+
+    static uint32_t sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, gpr_t rm);
 
     static uint32_t sme_ld1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm);
 

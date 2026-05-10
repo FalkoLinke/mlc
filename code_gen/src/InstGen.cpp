@@ -254,6 +254,28 @@ uint32_t mini_jit::InstGen::neon_dp_fmla_vector( simd_fp_t  reg_dest,
   return l_ins;
 }
 
+uint32_t mini_jit::InstGen::sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, uint32_t imm4) {
+  uint32_t ins = 0xa540a000;
+
+  ins |= (zt & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (pg & 0x7) << 10;
+  ins |= (imm4 & 0xf) << 16;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, gpr_t rm) {
+  uint32_t ins = 0xa5404000;
+
+  ins |= (zt & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (pg & 0x7) << 10;
+  ins |= (rm & 0x1f) << 16;
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::ssve_pfalse( pr_t pd ) {
   uint32_t ins = 0x2518e400;
 
@@ -269,6 +291,30 @@ uint32_t mini_jit::InstGen::ssve_ptrue( pr_t pd, sve_size_t sz, pr_pattern_t pat
   ins |= (pattern & 0x1f) << 5;
   ins |= (flags1 & 0x1) << 16;
   ins |= (sz & 0x3) << 22;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, uint32_t imm4) {
+  uint32_t ins = 0xe540e000;
+
+  ins |= (zt & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (pg & 0x7) << 10;
+  ins |= (imm4 & 0xf) << 16;
+  ins |= (sz & 0x1) << 21;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, gpr_t rm) {
+  uint32_t ins = 0xe5404000;
+
+  ins |= (zt & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (pg & 0x7) << 10;
+  ins |= (rm & 0x1f) << 16;
+  ins |= (sz & 0x1) << 21;
 
   return ins;
 }
