@@ -31,7 +31,7 @@ endif
 
 
 
-all: kernel_examples.out main.out instgen_examples.out
+all: kernel_examples.out main.out instgen_examples.out unary_tests.out unary_benchmarks_driver.out
 
 clean:
 	rm -f *.bin
@@ -49,4 +49,12 @@ main.out: main.cpp Kernel.cpp KernelFactory.cpp BranchRef.cpp LabeledBranch.cpp 
 
 instgen_examples.out: instgen_examples.cpp InstGen.cpp BranchRef.cpp LabeledBranch.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
+
+unary_tests.out: unary_tests.cpp unary_kernels.cpp KernelFactory.cpp Kernel.cpp InstGen.cpp BranchRef.cpp LabeledBranch.cpp
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+unary_benchmarks_driver.out: unary_benchmarks_driver.cpp unary_kernels.cpp KernelFactory.cpp Kernel.cpp InstGen.cpp BranchRef.cpp LabeledBranch.cpp
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+
 
