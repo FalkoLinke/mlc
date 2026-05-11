@@ -1,9 +1,7 @@
 #include <iostream>
 #include <chrono>
 
-#include "identity_kernel.h"
-#include "zero_kernel.h"
-#include "relu_kernel.h"
+#include "unary_kernels.h"
 
 
 int counter = 0;
@@ -141,6 +139,8 @@ void benchmark_kernel(kernel_t kernel) {
 
 
 int main() {
+    generate_kernels();
+
     kernel_t kernels[] = {
         MAKE_KERNEL(identity_16_16_kernel),
         MAKE_KERNEL(identity_16_16_trans_kernel),

@@ -15,60 +15,6 @@
 
 
 
-/*
-void identity_4_4( float const * a,
-                   float       * b,
-                   int64_t       ld_a,
-                   int64_t       ld_b,
-                   int32_t       trans_b );
-*/
-    .global FUNCLABEL(identity_4_4)
-FUNCLABEL(identity_4_4):
-    smstart
-
-    ptrue p0.s, VL4
-
-    // load A
-    ld1w z0.s, p0/z, [x0]
-    add x0, x0, x2, LSL #2
-    ld1w z1.s, p0/z, [x0]
-    add x0, x0, x2, LSL #2
-    ld1w z2.s, p0/z, [x0]
-    add x0, x0, x2, LSL #2
-    ld1w z3.s, p0/z, [x0]
-    add x0, x0, x2, LSL #2
-
-    // skip transpose if necessary
-    cbz x4, skip01
-
-    // perform transpose on 2x2 submatrices
-    trn1 z4.s, z0.s, z1.s
-    trn2 z5.s, z0.s, z1.s
-    trn1 z6.s, z2.s, z3.s
-    trn2 z7.s, z2.s, z3.s
-
-    // transpose matrix of submatrices
-    trn1 z0.d, z4.d, z6.d
-    trn1 z1.d, z5.d, z7.d
-    trn2 z2.d, z4.d, z6.d
-    trn2 z3.d, z5.d, z7.d
-
-skip01:
-    // store result
-    st1w z0.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z1.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z2.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z3.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-
-    smstop
-    ret
-
-
-
 
 
 
