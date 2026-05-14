@@ -6,6 +6,30 @@ Published docs: https://falkolinke.github.io/mlc/
 
 ## Build source code
 
+### code_gen (Week 5)
+
+To build the source code of the `code_gen` subdirectory execute the following commands:
+```
+cd code_gen/src
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+In order to use the `clang` compiler found in `homebrew` replace the last two commands as follows:
+```
+/opt/homebrew/opt/cmake/bin/cmake -D CMAKE_CXX_COMPILER="/opt/homebrew/opt/llvm/bin/clang++" ..
+/opt/homebrew/opt/cmake/bin/cmake --build .
+```
+
+The following executables are provided:
+- `build/unary_tests.out`: Executes the unit tests for the generated unary primitives.
+- `build/unary_benchmarks_driver.out`: Executes the benchmarks for the generated unary primitives.
+- `build/main.out`: Debugging driver.
+- `build/kernel_examples.out`: Executes the kernel examples.
+- `build/instgen_examples.out`: Executes the instruction generation examples.
+
+
 ### sme (Week 3/4)
 
 To build the source code of the `sme` subdirectory, execute the following commands:
