@@ -32,3 +32,13 @@ add_executable(unary_benchmarks_driver.out unary_benchmarks_driver.cpp Kernel.cp
 target_compile_options(unary_benchmarks_driver.out PRIVATE ${CXX_FLAGS})
 
 
+add_executable(gemm_driver_512_512_512.out 
+    gemm_driver_512_512_512.cpp 
+    gemm_kernel_512_512_512.cpp 
+    Kernel.cpp 
+    InstGen.cpp 
+    LabeledBranch.cpp 
+    BranchRef.cpp
+)
+target_compile_options(gemm_driver_512_512_512.out PRIVATE ${CXX_FLAGS})
+
