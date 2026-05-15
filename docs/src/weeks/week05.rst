@@ -49,11 +49,11 @@ Unary Primitives
 
 We obtained the following benchmark results for the unary primitives on the ``edward.inf-ra.uni-jena.de``.
 
-* ``identity``: 35.3 GiBs
-* transposing ``identity``: 1.05 GiBs
-* ``zero``: 65.49 GiBs
-* ``relu``: 1.55 GiBs
-* transposing ``relu``: 0.99 GiBs
+* ``identity``: 9.15 GiBs
+* transposing ``identity``: 8.73 GiBs
+* ``zero``: 16.52 GiBs
+* ``relu``: 9.17 GiBs
+* transposing ``relu``: 8.58 GiBs
 
 
 
