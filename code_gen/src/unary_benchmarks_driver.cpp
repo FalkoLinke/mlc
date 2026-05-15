@@ -98,7 +98,7 @@ public:
  * the GiBs metric, along with other benchmark results.
  */
 void benchmark_kernel(kernel_t kernel) {
-    int const reps = 10000000;
+    long const reps = 500000000;
     float a[16*16];
     float b[16*16];
 
@@ -107,7 +107,7 @@ void benchmark_kernel(kernel_t kernel) {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    for (int i = 0; i < reps; i++) {
+    for (long i = 0; i < reps; i++) {
         kernel_func(a, b, 16, 16);
         counter += 1;
     }
