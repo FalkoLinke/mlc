@@ -28,6 +28,7 @@ The following executables are provided:
 - `build/main.out`: Debugging driver.
 - `build/kernel_examples.out`: Executes the kernel examples.
 - `build/instgen_examples.out`: Executes the instruction generation examples.
+- `build/gemm_driver_512_512_512.out`: Executes the tests und benchmarks for the gemm jit kernel
 
 
 ### sme (Week 3/4)
