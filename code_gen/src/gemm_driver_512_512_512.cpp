@@ -5,9 +5,11 @@
 #include <ctime>
 #include <chrono>
 #include <iomanip>
+#include "Kernel.h"
+
 
 // Deklaration deiner JIT-Generator Funktion 
-void const * generate_gemm_kernel_512_512_512();
+void generate_gemm_kernel_512_512_512(mini_jit::Kernel& kernel);
 
 typedef void (*gemm_kernel_t)(float const * a,
                               float const * b,
@@ -71,15 +73,20 @@ int main() {
     // 2. KERNEL GENERIEREN & LADEN
     // ==========================================
     std::cout << "Generiere JIT Kernel...\n";
-    void const* raw_kernel_ptr = generate_gemm_kernel_512_512_512();
     
-    if (raw_kernel_ptr == nullptr) {
-        std::cerr << "Fehler: Kernel konnte nicht generiert werden!\n";
-        return 1;
-    }
+    mini_jit::Kernel gemm_kernel; 
 
     // Cast von (void const*) zu unserem ausführbaren Function Pointer Typen
-    gemm_kernel_t jit_gemm = reinterpret_cast<gemm_kernel_t>(const_cast<void*>(raw_kernel_ptr));
+    void (* jit_gemm)(float const * a,
+                              float const * b,
+                              float       * c,
+                              int64_t       ld_a,
+                              int64_t       ld_b,
+                              int64_t       ld_c) = nullptr;
+
+
+    generate_gemm_kernel_512_512_512(gemm_kernel);
+    jit_gemm = (void (*)(float const *, float const *, float *, int64_t, int64_t, int64_t))gemm_kernel.get_kernel();
 
 
     // ==========================================
@@ -87,7 +94,6 @@ int main() {
     // ==========================================
     std::cout << "Führe JIT Kernel aus...\n";
     
-    // NEU: Rufe den Kernel über den Pointer auf!
     jit_gemm(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     
     // C++ Referenz aufrufen
@@ -142,7 +148,7 @@ int main() {
 
     for (int i = 0; i < num_iterations; i++) {
         // NEU: Kernel hier ebenfalls über den Pointer aufrufen
-        jit_gemm(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
+        //jit_gemm(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();
