@@ -14,32 +14,22 @@ using sme_hv_kind_t = InstGen::sme_hv_kind_t;
 // LDR ZA[Wv, #imm], [Xn, #imm, MUL VL]
 uint32_t ldr_za(int wv, int off4, int xn) {
     uint32_t inst = 0xE1000000;
-
     uint32_t rv = wv - 12;
 
-    // Rv auf Bits 14:13
     inst |= ((rv & 0x3) << 13);
-    
-    // Xn (Rn) auf Bits 9:5
     inst |= ((xn & 0x1f) << 5);
-    
-    // Immediate-Wert auf Bits 3:0
     inst |= (off4 & 0xf);
     
     return inst;
 }
 
+// STR ZA[Wv, #imm], [Xn, #imm, MUL VL]
 uint32_t str_za(int wv, int off4, int xn) {
     uint32_t inst = 0xE1200000; 
     
-    // Rv auf Bits 14:13 (wv - 12, da wv in [12,15] liegt)
     uint32_t rv = (wv - 12) & 0x3;
     inst |= (rv << 13);              
-
-    //Xn Basis-Register (Bits 9:5)
     inst |= ((xn & 0x1F) << 5);
-
-    //Immediate-Offset (off4) auf Bits 3:0 (off4 muss in [0,15] liegen)
     inst |= (off4 & 0xF);
 
     return inst;
@@ -83,6 +73,7 @@ void generate_gemm_kernel_512_512_512(mini_jit::Kernel& kernel) {
 
     //kernel.add_instr(gen.base_smstart());
     kernel.add_instr(0xd503477f);
+
     kernel.add_instr(gen.ssve_ptrue(pr_t::p0, sve_size_t::s)); // ptrue p0.s
 
     kernel.add_instr(0x04BF5829); // rdsvl x9, #1
@@ -223,7 +214,7 @@ void generate_gemm_kernel_512_512_512(mini_jit::Kernel& kernel) {
     kernel.add_branch(gen.base_b_cond("N_loop", InstGen::br_cond_t(1))); // b.ne N_loop
 
 
-    kernel.add_instr(gen.base_smstop());
+    //kernel.add_instr(gen.base_smstop());
     kernel.add_instr(0xd503467f);
     
     // kernel.add_instr(0xd65f03c0);

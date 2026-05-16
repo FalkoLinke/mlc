@@ -7,8 +7,6 @@
 #include <iomanip>
 #include "Kernel.h"
 
-
-// Deklaration deiner JIT-Generator Funktion 
 void generate_gemm_kernel_512_512_512(mini_jit::Kernel& kernel);
 
 typedef void (*gemm_kernel_t)(float const * a,
@@ -147,8 +145,8 @@ int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < num_iterations; i++) {
-        // NEU: Kernel hier ebenfalls über den Pointer aufrufen
-        //jit_gemm(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
+        
+        jit_gemm(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();

@@ -34,11 +34,10 @@ GEMM
 ----------------
 
 
+``echo "instruction" | /opt/homebrew/opt/llvm/bin/llvm-mc --triple=aarch64 -mattr=+sme --show-encoding;`` for getting the instruction encoding of the generated assembly code.
 
-
-
-
-
+Researching the instruction set of the Arm Scalable Matrix Extension (SME) for the Encoding of FMOPA, LDR+STR za and zt, eg. here:
+https://developer.arm.com/documentation/ddi0602/2026-03/SME-Instructions/FMOPA--non-widening---Floating-point-outer-product--accumulating-?lang=en
 
 
 Benchmarks
@@ -63,3 +62,6 @@ GEMM
 ^^^^^^^^^^^^^^^^^
 
 
+* **Total Iterations:** 100,000
+* **Total Execution Time:** 14.84324 seconds
+* **Compute Performance:** 1808.47002 GFLOPS (~1.81 TFLOPS)
