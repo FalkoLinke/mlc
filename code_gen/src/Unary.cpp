@@ -50,13 +50,13 @@ Unary::error_t Unary::generate_identity_notrans_fp32(uint32_t m, uint32_t n) {
             sve_zr_t reg = regs[regs_top];
             regs_top += 1;
 
-            kernel.add_instr(ig.sve_ld1w(reg, pr_t::p0, gpr_t::x0, lcol / 16));
+            kernel.add_instr(ig.sve_ld1w(reg, pr_t::p0, gpr_t::x0, lrow / 16));
             remaining_values -= 16;
 
-            lcol += 16;
-            if (lcol >= n) {
-                lrow += 1;
-                lcol = 0;
+            lrow += 16;
+            if (lrow >= m) {
+                lcol += 1;
+                lrow = 0;
                 kernel.add_instr(ig.base_add(gpr_t::x0, gpr_t::x0, gpr_t::x2, shift_kind_t::lsl, 2));
             }
         }
@@ -65,12 +65,12 @@ Unary::error_t Unary::generate_identity_notrans_fp32(uint32_t m, uint32_t n) {
         for (uint32_t i = 0; i < regs_top; i++) {
             sve_zr_t reg = regs[i];
 
-            kernel.add_instr(ig.sve_st1w(reg, sve_size_t::s, pr_t::p0, gpr_t::x1, scol / 16));
+            kernel.add_instr(ig.sve_st1w(reg, sve_size_t::s, pr_t::p0, gpr_t::x1, srow / 16));
 
-            scol += 16;
-            if (scol >= n) {
-                srow += 1;
-                scol = 0;
+            srow += 16;
+            if (srow >= m) {
+                scol += 1;
+                srow = 0;
                 kernel.add_instr(ig.base_add(gpr_t::x1, gpr_t::x1, gpr_t::x3, shift_kind_t::lsl, 2));
             }
         }
@@ -93,6 +93,10 @@ Unary::error_t Unary::generate( uint32_t m, uint32_t n, uint32_t trans_b, dtype_
             return generate_identity_notrans_fp32(m, n);
         }
     }
+
+    InstGen ig;
+    kernel.add_instr(ig.base_ret());
+    kernel.set_kernel();
 
     return Unary::error_t::unsupported_args;
 }

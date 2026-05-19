@@ -3,8 +3,13 @@
 
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include "unary_kernels.h"
+#include "code_gen_common.hpp"
+#include "Unary.h"
+
+using mini_jit::Unary;
 
 
 
@@ -17,51 +22,6 @@
 
 
 
-
-
-
-
-/**
- * @brief Fills the buffer with the given value. 
- * @param buffer    Pointer to the buffer to fill.
- * @param size      The number of floats in the buffer.
- * @param value     The value to set each entry of the buffer to.
- **/
-void fill_const(float* buffer, size_t const size, float const value) {
-    for (size_t i = 0; i < size; i++) {
-        buffer[i] = value;
-    }
-}
-
-/**
- * @brief Sets each entry of the buffer to it's index. 
- * @param buffer    Pointer to the buffer to fill.
- * @param size      The number of floats in the buffer.
- **/
-void fill_indices(float *buffer, size_t const size) {
-    for (size_t i = 0; i < size; i++) {
-        buffer[i] = (float)i;
-    }
-}
-
-/**
- * @brief Returns `true` if the two matrices are equal. 
- * @param a         The first matrix.
- * @param b         The second matrix.
- * @param m         The number of rows of a and b.
- * @param n         The number of columns of a and b.
- * @return          `true` if all elements are equal, `false` otherwise.
- **/
-bool mats_equal(float const* a, float const* b, int m, int n) {
-    for (int r = 0; r < m; r++) {
-        for (int c = 0; c < n; c++) {
-            if (a[r * n + c] != b[r * n + c]) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
 
 
 
@@ -90,28 +50,7 @@ bool mats_equal(float const* a, float const* b, int m, int n) {
  * @param trans_b Column-major B if 0, row-major B if 1. 
  **/
 void ref_identity_16_16(float const* a, float *b, int64_t ld_a, int64_t ld_b, int32_t trans_b) {
-    int off_a_outer = ld_a;
-    int off_a_inner = 1;
-
-    int off_b_outer = trans_b == 0 ? ld_b : 1;
-    int off_b_inner = trans_b == 0 ? 1 : ld_b;
-
-    float const* ptr_a_outer = a;
-    float* ptr_b_outer = b;
-    for (int c = 0; c < 16; c++) {
-
-        float const* ptr_a_inner = ptr_a_outer;
-        float* ptr_b_inner = ptr_b_outer;
-        for (int r = 0; r < 16; r++) {
-            *ptr_b_inner = *ptr_a_inner;
-
-            ptr_a_inner += off_a_inner;
-            ptr_b_inner += off_b_inner;
-        }
-
-        ptr_a_outer += off_a_outer;
-        ptr_b_outer += off_b_outer;
-    }
+    identity(a, b, 16, 16, ld_a, ld_b, trans_b);
 }
 
 /**
@@ -120,12 +59,7 @@ void ref_identity_16_16(float const* a, float *b, int64_t ld_a, int64_t ld_b, in
  * @param ld_a Leading dimension of A.
  **/
 void ref_zero_16_16(float* a, int64_t ld_a) {
-    for (int c = 0; c < 16; c++) {
-        for (int r = 0; r < 16; r++) {
-            a[r] = 0.0;
-        }
-        a += ld_a;
-    }
+    zero(a, 16, 16, ld_a);
 }
 
 /*
@@ -137,14 +71,7 @@ void ref_zero_16_16(float* a, int64_t ld_a) {
 * @param trans_b Column-major B if 0, row-major B if 1. 
 **/
 void ref_relu_16_16(float const* a, float* b, int64_t ld_a, int64_t ld_b, int32_t trans_b) {
-    ref_identity_16_16(a, b, ld_a, ld_b, trans_b);
-
-    for (int c = 0; c < 16; c++) {
-        for (int r = 0; r < 16; r++) {
-            b[r] = fmaxf(b[r], 0.0);
-        }
-        b += ld_b;
-    }
+    relu(a, b, 16, 16, ld_a, ld_b, trans_b);
 }
 
 
@@ -283,8 +210,8 @@ TEST_CASE("nontransposing identity submatrix 01", "[test]") {
     float exp[rows * rows];
 
     fill_indices(a, rows * rows);
-    fill_const(b, rows * rows, -5.0);
-    fill_const(exp, rows * rows, -5.0);
+    fill_const(b, rows * rows, -5.0f);
+    fill_const(exp, rows * rows, -5.0f);
 
     int sub_off = rows / 4 + rows / 4 * rows;
     identity_16_16(a + sub_off, b + sub_off, rows, rows, 0);
@@ -301,8 +228,8 @@ TEST_CASE("transposing identity submatrix 01", "[test]") {
     float exp[rows * rows];
 
     fill_indices(a, rows * rows);
-    fill_const(b, rows * rows, -5.0);
-    fill_const(exp, rows * rows, -5.0);
+    fill_const(b, rows * rows, -5.0f);
+    fill_const(exp, rows * rows, -5.0f);
 
     int sub_off = rows / 4 + rows / 4 * rows;
     identity_16_16(a + sub_off, b + sub_off, rows, rows, 1);
@@ -321,8 +248,8 @@ TEST_CASE("nontransposing relu submatrix 01", "[test]") {
     float exp[rows * rows];
 
     fill_indices(a, rows * rows);
-    fill_const(b, rows * rows, -5.0);
-    fill_const(exp, rows * rows, -5.0);
+    fill_const(b, rows * rows, -5.0f);
+    fill_const(exp, rows * rows, -5.0f);
     for (int i = 0; i < 16; i++) {
         (a + sub_off)[i*16] = -1.0;
     }
@@ -343,8 +270,8 @@ TEST_CASE("transposing relu submatrix 01", "[test]") {
     float exp[rows * rows];
 
     fill_indices(a, rows * rows);
-    fill_const(b, rows * rows, -5.0);
-    fill_const(exp, rows * rows, -5.0);
+    fill_const(b, rows * rows, -5.0f);
+    fill_const(exp, rows * rows, -5.0f);
     for (int i = 0; i < 16; i++) {
         (a + sub_off)[i*16] = -1.0;
     }
@@ -357,6 +284,95 @@ TEST_CASE("transposing relu submatrix 01", "[test]") {
 }
 
 
+
+
+
+template <typename T>
+struct RefUnary {
+    private:
+        Unary::ptype_t const op;
+        bool const trans_b;
+        uint64_t const m;
+        uint64_t const n;
+
+    public:
+        RefUnary(Unary::ptype_t op, bool trans_b, uint64_t m, uint64_t n) : op(op), trans_b(trans_b), m(m), n(n) {
+
+        }
+        ~RefUnary() = default;
+
+        RefUnary( RefUnary const & ) = default;
+        RefUnary & operator=( RefUnary const & ) = default;
+        RefUnary( RefUnary && ) noexcept = delete;
+        RefUnary & operator=( RefUnary && ) noexcept = delete;
+
+        void operator()(T const* a, T* b, int64_t lda, int64_t ldb) {
+            if (op == Unary::ptype_t::identity) {
+                identity(a, b, m, n, lda, ldb, trans_b);
+
+            } else if (op == Unary::ptype_t::zero) {
+                zero(b, m, n, ldb);
+
+            } else if (op == Unary::ptype_t::relu) {
+                relu(a, b, m, n, lda, ldb, trans_b);
+
+            }
+        }
+};
+
+void test_unary_op(uint64_t m, uint64_t n, int64_t lda, int64_t ldb, bool trans_b, Unary::ptype_t op) {
+    // make sure leading info is correct
+    if (!(0 <= lda && 0 <= ldb)) {
+        return;
+    }
+    if (!(static_cast<uint64_t>(lda) >= m)) {
+        return;
+    }
+    if (trans_b) {
+        if (!(static_cast<uint64_t>(ldb) >= n)) {
+            return;
+        }
+    } else {
+        if (!(static_cast<uint64_t>(ldb) >= m)) {
+            return;
+        }
+    }
+
+    // generate kernel under test
+    Unary unary;
+    Unary::error_t err = unary.generate(m, n, trans_b, Unary::dtype_t::fp32, op);
+    REQUIRE(err == Unary::error_t::success);
+    Unary::kernel_t kernel = unary.get_kernel();
+
+    // obtain corresponding reference implementation
+    RefUnary<float> ref_kernel(op, trans_b, m, n);
+
+    // allocate and initialize memory
+    std::vector<float> a(n * lda, 0);
+    std::vector<float> b(n * ldb, -1.0f);
+    std::vector<float> exp(n * ldb, -1.0f);
+    fill_indices(a.data(), m, n, lda);
+
+    // execute kernels
+    kernel(a.data(), b.data(), lda, ldb);
+    ref_kernel(a.data(), exp.data(), lda, ldb);
+
+    // check if correct 
+    bool result = mats_equal<float>(b.data(), exp.data(), m, n, ldb, ldb);
+    REQUIRE(result);
+}
+
+TEST_CASE("codegen kernels", "[test]") {
+    uint64_t m = GENERATE(16, 32, 48, 64);
+    uint64_t n = GENERATE(16, 32, 48, 64);
+    int64_t lda = GENERATE(16, 32, 48, 64, 80, 96, 112, 128);
+    int64_t ldb = GENERATE(16, 32, 48, 64, 80, 96, 112, 128);
+    Unary::ptype_t op = GENERATE(Unary::ptype_t::identity);
+    bool trans_b = GENERATE(false);
+
+    INFO("m=" << m << ", n=" << n << ", lda=" << lda << ", ldb=" << ldb << ", trans_b=" << trans_b << ", op=" << (uint32_t)op);
+    test_unary_op(m, n, lda, ldb, false, op);
+}
 
 
 

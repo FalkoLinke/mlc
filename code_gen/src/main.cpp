@@ -3,6 +3,7 @@
 #include "Kernel.h"
 #include "KernelFactory.h"
 #include "Unary.h"
+#include "code_gen_common.hpp"
 
 using mini_jit::Kernel;
 using mini_jit::KernelFactory;
@@ -12,27 +13,25 @@ using mini_jit::Unary;
 
 
 int main() {
+    uint64_t const m = 64;
+    uint64_t const n = 48;
+    int64_t const lda = 128;
+    int64_t const ldb = 128;
+    bool const trans_b = false;
+    Unary::ptype_t const op = Unary::ptype_t::identity;
+
     Unary unary;
-    unary.generate(16, 16, 0, Unary::dtype_t::fp32, Unary::ptype_t::identity);
+    unary.generate(m, n, trans_b, Unary::dtype_t::fp32, op);
     unary.write("test.bin");
     Unary::kernel_t kernel = unary.get_kernel();
 
-    float a[16*16];
-    float b[16*16];
-    int64_t lda = 16;
-    int64_t ldb = 16;
-    for (int i = 0; i < 16*16; i++) {
-        a[i] = /*(i % 2 == 0 ? -1.0 : 1.0) * */(float)i;
-    }
+    std::vector<float> a(n * lda, 0.0f);
+    std::vector<float> b(n * ldb, 0.0f);
+    fill_indices(a.data(), m, n, lda);
 
-    kernel(a, b, lda, ldb);
+    kernel(a.data(), b.data(), lda, ldb);
 
-    for (int r = 0; r < 16; r++) {
-        for (int c = 0; c < 16; c++) {
-            std::cout << b[c * 16 + r] << " ";
-        }
-        std::cout << std::endl;
-    }
+    print_mat(b.data(), trans_b ? n : m, trans_b ? m : n, ldb);
 
     return 0;
 }
