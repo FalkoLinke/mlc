@@ -13,11 +13,11 @@ using mini_jit::Unary;
 
 
 int main() {
-    uint64_t const m = 64;
-    uint64_t const n = 48;
-    int64_t const lda = 128;
-    int64_t const ldb = 128;
-    bool const trans_b = false;
+    uint64_t const m = 32;
+    uint64_t const n = 16;
+    int64_t const lda = 32;
+    int64_t const ldb = 16;
+    bool const trans_b = true;
     Unary::ptype_t const op = Unary::ptype_t::identity;
 
     Unary unary;

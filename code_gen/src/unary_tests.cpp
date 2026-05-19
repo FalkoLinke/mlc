@@ -369,7 +369,7 @@ TEST_CASE("codegen kernels", "[test]") {
     std::vector<int64_t> ldas = {16, 32, 48, 64, 80, 96, 112, 128};
     std::vector<int64_t> ldbs = {16, 32, 48, 64, 80, 96, 112, 128};
     std::vector<Unary::ptype_t> ops = { Unary::ptype_t::identity };
-    std::vector<bool> trans_bs = { false };
+    std::vector<bool> trans_bs = { false, true };
 
     for (uint64_t m : ms) {
         for (uint64_t n : ns) {

@@ -21,6 +21,7 @@ class mini_jit::Unary {
     Kernel kernel;
 
     error_t generate_identity_notrans_fp32(uint32_t m, uint32_t n);
+    error_t generate_identity_fp32(uint32_t m, uint32_t n, uint32_t trans_b);
 
   public:
     /// data type
