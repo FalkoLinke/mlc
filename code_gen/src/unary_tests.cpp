@@ -337,6 +337,7 @@ void test_unary_op(uint64_t m, uint64_t n, int64_t lda, int64_t ldb, bool trans_
             return;
         }
     }
+    INFO("m=" << m << ", n=" << n << ", lda=" << lda << ", ldb=" << ldb << ", trans_b=" << trans_b << ", op=" << (uint32_t)op);
 
     // generate kernel under test
     Unary unary;
@@ -363,15 +364,26 @@ void test_unary_op(uint64_t m, uint64_t n, int64_t lda, int64_t ldb, bool trans_
 }
 
 TEST_CASE("codegen kernels", "[test]") {
-    uint64_t m = GENERATE(16, 32, 48, 64);
-    uint64_t n = GENERATE(16, 32, 48, 64);
-    int64_t lda = GENERATE(16, 32, 48, 64, 80, 96, 112, 128);
-    int64_t ldb = GENERATE(16, 32, 48, 64, 80, 96, 112, 128);
-    Unary::ptype_t op = GENERATE(Unary::ptype_t::identity);
-    bool trans_b = GENERATE(false);
+    std::vector<uint64_t> ms = {16, 32, 48, 64};
+    std::vector<uint64_t> ns = {16, 32, 48, 64};
+    std::vector<int64_t> ldas = {16, 32, 48, 64, 80, 96, 112, 128};
+    std::vector<int64_t> ldbs = {16, 32, 48, 64, 80, 96, 112, 128};
+    std::vector<Unary::ptype_t> ops = { Unary::ptype_t::identity };
+    std::vector<bool> trans_bs = { false };
 
-    INFO("m=" << m << ", n=" << n << ", lda=" << lda << ", ldb=" << ldb << ", trans_b=" << trans_b << ", op=" << (uint32_t)op);
-    test_unary_op(m, n, lda, ldb, false, op);
+    for (uint64_t m : ms) {
+        for (uint64_t n : ns) {
+            for (int64_t lda : ldas) {
+                for (int64_t ldb : ldbs) {
+                    for (Unary::ptype_t op : ops) {
+                        for (bool trans_b : trans_bs) {
+                            test_unary_op(m, n, lda, ldb, trans_b, op);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 
