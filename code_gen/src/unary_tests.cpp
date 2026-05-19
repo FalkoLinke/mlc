@@ -307,35 +307,39 @@ struct RefUnary {
         RefUnary & operator=( RefUnary && ) noexcept = delete;
 
         void operator()(T const* a, T* b, int64_t lda, int64_t ldb) {
+            uint64_t ma = m;
+            uint64_t na = n;
+            uint64_t mb = trans_b ? n : m;
+            uint64_t nb = trans_b ? m : n;
+
             if (op == Unary::ptype_t::identity) {
-                identity(a, b, m, n, lda, ldb, trans_b);
+                identity(a, b, ma, na, lda, ldb, trans_b);
 
             } else if (op == Unary::ptype_t::zero) {
-                zero(b, m, n, ldb);
+                zero(b, mb, nb, ldb);
 
             } else if (op == Unary::ptype_t::relu) {
-                relu(a, b, m, n, lda, ldb, trans_b);
+                relu(a, b, ma, na, lda, ldb, trans_b);
 
             }
         }
 };
 
 void test_unary_op(uint64_t m, uint64_t n, int64_t lda, int64_t ldb, bool trans_b, Unary::ptype_t op) {
+    uint64_t ma = m;
+    uint64_t na = n;
+    uint64_t mb = trans_b ? n : m;
+    uint64_t nb = trans_b ? m : n;
+
     // make sure leading info is correct
     if (!(0 <= lda && 0 <= ldb)) {
         return;
     }
-    if (!(static_cast<uint64_t>(lda) >= m)) {
+    if (!(static_cast<uint64_t>(lda) >= ma)) {
         return;
     }
-    if (trans_b) {
-        if (!(static_cast<uint64_t>(ldb) >= n)) {
-            return;
-        }
-    } else {
-        if (!(static_cast<uint64_t>(ldb) >= m)) {
-            return;
-        }
+    if (!(static_cast<uint64_t>(ldb) >= mb)) {
+        return;
     }
     INFO("m=" << m << ", n=" << n << ", lda=" << lda << ", ldb=" << ldb << ", trans_b=" << trans_b << ", op=" << (uint32_t)op);
 
@@ -349,17 +353,17 @@ void test_unary_op(uint64_t m, uint64_t n, int64_t lda, int64_t ldb, bool trans_
     RefUnary<float> ref_kernel(op, trans_b, m, n);
 
     // allocate and initialize memory
-    std::vector<float> a(n * lda, 0);
-    std::vector<float> b(n * ldb, -1.0f);
-    std::vector<float> exp(n * ldb, -1.0f);
-    fill_indices(a.data(), m, n, lda);
+    std::vector<float> a(na * lda, 0);
+    std::vector<float> b(nb * ldb, -1.0f);
+    std::vector<float> exp(nb * ldb, -1.0f);
+    fill_indices(a.data(), ma, na, lda);
 
     // execute kernels
     kernel(a.data(), b.data(), lda, ldb);
     ref_kernel(a.data(), exp.data(), lda, ldb);
 
     // check if correct 
-    bool result = mats_equal<float>(b.data(), exp.data(), m, n, ldb, ldb);
+    bool result = mats_equal<float>(b.data(), exp.data(), mb, nb, ldb, ldb);
     REQUIRE(result);
 }
 
@@ -368,7 +372,7 @@ TEST_CASE("codegen kernels", "[test]") {
     std::vector<uint64_t> ns = {16, 32, 48, 64};
     std::vector<int64_t> ldas = {16, 32, 48, 64, 80, 96, 112, 128};
     std::vector<int64_t> ldbs = {16, 32, 48, 64, 80, 96, 112, 128};
-    std::vector<Unary::ptype_t> ops = { Unary::ptype_t::identity };
+    std::vector<Unary::ptype_t> ops = { Unary::ptype_t::identity, Unary::ptype_t::zero, Unary::ptype_t::relu };
     std::vector<bool> trans_bs = { false, true };
 
     for (uint64_t m : ms) {

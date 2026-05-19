@@ -16,14 +16,6 @@ class mini_jit::Unary {
       success = 0,
       unsupported_args = 1,
     };
-
-  private:
-    Kernel kernel;
-
-    error_t generate_identity_notrans_fp32(uint32_t m, uint32_t n);
-    error_t generate_identity_fp32(uint32_t m, uint32_t n, uint32_t trans_b);
-
-  public:
     /// data type
     enum class dtype_t : uint32_t {
       fp32 = 0,
@@ -36,6 +28,15 @@ class mini_jit::Unary {
       identity = 1,
       relu     = 2     
     };
+
+  private:
+    Kernel kernel;
+
+    error_t generate_identity_notrans_fp32(uint32_t m, uint32_t n);
+    error_t generate_identity_fp32(uint32_t m, uint32_t n, uint32_t trans_b);
+    error_t generate_16x16_microkernel(ptype_t op, uint32_t trans_b);
+
+  public:
 
     /**
      * @brief Generate a kernel for a unary primitive.
