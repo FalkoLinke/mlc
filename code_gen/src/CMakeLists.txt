@@ -21,7 +21,7 @@ target_compile_options(kernel_examples.out PRIVATE ${CXX_FLAGS})
 add_executable(instgen_examples.out instgen_examples.cpp InstGen.cpp LabeledBranch.cpp)
 target_compile_options(instgen_examples.out PRIVATE ${CXX_FLAGS})
 
-add_executable(main.out main.cpp Kernel.cpp KernelFactory.cpp InstGen.cpp LabeledBranch.cpp BranchRef.cpp)
+add_executable(main.out main.cpp Kernel.cpp KernelFactory.cpp InstGen.cpp LabeledBranch.cpp BranchRef.cpp Unary.cpp)
 target_compile_options(main.out PRIVATE ${CXX_FLAGS})
 
 add_executable(unary_tests.out unary_tests.cpp Kernel.cpp KernelFactory.cpp unary_kernels.cpp InstGen.cpp LabeledBranch.cpp BranchRef.cpp)
