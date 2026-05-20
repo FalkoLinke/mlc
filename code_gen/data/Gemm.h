@@ -2,12 +2,17 @@
 #define MINI_JIT_GEMM_H
 
 #include <cstdint>
+#include "../src/Kernel.h"
 
 namespace mini_jit {
   class Gemm;
 }
 
 class mini_jit::Gemm {
+
+   private:
+    mini_jit::Kernel kernel;
+
   public:
     /// data type
     enum class dtype_t : uint32_t {
@@ -17,7 +22,14 @@ class mini_jit::Gemm {
 
     /// error codes
     enum class error_t : int32_t {
-      success = 0
+      success = 0,
+      error = 1,
+      not16 = 2,
+      mnk_zero = 3,
+      onlyACColumnMajor = 4,
+      onlyfp32 = 5,
+      only16 = 6,
+      onlyBRowMajor = 7,
     };
 
     /**
