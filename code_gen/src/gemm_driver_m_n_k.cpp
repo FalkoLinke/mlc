@@ -5,9 +5,9 @@
 #include <ctime>
 #include <chrono>
 #include <iomanip>
-#include "Kernel.h"
+#include "../data/Gemm.h"
 
-void generate_gemm_kernel_512_512_512(mini_jit::Kernel& kernel);
+
 
 typedef void (*gemm_kernel_t)(float const * a,
                               float const * b,
@@ -17,17 +17,44 @@ typedef void (*gemm_kernel_t)(float const * a,
                               int64_t       ld_c);
 
 
-// --- C++ Referenz-Implementierung für die Verifizierung ---
-void gemm_512_512_512_reference(float const* a, float const* b, float* c, int64_t ld_a, int64_t ld_b, int64_t ld_c) {
-    int const K = 512; 
-    
-    for (int j = 0; j < 512; j++) {         
-        for (int i = 0; i < 512; i++) {
+// --- Universelle C++ Referenz-Implementierung für beliebige Layouts ---
+// trans_x: 0 = Column-Major (Spaltenweise), 1 = Row-Major (Zeilenweise)
+void gemm_flexible_reference(
+    float const* a, 
+    float const* b, 
+    float*       c, 
+    uint32_t     M, 
+    uint32_t     N, 
+    uint32_t     K, 
+    uint32_t     trans_a, 
+    uint32_t     trans_b, 
+    uint32_t     trans_c, 
+    int64_t      ld_a, 
+    int64_t      ld_b, 
+    int64_t      ld_c
+) {
+    // m läuft über die Zeilen von C und A
+    for (uint32_t m = 0; m < M; m++) {         
+        // n läuft über die Spalten von C und B
+        for (uint32_t n = 0; n < N; n++) {
             float sum = 0.0f;
-            for (int k = 0; k < K; k++) {
-                sum += a[k * ld_a + i] * b[k * ld_b + j];
+            
+            // k läuft über die mathematische Innen-Dimension
+            for (uint32_t k = 0; k < K; k++) {
+                // A: Row-Major benötigt (m * ld + k), Column-Major benötigt (k * ld + m)
+                int64_t idx_a = (trans_a == 1) ? (m * ld_a + k) : (k * ld_a + m);
+                
+                // B: Row-Major benötigt (k * ld + n), Column-Major benötigt (n * ld + k)
+                int64_t idx_b = (trans_b == 1) ? (k * ld_b + n) : (n * ld_b + k);
+                
+                sum += a[idx_a] * b[idx_b];
             }
-            c[j * ld_c + i] += sum;
+            
+            // C: Row-Major benötigt (m * ld + n), Column-Major benötigt (n * ld + m)
+            int64_t idx_c = (trans_c == 1) ? (m * ld_c + n) : (n * ld_c + m);
+            
+            // Ergebnis akkumulieren
+            c[idx_c] += sum;
         }
     }
 }
@@ -53,9 +80,13 @@ int main() {
     int const N = 512;
     int const K = 512;
     
-    int const ld_a = 512;
-    int const ld_b = 512;
-    int const ld_c = 512;
+    int const ld_a = M;
+    int const ld_b = N;
+    int const ld_c = K;
+
+    int trans_A = 0;
+    int trans_B = 1;
+    int trans_C = 0;
 
     std::vector<float> a(ld_a * K);
     std::vector<float> b(K * ld_b);
@@ -72,30 +103,36 @@ int main() {
     // ==========================================
     std::cout << "Generiere JIT Kernel...\n";
     
-    mini_jit::Kernel gemm_kernel; 
+    mini_jit::Gemm gemm;
 
-    // Cast von (void const*) zu unserem ausführbaren Function Pointer Typen
-    void (* jit_gemm)(float const * a,
-                              float const * b,
-                              float       * c,
-                              int64_t       ld_a,
-                              int64_t       ld_b,
-                              int64_t       ld_c) = nullptr;
+    
+    auto status = gemm.generate(
+        M, N, K, 
+        trans_A, trans_B, trans_C, // row-major für A, B und C
+        mini_jit::Gemm::dtype_t::fp32
+    );
 
+    if (status != mini_jit::Gemm::error_t::success) {
+        std::cerr << "Fehler bei der Kernel-Generierung! Code: " 
+                  << static_cast<int>(status) << std::endl;
+        return 1;
+    }
 
-    generate_gemm_kernel_512_512_512(gemm_kernel);
-    jit_gemm = (void (*)(float const *, float const *, float *, int64_t, int64_t, int64_t))gemm_kernel.get_kernel();
-
+    auto gemm_kernel = gemm.get_kernel();
+    if (!gemm_kernel) {
+        std::cerr << "Fehler: Kernel-Zeiger ist null!" << std::endl;
+        return 1;
+    }
 
     // ==========================================
     // 3. KORREKTHEIT VERIFIZIEREN
     // ==========================================
     std::cout << "Führe JIT Kernel aus...\n";
     
-    jit_gemm(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
+    gemm_kernel(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     
     // C++ Referenz aufrufen
-    gemm_512_512_512_reference(a.data(), b.data(), c_ref.data(), ld_a, ld_b, ld_c);
+    gemm_flexible_reference(a.data(), b.data(), c_ref.data(), M, N, K, trans_A, trans_B, trans_C, ld_a, ld_b, ld_c);
 
     bool passed = true;
     float max_diff = 0.0f;
@@ -146,7 +183,7 @@ int main() {
 
     for (int i = 0; i < num_iterations; i++) {
         
-        jit_gemm(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
+        gemm_kernel(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();

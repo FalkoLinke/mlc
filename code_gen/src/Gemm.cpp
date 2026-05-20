@@ -1,5 +1,5 @@
 #include <cstdint>
-#include "../Data/Gemm.h"
+#include "../data/Gemm.h"
 #include "Kernel.h"
 #include "InstGen.h"
 
@@ -65,33 +65,6 @@ auto reg_x = [](uint32_t id) { return static_cast<gpr_t>(id | 0x20); };
 auto reg_w = [](uint32_t id) { return static_cast<gpr_t>(id); };
 
 namespace mini_jit {
-  class Gemm;
-}
-
-class mini_jit::Gemm {
-
-  private:
-    mini_jit::Kernel kernel;
-
-  public:
-    /// data type
-    enum class dtype_t : uint32_t {
-      fp32 = 0,
-      fp64 = 1
-    };
-
-    /// error codes
-    enum class error_t : int32_t {
-      success = 0,
-      error = 1,
-      not16 = 2,
-      mnk_zero = 3,
-      onlyrowmajor = 4,
-      onlyfp32 = 5,
-      only16 = 6
-    };
-
-    
 
     /**
      * @brief Generate a kernel for matrix multiplication.
@@ -104,7 +77,7 @@ class mini_jit::Gemm {
      * @param dtype   Data type of the matrices.
      * @return error_t::success on success, another error_t value otherwise.
      **/
-    error_t generate( uint32_t m,
+    Gemm::error_t Gemm::generate( uint32_t m,
                       uint32_t n,
                       uint32_t k,
                       uint32_t trans_a,
@@ -114,9 +87,11 @@ class mini_jit::Gemm {
     {
       mini_jit::InstGen gen;
 
-      // For simplicity, we only implement the case for fp32 and row-major order.
-      if (trans_a != 1 || trans_b != 1 || trans_c != 1) {
-        return error_t::onlyrowmajor;
+      if (trans_a != 0  || trans_c != 0) {
+        return error_t::onlyACColumnMajor;
+      }
+      if (trans_b != 1) {
+        return error_t::onlyBRowMajor;
       }
       if (dtype != dtype_t::fp32) {
         return error_t::onlyfp32;
@@ -304,7 +279,7 @@ class mini_jit::Gemm {
      * @brief Get the generated kernel: C += A * B.
      * @return pointer to the generated kernel.
      **/
-    kernel_t get_kernel() const {
+    Gemm::kernel_t Gemm::get_kernel() const {
         return (kernel_t) this->kernel.get_kernel();
     }
 };
