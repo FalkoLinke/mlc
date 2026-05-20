@@ -92,7 +92,7 @@ void benchmark_jit_kernel(uint64_t m, uint64_t n, Unary::ptype_t op, bool trans_
 
 
 
-void benchmark_jit_kernels(long const reps) {
+void benchmark_jit_kernels(long const target_gib) {
     std::vector<uint64_t> ms = {64, 128, 512};
     std::vector<uint64_t> ns = {64, 128, 512};
     std::vector<bool> trans_bs = {false, true};
@@ -102,6 +102,7 @@ void benchmark_jit_kernels(long const reps) {
         for (bool trans_b : trans_bs) {
             for (uint64_t m : ms) {
                 for (uint64_t n : ns) {
+                    long reps = (long)(target_gib * ((1024.0f * 1024.0f * 1024.0f) / (m * n * sizeof(float))));
                     benchmark_jit_kernel(m, n, op, trans_b, reps);
                 }
             }
@@ -110,9 +111,9 @@ void benchmark_jit_kernels(long const reps) {
 }
 
 int main() {
-    long const reps = 100000000;
+    long const target_gib = 300;
 
-    benchmark_jit_kernels(reps);
+    benchmark_jit_kernels(target_gib);
 
     std::cerr << counter << std::endl;
     return 0;
