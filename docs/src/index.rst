@@ -19,6 +19,7 @@ documentation for details.
    weeks/week02
    weeks/week03
    weeks/week05
+   weeks/week06
 
 
 
