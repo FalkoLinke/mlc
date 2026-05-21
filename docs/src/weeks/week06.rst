@@ -33,13 +33,120 @@ The full kernel loops over the input matrices' tiles, executing the microkernel 
 GEMM
 ----------------
 
-
-
-
-
-
-
-
+============================================================
+ STARTE JIT GEMM TESTS FÜR ALLE KOMBINATIONEN
+============================================================
+------------------------------------------------------------
+ Teste M=64, N=64, K=64
+ [✓] Verifizierung OK (Max Abweichung: 0.00342)
+ [~] Benchmark: 200000 Durchläufe | 0.094 Sekunden | 1114.9 GFLOPS
+------------------------------------------------------------
+ Teste M=64, N=64, K=128
+ [✓] Verifizierung OK (Max Abweichung: 0.00635)
+ [~] Benchmark: 200000 Durchläufe | 0.126 Sekunden | 1665.7 GFLOPS
+------------------------------------------------------------
+ Teste M=64, N=64, K=512
+ [✓] Verifizierung OK (Max Abweichung: 0.01855)
+ [~] Benchmark: 200000 Durchläufe | 0.445 Sekunden | 1885.9 GFLOPS
+------------------------------------------------------------
+ Teste M=64, N=128, K=64
+ [✓] Verifizierung OK (Max Abweichung: 0.00684)
+ [~] Benchmark: 200000 Durchläufe | 0.146 Sekunden | 1433.1 GFLOPS
+------------------------------------------------------------
+ Teste M=64, N=128, K=128
+ [✓] Verifizierung OK (Max Abweichung: 0.00977)
+ [~] Benchmark: 200000 Durchläufe | 0.252 Sekunden | 1661.7 GFLOPS
+------------------------------------------------------------
+ Teste M=64, N=128, K=512
+ [✓] Verifizierung OK (Max Abweichung: 0.03516)
+ [~] Benchmark: 200000 Durchläufe | 0.890 Sekunden | 1886.0 GFLOPS
+------------------------------------------------------------
+ Teste M=64, N=512, K=64
+ [✓] Verifizierung OK (Max Abweichung: 0.03125)
+ [~] Benchmark: 200000 Durchläufe | 0.602 Sekunden | 1394.6 GFLOPS
+------------------------------------------------------------
+ Teste M=64, N=512, K=128
+ [✓] Verifizierung OK (Max Abweichung: 0.03906)
+ [~] Benchmark: 200000 Durchläufe | 1.036 Sekunden | 1620.2 GFLOPS
+------------------------------------------------------------
+ Teste M=64, N=512, K=512
+ [✓] Verifizierung OK (Max Abweichung: 0.08984)
+ [~] Benchmark: 200000 Durchläufe | 3.712 Sekunden | 1807.7 GFLOPS
+------------------------------------------------------------
+ Teste M=128, N=64, K=64
+ [✓] Verifizierung OK (Max Abweichung: 0.00684)
+ [~] Benchmark: 200000 Durchläufe | 0.145 Sekunden | 1450.2 GFLOPS
+------------------------------------------------------------
+ Teste M=128, N=64, K=128
+ [✓] Verifizierung OK (Max Abweichung: 0.00977)
+ [~] Benchmark: 200000 Durchläufe | 0.251 Sekunden | 1671.0 GFLOPS
+------------------------------------------------------------
+ Teste M=128, N=64, K=512
+ [✓] Verifizierung OK (Max Abweichung: 0.03516)
+ [~] Benchmark: 200000 Durchläufe | 0.890 Sekunden | 1884.9 GFLOPS
+------------------------------------------------------------
+ Teste M=128, N=128, K=64
+ [✓] Verifizierung OK (Max Abweichung: 0.01562)
+ [~] Benchmark: 200000 Durchläufe | 0.289 Sekunden | 1450.5 GFLOPS
+------------------------------------------------------------
+ Teste M=128, N=128, K=128
+ [✓] Verifizierung OK (Max Abweichung: 0.01953)
+ [~] Benchmark: 200000 Durchläufe | 0.502 Sekunden | 1670.0 GFLOPS
+------------------------------------------------------------
+ Teste M=128, N=128, K=512
+ [✓] Verifizierung OK (Max Abweichung: 0.04688)
+ [~] Benchmark: 200000 Durchläufe | 1.808 Sekunden | 1856.0 GFLOPS
+------------------------------------------------------------
+ Teste M=128, N=512, K=64
+ [✓] Verifizierung OK (Max Abweichung: 0.06250)
+ [~] Benchmark: 200000 Durchläufe | 1.265 Sekunden | 1326.5 GFLOPS
+------------------------------------------------------------
+ Teste M=128, N=512, K=128
+ [✓] Verifizierung OK (Max Abweichung: 0.09375)
+ [~] Benchmark: 200000 Durchläufe | 2.137 Sekunden | 1570.4 GFLOPS
+------------------------------------------------------------
+ Teste M=128, N=512, K=512
+ [✓] Verifizierung OK (Max Abweichung: 0.21875)
+ [~] Benchmark: 200000 Durchläufe | 7.672 Sekunden | 1749.6 GFLOPS
+------------------------------------------------------------
+ Teste M=512, N=64, K=64
+ [✓] Verifizierung OK (Max Abweichung: 0.02734)
+ [~] Benchmark: 200000 Durchläufe | 0.728 Sekunden | 1152.8 GFLOPS
+------------------------------------------------------------
+ Teste M=512, N=64, K=128
+ [✓] Verifizierung OK (Max Abweichung: 0.03906)
+ [~] Benchmark: 200000 Durchläufe | 1.137 Sekunden | 1475.7 GFLOPS
+------------------------------------------------------------
+ Teste M=512, N=64, K=512
+ [✓] Verifizierung OK (Max Abweichung: 0.09375)
+ [~] Benchmark: 200000 Durchläufe | 3.902 Sekunden | 1719.7 GFLOPS
+------------------------------------------------------------
+ Teste M=512, N=128, K=64
+ [✓] Verifizierung OK (Max Abweichung: 0.05469)
+ [~] Benchmark: 200000 Durchläufe | 1.441 Sekunden | 1164.5 GFLOPS
+------------------------------------------------------------
+ Teste M=512, N=128, K=128
+ [✓] Verifizierung OK (Max Abweichung: 0.07031)
+ [~] Benchmark: 200000 Durchläufe | 2.261 Sekunden | 1484.3 GFLOPS
+------------------------------------------------------------
+ Teste M=512, N=128, K=512
+ [✓] Verifizierung OK (Max Abweichung: 0.18750)
+ [~] Benchmark: 200000 Durchläufe | 7.596 Sekunden | 1767.1 GFLOPS
+------------------------------------------------------------
+ Teste M=512, N=512, K=64
+ [✓] Verifizierung OK (Max Abweichung: 0.18750)
+ [~] Benchmark: 200000 Durchläufe | 5.796 Sekunden | 1157.9 GFLOPS
+------------------------------------------------------------
+ Teste M=512, N=512, K=128
+ [✓] Verifizierung OK (Max Abweichung: 0.31250)
+ [~] Benchmark: 200000 Durchläufe | 9.081 Sekunden | 1478.0 GFLOPS
+------------------------------------------------------------
+ Teste M=512, N=512, K=512
+ [✓] Verifizierung OK (Max Abweichung: 0.65625)
+ [~] Benchmark: 200000 Durchläufe | 31.199 Sekunden | 1720.8 GFLOPS
+============================================================
+ ALLE TESTS ERFOLGREICH ABGESCHLOSSEN!
+============================================================
 
 
 
