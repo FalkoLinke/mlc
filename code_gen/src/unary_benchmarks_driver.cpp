@@ -97,8 +97,7 @@ public:
  * From the total number of bytes processed it then determines and prints
  * the GiBs metric, along with other benchmark results.
  */
-void benchmark_kernel(kernel_t kernel) {
-    long const reps = 500000000;
+void benchmark_kernel(kernel_t kernel, long const reps) {
     float a[16*16];
     float b[16*16];
 
@@ -138,9 +137,13 @@ void benchmark_kernel(kernel_t kernel) {
 
 
 
-int main() {
-    generate_kernels();
 
+
+
+
+
+
+void benchmark_kernels(long const reps) {
     kernel_t kernels[] = {
         MAKE_KERNEL(identity_16_16_kernel),
         MAKE_KERNEL(identity_16_16_trans_kernel),
@@ -151,9 +154,15 @@ int main() {
     size_t const kernels_count = sizeof(kernels) / sizeof(kernel_t);
 
     for (size_t i = 0; i < kernels_count; i++) {
-        benchmark_kernel(kernels[i]);
+        benchmark_kernel(kernels[i], reps);
     }
+}
 
+int main() {
+    generate_kernels();
+    long const reps = 100000000;
+
+    benchmark_kernels(reps);
 
     std::cerr << counter << std::endl;
     return 0;
