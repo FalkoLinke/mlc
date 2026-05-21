@@ -70,13 +70,12 @@ void benchmark_jit_kernel(uint64_t m, uint64_t n, Unary::ptype_t op, bool trans_
     double gibs = gib_transferred / time_taken;
 
 
-    std::cout << "=========================" << std::endl;
-    std::cout << "\tOp: " << op_descr(op) << std::endl;
-    std::cout << "\t(m, n): (" << m << ", " << n << ")" << std::endl;
-    std::cout << "\ttrans_b: " << trans_b << std::endl;
-    std::cout << "\tDuration [s]: " << time_taken << std::endl;
-    std::cout << "\tBytes transferred [GiB]: " << gib_transferred << std::endl;
-    std::cout << "\tGiBs: " << gibs << std::endl;
+    std::cout << op_descr(op) << "\t\t";
+    std::cout << "(" << m << ", " << n << ")" << "\t\t";
+    std::cout << trans_b << "\t\t";
+    std::cout << time_taken << "\t\t";
+    std::cout << gib_transferred << "\t\t";
+    std::cout << gibs << std::endl;
 }
 
 
@@ -97,6 +96,14 @@ void benchmark_jit_kernels(long const target_gib) {
     std::vector<uint64_t> ns = {64, 128, 512};
     std::vector<bool> trans_bs = {false, true};
     std::vector<Unary::ptype_t> ops = {Unary::ptype_t::identity, Unary::ptype_t::zero, Unary::ptype_t::relu};
+
+
+    std::cout << "Operation" << "\t\t";
+    std::cout << "(m, n)" << "\t\t";
+    std::cout << "trans_b" << "\t\t";
+    std::cout << "Duration [s]" << "\t\t";
+    std::cout << "Bytes transferred [GiB]" << "\t\t";
+    std::cout << "GiBs" << std::endl;
 
     for (Unary::ptype_t op : ops) {
         for (bool trans_b : trans_bs) {
