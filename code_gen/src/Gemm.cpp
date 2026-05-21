@@ -106,13 +106,14 @@ namespace mini_jit {
       uint32_t m_32 = m / 32;
       uint32_t n_32 = n / 32;
 
-      uint32_t m_16 = m - m_32 * 32;
-      uint32_t n_16 = n - n_32 * 32;
+      uint32_t m_rest = m - m_32 * 32;
+      uint32_t n_rest = n - n_32 * 32;
 
       //kernel.add_instr(gen.base_smstart());
       kernel.add_instr(0xd503477f);
 
       kernel.add_instr(gen.ssve_ptrue(pr_t::p0, sve_size_t::s)); // ptrue p0.s
+      kernel.add_instr(gen.ssve_ptrue(pr_t::p1, sve_size_t::s)); // ptrue p1.s
 
       kernel.add_instr(0x04BF5829); // rdsvl x9, #1
       kernel.add_instr(0xD342FD29); // lsr x9, x9, #2  (UBFM)
@@ -121,19 +122,16 @@ namespace mini_jit {
       kernel.add_instr(0xD37EF46B); // lsl x11, x3, #2 (UBFM)
       kernel.add_instr(0xD37EF491); // lsl x17, x4, #2 (UBFM)
 
-      // N Variables loop counter in x16
+      // N Variables loop counter (Elements processed) in x16
       kernel.add_instr(gen.base_movz(reg_x(16), 0, 0)); // mov x16, #0
-
       // ---------------------- N_loop ----------------------
-      kernel.add_label("N_loop");
       for (u_int32_t i_n = 0; i_n < n_32; ++i_n) {
 
-        // M Variables loop counter in x15
+        // M Variables loop counter (Elements processed) in x15
         kernel.add_instr(gen.base_movz(reg_x(15), 0, 0)); // mov x15, #0
         // ---------------------- M_loop ----------------------
         for (u_int32_t i_m = 0; i_m < m_32; ++i_m) {
         
-          kernel.add_label("M_loop");
           kernel.add_instr(gen.base_mov(reg_x(6), reg_x(2))); // mov x6, x2
           kernel.add_instr(gen.base_add(reg_x(6), reg_x(6), reg_x(15), shift_kind_t::lsl, 2, 0)); // add x6, x6, x15, lsl #2
           
@@ -143,32 +141,22 @@ namespace mini_jit {
           kernel.add_instr(gen.base_movz(reg_w(12), 0, 0)); // mov w12, #0
           kernel.add_instr(gen.base_movz(reg_w(13), 2, 0)); // mov w13, #2
 
-          // Load C (Teil 1) - .rept 8 
-          for (u_int32_t i = 0; i < 8; ++i) {
+          // Load C (Teil 1) - .rept 16
+          for (u_int32_t i = 0; i < 16; ++i) {
               kernel.add_instr(ldr_za(12, 0, 6));
               kernel.add_instr(ldr_za(12, 1, 6));
               kernel.add_instr(gen.base_add(reg_w(12), reg_w(12), 4, 0));
               kernel.add_instr(gen.base_add(reg_x(6), reg_x(6), reg_x(10), shift_kind_t::lsl, 0, 0));
 
-              kernel.add_instr(ldr_za(12, 0, 6));
-              kernel.add_instr(ldr_za(12, 1, 6));
-              kernel.add_instr(gen.base_add(reg_w(12), reg_w(12), 4, 0));
-              kernel.add_instr(gen.base_add(reg_x(6), reg_x(6), reg_x(10), shift_kind_t::lsl, 0, 0));
           }
 
-          // Load C (Teil 2) - .rept 8
-          for (u_int32_t i = 0; i < 8; ++i) {
-              kernel.add_instr(ldr_za(13, 0, 6));
-              kernel.add_instr(ldr_za(13, 1, 6));
-              kernel.add_instr(gen.base_add(reg_w(13), reg_w(13), 4, 0));
-              kernel.add_instr(gen.base_add(reg_x(6), reg_x(6), reg_x(10), shift_kind_t::lsl, 0, 0));
-
+          // Load C (Teil 2) - .rept 16
+          for (u_int32_t i = 0; i < 16; ++i) {
               kernel.add_instr(ldr_za(13, 0, 6));
               kernel.add_instr(ldr_za(13, 1, 6));
               kernel.add_instr(gen.base_add(reg_w(13), reg_w(13), 4, 0));
               kernel.add_instr(gen.base_add(reg_x(6), reg_x(6), reg_x(10), shift_kind_t::lsl, 0, 0));
           }
-
 
           kernel.add_instr(gen.base_mov(reg_x(7), reg_x(0))); // mov x7, x0
           kernel.add_instr(gen.base_mov(reg_x(8), reg_x(1))); // mov x8, x1
@@ -211,26 +199,16 @@ namespace mini_jit {
           kernel.add_instr(gen.base_movz(reg_w(12), 0, 0)); // mov w12, #0
           kernel.add_instr(gen.base_movz(reg_w(13), 2, 0)); // mov w13, #2
 
-          // Store C (Teil 1) - .rept 8
-          for (u_int32_t i = 0; i < 8; ++i) {
-              kernel.add_instr(str_za(12, 0, 6));
-              kernel.add_instr(str_za(12, 1, 6));
-              kernel.add_instr(gen.base_add(reg_w(12), reg_w(12), 4, 0));
-              kernel.add_instr(gen.base_add(reg_x(6), reg_x(6), reg_x(10), shift_kind_t::lsl, 0, 0));
-
+          // Store C (Teil 1) - .rept 16
+          for (u_int32_t i = 0; i < 16; ++i) {
               kernel.add_instr(str_za(12, 0, 6));
               kernel.add_instr(str_za(12, 1, 6));
               kernel.add_instr(gen.base_add(reg_w(12), reg_w(12), 4, 0));
               kernel.add_instr(gen.base_add(reg_x(6), reg_x(6), reg_x(10), shift_kind_t::lsl, 0, 0));
           }
 
-          // Store C (Teil 2) - .rept 8
-          for (u_int32_t i = 0; i < 8; ++i) {
-              kernel.add_instr(str_za(13, 0, 6));
-              kernel.add_instr(str_za(13, 1, 6));
-              kernel.add_instr(gen.base_add(reg_w(13), reg_w(13), 4, 0));
-              kernel.add_instr(gen.base_add(reg_x(6), reg_x(6), reg_x(10), shift_kind_t::lsl, 0, 0));
-
+          // Store C (Teil 2) - .rept 16
+          for (u_int32_t i = 0; i < 16; ++i) {
               kernel.add_instr(str_za(13, 0, 6));
               kernel.add_instr(str_za(13, 1, 6));
               kernel.add_instr(gen.base_add(reg_w(13), reg_w(13), 4, 0));

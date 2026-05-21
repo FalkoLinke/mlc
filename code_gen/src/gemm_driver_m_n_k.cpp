@@ -76,7 +76,7 @@ void fill_sequential(std::vector<float>& vec) {
 int main() {
     srand(time(nullptr)); 
 
-    int const M = 512;
+    int const M = 256;
     int const N = 512;
     int const K = 512;
     
