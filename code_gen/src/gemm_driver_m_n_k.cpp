@@ -1,3 +1,5 @@
+// mithilfe von KI erstellt
+
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -5,17 +7,8 @@
 #include <ctime>
 #include <chrono>
 #include <iomanip>
+#include <algorithm> // für std::max
 #include "../data/Gemm.h"
-
-
-
-typedef void (*gemm_kernel_t)(float const * a,
-                              float const * b,
-                              float       * c,
-                              int64_t       ld_a,
-                              int64_t       ld_b,
-                              int64_t       ld_c);
-
 
 // --- Universelle C++ Referenz-Implementierung für beliebige Layouts ---
 // trans_x: 0 = Column-Major (Spaltenweise), 1 = Row-Major (Zeilenweise)
@@ -72,17 +65,13 @@ void fill_sequential(std::vector<float>& vec) {
     }
 }
 
-
-int main() {
-    srand(time(nullptr)); 
-
-    int const M = 256;
-    int const N = 512;
-    int const K = 512;
-    
-    int const ld_a = M;
-    int const ld_b = N;
-    int const ld_c = K;
+// --- Ausgelagerte Test- und Benchmark-Funktion ---
+bool run_test_and_benchmark(int M, int N, int K) {
+    // Leading Dimensions: Um Speicherverletzungen zu vermeiden, müssen sie den 
+    // mathematischen Layout-Regeln folgen.
+    int const ld_a = M; // A ist M x K (trans_A=0, Col-Major) -> ld_a >= M
+    int const ld_b = N; // B ist K x N (trans_B=1, Row-Major) -> ld_b >= N
+    int const ld_c = M; // C ist M x N (trans_C=0, Col-Major) -> ld_c >= M
 
     int trans_A = 0;
     int trans_B = 1;
@@ -98,53 +87,43 @@ int main() {
     fill_sequential(c_asm); 
     c_ref = c_asm;
 
-    // ==========================================
-    // 2. KERNEL GENERIEREN & LADEN
-    // ==========================================
-    std::cout << "Generiere JIT Kernel...\n";
-    
-    mini_jit::Gemm gemm;
+    std::cout << "------------------------------------------------------------\n";
+    std::cout << " Teste M=" << M << ", N=" << N << ", K=" << K << "\n";
 
-    
+    // 1. KERNEL GENERIEREN & LADEN
+    mini_jit::Gemm gemm;
     auto status = gemm.generate(
         M, N, K, 
-        trans_A, trans_B, trans_C, // row-major für A, B und C
+        trans_A, trans_B, trans_C,
         mini_jit::Gemm::dtype_t::fp32
     );
 
     if (status != mini_jit::Gemm::error_t::success) {
-        std::cerr << "Fehler bei der Kernel-Generierung! Code: " 
+        std::cerr << " [!] Fehler bei der Kernel-Generierung! Code: " 
                   << static_cast<int>(status) << std::endl;
-        return 1;
+        return false;
     }
 
     auto gemm_kernel = gemm.get_kernel();
     if (!gemm_kernel) {
-        std::cerr << "Fehler: Kernel-Zeiger ist null!" << std::endl;
-        return 1;
+        std::cerr << " [!] Fehler: Kernel-Zeiger ist null!" << std::endl;
+        return false;
     }
 
-    // ==========================================
-    // 3. KORREKTHEIT VERIFIZIEREN
-    // ==========================================
-    std::cout << "Führe JIT Kernel aus...\n";
-    
+    // 2. KORREKTHEIT VERIFIZIEREN
     gemm_kernel(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
-    
-    // C++ Referenz aufrufen
     gemm_flexible_reference(a.data(), b.data(), c_ref.data(), M, N, K, trans_A, trans_B, trans_C, ld_a, ld_b, ld_c);
 
     bool passed = true;
     float max_diff = 0.0f;
     int error_index = -1;
 
-    for (int i = 0; i < M * N; i++) {
+    for (int i = 0; i < ld_c * N; i++) {
         float expected = c_ref[i];
         float actual = c_asm[i];
         float diff = std::abs(actual - expected);
         
         if (diff > max_diff) max_diff = diff;
-        
         float tol = std::max(1e-4f, 5e-4f * std::abs(expected));
 
         if (diff > tol && passed) {
@@ -154,31 +133,20 @@ int main() {
     }
 
     if (!passed) {
-        std::cout << "============================================\n";
-        std::cout << " FEHLGESCHLAGEN! Ergebnisse stimmen nicht überein.\n";
-        std::cout << " Erster Fehler bei Index: " << error_index 
+        std::cout << " [!] FEHLGESCHLAGEN! Ergebnisse stimmen nicht überein.\n";
+        std::cout << "     Erster Fehler bei Index: " << error_index 
                   << " (Zeile " << (error_index % ld_c) << ", Spalte " << (error_index / ld_c) << ")\n";
-        
         std::cout << std::fixed << std::setprecision(5);
-        std::cout << " Erwartet:  " << c_ref[error_index] << "\n";
-        std::cout << " Bekommen:  " << c_asm[error_index] << "\n";
-        std::cout << "============================================\n\n";
-
-        return 1; 
+        std::cout << "     Erwartet:  " << c_ref[error_index] << "\n";
+        std::cout << "     Bekommen:  " << c_asm[error_index] << "\n";
+        return false; 
     }
     
-    std::cout << "============================================\n";
-    std::cout << " VERIFIZIERUNG ERFOLGREICH!\n";
-    std::cout << std::fixed << std::setprecision(5);
-    std::cout << " Maximale Abweichung: " << max_diff << "\n";
-    std::cout << "============================================\n\n";
+    std::cout << " [✓] Verifizierung OK (Max Abweichung: " << std::fixed << std::setprecision(5) << max_diff << ")\n";
 
-    // ==========================================
-    // 4. PERFORMANCE BENCHMARKING
-    // ==========================================
-    std::cout << "Starte Benchmark...\n";
-
-    int const num_iterations = 100000; 
+    // 3. PERFORMANCE BENCHMARKING
+    
+    int const num_iterations = 200000; 
     auto start_time = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < num_iterations; i++) {
@@ -194,13 +162,45 @@ int main() {
     double total_flops = flops_per_call * num_iterations;
     double gflops = (total_flops / 1e9) / duration;
 
-    std::cout << "============================================\n";
-    std::cout << " BENCHMARK ERGEBNISSE\n";
-    std::cout << "============================================\n";
-    std::cout << " Durchlaeufe:   " << num_iterations << "\n";
-    std::cout << " Gesamtzeit:    " << duration << " Sekunden\n";
-    std::cout << " Performance:   " << gflops << " GFLOPS\n";
-    std::cout << "============================================\n";
+    // --- DIAGNOSTIK-PRINT (Zeigt uns die nackte Wahrheit, falls cout spinnt) ---
+    //std::cout << "  [DEBUG RAW] total_flops: " << total_flops << " | duration: " << duration << " | gflops_raw: " << gflops << "  " << flops_per_call <<"\n";
+
+    // Schöne Ausgabe
+    std::cout << " [~] Benchmark: " << num_iterations << " Durchläufe | " 
+              << std::fixed << std::setprecision(3) << duration << " Sekunden | "
+              << std::fixed << std::setprecision(1) << gflops << " GFLOPS\n";
+
+    return true;
+}
+
+
+int main() {
+    srand(time(nullptr)); 
+
+    // Die zu testenden Dimensionen
+    std::vector<int> sizes = {64, 128, 512};
+    
+    std::cout << "============================================================\n";
+    std::cout << " STARTE JIT GEMM TESTS FÜR ALLE KOMBINATIONEN\n";
+    std::cout << "============================================================\n";
+
+    // Alle Kombinationen durchiterieren
+    for (int m : sizes) {
+        for (int n : sizes) {
+            for (int k : sizes) {
+                // Führe Test aus. Wenn er fehlschlägt, brich das Programm ab.
+                if (!run_test_and_benchmark(m, n, k)) {
+                    std::cerr << "\n[!] Testreihe abgebrochen wegen Fehler bei M=" 
+                              << m << ", N=" << n << ", K=" << k << "!\n";
+                    return 1;
+                }
+            }
+        }
+    }
+    
+    std::cout << "============================================================\n";
+    std::cout << " ALLE TESTS ERFOLGREICH ABGESCHLOSSEN!\n";
+    std::cout << "============================================================\n";
 
     return 0;
 }

@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <stdbool.h>
 #include "../data/Gemm.h"
 #include "Kernel.h"
 #include "InstGen.h"
@@ -106,8 +107,8 @@ namespace mini_jit {
       uint32_t m_32 = m / 32;
       uint32_t n_32 = n / 32;
 
-      uint32_t m_rest = m - m_32 * 32;
-      uint32_t n_rest = n - n_32 * 32;
+      //uint32_t m_rest = m - m_32 * 32;
+      //uint32_t n_rest = n - n_32 * 32;
 
       //kernel.add_instr(gen.base_smstart());
       kernel.add_instr(0xd503477f);
@@ -144,7 +145,9 @@ namespace mini_jit {
           // Load C (Teil 1) - .rept 16
           for (u_int32_t i = 0; i < 16; ++i) {
               kernel.add_instr(ldr_za(12, 0, 6));
+              //kernel.add_instr(ld1w_za(0, 0, 14, 0, 0, 6, 31));
               kernel.add_instr(ldr_za(12, 1, 6));
+              //kernel.add_instr(ld1w_za(1, 0, 14, 0, 0, 6, 31));
               kernel.add_instr(gen.base_add(reg_w(12), reg_w(12), 4, 0));
               kernel.add_instr(gen.base_add(reg_x(6), reg_x(6), reg_x(10), shift_kind_t::lsl, 0, 0));
 

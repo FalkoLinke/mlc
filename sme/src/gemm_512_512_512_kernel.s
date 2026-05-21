@@ -53,6 +53,7 @@ M_loop:
     
     .rept 8
     ldr za[w12, #0], [x6, #0, mul vl]
+    //ld1w    { za0h.S[w12, 0] }, p0/Z, [x6]
     ldr za[w12, #1], [x6, #1, mul vl]
     add w12, w12, #4
     add x6, x6, x10
