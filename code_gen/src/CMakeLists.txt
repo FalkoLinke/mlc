@@ -44,3 +44,13 @@ add_executable(gemm_driver_512_512_512.out
 )
 target_compile_options(gemm_driver_512_512_512.out PRIVATE ${CXX_FLAGS})
 
+add_executable(gemm_driver_M_N_K.out 
+    gemm_driver_M_N_K.cpp 
+    Gemm.cpp 
+    Kernel.cpp 
+    InstGen.cpp 
+    LabeledBranch.cpp 
+    BranchRef.cpp
+)
+target_compile_options(gemm_driver_M_N_K.out PRIVATE ${CXX_FLAGS})
+
