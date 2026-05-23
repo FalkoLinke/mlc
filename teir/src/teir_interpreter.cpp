@@ -125,6 +125,18 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
                     axis_n->strides[primitive_tensor_idxs[0]] / 4,
                     axis_n->strides[primitive_tensor_idxs[1]] / 4
                 );
+
+            } else if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_n->strides[primitive_tensor_idxs[1]] == 4) {
+                Unary unary;
+                unary.generate(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::identity);
+                Unary::kernel_t kernel = unary.get_kernel();
+
+                kernel(
+                    (float const*)tensors[primitive_tensor_idxs[0]],
+                    (float*)tensors[primitive_tensor_idxs[1]],
+                    axis_n->strides[primitive_tensor_idxs[0]] / 4,
+                    axis_m->strides[primitive_tensor_idxs[1]] / 4
+                );
             }
         }
 

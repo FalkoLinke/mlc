@@ -197,3 +197,61 @@ TEST_CASE( "abc->abc", "[test]") {
     bool result = b == c;
     REQUIRE(result);
 }
+
+TEST_CASE( "abc->acb", "[test]") {
+    uint64_t const da = 64;
+    uint64_t const db = 64;
+    uint64_t const dc = 64;
+    
+    uint64_t const in0_sc = sizeof(float);
+    uint64_t const in0_sb = dc * in0_sc;
+    uint64_t const in0_sa = db * in0_sb;
+
+    uint64_t const out_sb = sizeof(float);
+    uint64_t const out_sc = db * out_sb;
+    uint64_t const out_sa = dc * out_sc;
+
+    std::vector<float> a(da * db * dc, 0.0f);
+    std::vector<float> b(da * db * dc, 0.0f);
+    std::vector<float> c(da * db * dc, 0.0f);
+    fill_indices(a.data(), a.size());
+
+    teir_operation abc_acb_op(
+        "abc->acb",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
+            teir_axis("b", db, {in0_sb, out_sb}, {0, 0}),
+            teir_axis("c", dc, {in0_sc, out_sc}, {0, 0}),
+        },
+        {
+            teir_primitive(
+                "copy",
+                teir_ptype_t::ptype_copy,
+                { "in0", "out" },
+                {{"M", {"c"}}, {"N", {"b"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"iter_a"},
+            {
+                teir_iter_node("iter_a", "a", teir_policy_t::policy_sequential, {"inv_copy"}),
+            },
+            {
+                teir_inv_node("inv_copy", "copy")
+            }
+        )
+    );
+
+    std::vector<void*> args = {a.data(), b.data()};
+    teir_interpreter interpreter(abc_acb_op, args);
+    interpreter.run();
+    teir_abc_acb(a.data(), c.data(), da, db, dc);
+
+    bool result = b == c;
+    REQUIRE(result);
+}

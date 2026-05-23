@@ -92,7 +92,26 @@ void teir_abcd_dcba_v2(T const* in0, T* out, uint64_t da, uint64_t db, uint64_t 
     */
 }
 
+template <typename T>
+void teir_abc_acb(T const* in0, T* out, uint64_t da, uint64_t db, uint64_t dc) {
+    uint64_t in0_sc = 1;
+    uint64_t in0_sb = dc * in0_sc;
+    uint64_t in0_sa = db * in0_sb;
 
+    uint64_t out_sb = 1;
+    uint64_t out_sc = db * out_sb;
+    uint64_t out_sa = dc * out_sc;
+
+    for (uint64_t ia = 0; ia < da; ia++) {
+        for (uint64_t ib = 0; ib < db; ib++) {
+            for (uint64_t ic = 0; ic < dc; ic++) {
+                T const* in0_ptr = in0 + ia * in0_sa + ib * in0_sb + ic * in0_sc;
+                T* out_ptr       = out + ia * out_sa + ib * out_sb + ic * out_sc;
+                *out_ptr = *in0_ptr;
+            }
+        }
+    }
+}
 
 
 
