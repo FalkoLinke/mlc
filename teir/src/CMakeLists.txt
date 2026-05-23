@@ -16,7 +16,18 @@ FetchContent_MakeAvailable(Catch2)
 set(CXX_FLAGS -Wall -Wextra -march=armv9.2-a+nosve+sme -O3)
 
 
-add_executable(teir_tests.out teir_tests.cpp teir.cpp teir_interpreter.cpp)
+add_executable(teir_tests.out 
+  teir_tests.cpp 
+  teir.cpp 
+  teir_interpreter.cpp 
+  teir_compiler.cpp
+  BranchRef.cpp 
+  Gemm.cpp 
+  InstGen.cpp 
+  Kernel.cpp 
+  LabeledBranch.cpp
+  Unary.cpp
+)
 target_compile_options(teir_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(teir_tests.out PRIVATE Catch2::Catch2WithMain)
 

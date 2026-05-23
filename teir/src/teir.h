@@ -138,7 +138,9 @@ struct teir_operation {
         teir_operation(std::string id, std::vector<teir_tensor> tensors, std::vector<teir_axis> axes, std::vector<teir_primitive> primitives, teir_schedule schedule);
 
         teir_axis const* resolve_axis_id(std::string const& id) const;
+
         teir_primitive const* resolve_primitive_id(std::string const& id) const;
+        uint64_t resolve_primitive_id_idx(std::string const& id) const;
 
         uint64_t resolve_tensor_id(std::string const& id) const;
 };

@@ -89,6 +89,15 @@ teir_primitive const* teir_operation::resolve_primitive_id(std::string const& id
     return nullptr;
 }
 
+uint64_t teir_operation::resolve_primitive_id_idx(std::string const& id) const {
+    for (uint64_t i = 0; i < primitives.size(); i++) {
+        if (primitives[i].id == id) {
+            return i;
+        }
+    }
+    return ~0;
+}
+
 uint64_t teir_operation::resolve_tensor_id(std::string const& id) const {
     for (uint64_t i = 0; i < tensors.size(); i++) {
         if (tensors[i].id == id) {
