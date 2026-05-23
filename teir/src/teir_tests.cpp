@@ -44,7 +44,7 @@ TEST_CASE( "ab->ab", "[test]") {
         "ab->ba",
         {
             teir_tensor("in0", teir_dtype_t::dtype_fp32),
-            teir_tensor("out", teir_dtype_t::dtype_fp64),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
         },
         {
             teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
@@ -97,7 +97,7 @@ TEST_CASE( "ab->ba", "[test]") {
         "ab->ba",
         {
             teir_tensor("in0", teir_dtype_t::dtype_fp32),
-            teir_tensor("out", teir_dtype_t::dtype_fp64),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
         },
         {
             teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
