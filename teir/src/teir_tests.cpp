@@ -255,3 +255,73 @@ TEST_CASE( "abc->acb", "[test]") {
     bool result = b == c;
     REQUIRE(result);
 }
+
+
+
+
+
+
+
+TEST_CASE( "RELU abc->acb", "[test]") {
+    uint64_t const da = 64;
+    uint64_t const db = 64;
+    uint64_t const dc = 64;
+    
+    uint64_t const in0_sc = sizeof(float);
+    uint64_t const in0_sb = dc * in0_sc;
+    uint64_t const in0_sa = db * in0_sb;
+
+    uint64_t const out_sb = sizeof(float);
+    uint64_t const out_sc = db * out_sb;
+    uint64_t const out_sa = dc * out_sc;
+
+    std::vector<float> a(da * db * dc, 0.0f);
+    std::vector<float> b(da * db * dc, 0.0f);
+    std::vector<float> c(da * db * dc, 0.0f);
+    for (uint64_t i = 0; i < a.size(); i++) {
+        a[i] = (i % 2 == 0) ? i : -i;
+    }
+
+    teir_operation relu_abc_acb_op(
+        "RELU abc->acb",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
+            teir_axis("b", db, {in0_sb, out_sb}, {0, 0}),
+            teir_axis("c", dc, {in0_sc, out_sc}, {0, 0}),
+        },
+        {
+            teir_primitive(
+                "relu",
+                teir_ptype_t::ptype_relu,
+                { "in0", "out" },
+                {{"M", {"c"}}, {"N", {"b"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"iter_a"},
+            {
+                teir_iter_node("iter_a", "a", teir_policy_t::policy_sequential, {"inv_relu"}),
+            },
+            {
+                teir_inv_node("inv_relu", "relu")
+            }
+        )
+    );
+
+    std::vector<void*> args = {a.data(), b.data()};
+    teir_interpreter interpreter(relu_abc_acb_op, args);
+    interpreter.run();
+
+    teir_abc_acb(a.data(), c.data(), da, db, dc);
+    for (uint64_t i = 0; i < c.size(); i++) {
+        c[i] = fmax(c[i], 0.0f);
+    }
+
+    bool result = b == c;
+    REQUIRE(result);
+}
