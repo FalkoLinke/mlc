@@ -78,7 +78,7 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
     // resolve primitive arguments
     std::vector<uint64_t> primitive_tensor_idxs;
     for (std::string const& tensor_id : primitive->tensors) {
-        uint64_t tensor_idx = operation.resolve_tensor_id(tensor_id);
+        uint64_t tensor_idx = operation.resolve_tensor_id_idx(tensor_id);
         primitive_tensor_idxs.push_back(tensor_idx);
     }
 
