@@ -261,6 +261,8 @@ class mini_jit::InstGen {
 
     static uint32_t base_blr( gpr_t rn );
 
+    static uint32_t base_brk( uint32_t imm16 );
+
     static uint32_t base_b_cond( int32_t imm19, br_cond_t cond );
 
     static LabeledBranch base_b_cond( std::string label, br_cond_t cond );

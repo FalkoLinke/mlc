@@ -66,6 +66,14 @@ uint32_t mini_jit::InstGen::base_blr( gpr_t rn ) {
   return ins;
 }
 
+uint32_t mini_jit::InstGen::base_brk( uint32_t imm16 ) {
+  uint32_t ins = 0xd4200000;
+
+  ins |= (imm16 & 0xffff) << 5;
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::base_b_cond( int32_t imm19, br_cond_t cond ) {
   uint32_t ins = 0x54000000;
 

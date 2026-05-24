@@ -185,8 +185,7 @@ bool teir_compiler::lower_zero_tile(teir_operation const& operation, teir_primit
     kernel.add_instr(ig.base_movz(InstGen::gpr_t::x2, 0));
     kernel.add_instr(ig.base_movz(InstGen::gpr_t::x3, axis_n->strides[tensor_idxs[0]] / 4));
 
-    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x7, primitive_idx * 8));
-    kernel.add_instr(ig.base_add(InstGen::gpr_t::x7, InstGen::gpr_t::x27, InstGen::gpr_t::x7));
+    kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x7, InstGen::gpr_t::x27, primitive_idx * 8, InstGen::addr_mode_t::unsigned_offset));
     kernel.add_instr(ig.base_blr(InstGen::gpr_t::x7));
 
     return true;
@@ -225,15 +224,19 @@ void teir_compiler::compile(teir_operation const& operation) {
     // we make sure to store this after we finished initializing the table to avoid the data pointer changing
     // due to vector reallocations
     void** dispatch_table = kernel_functions.data();
-    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff));
-    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff00, 16));
-    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff0000, 32));
-    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff000000, 48));
+    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xffff));
+    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, (((uint64_t)dispatch_table) & 0xffff0000) >> 16, 16));
+    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, (((uint64_t)dispatch_table) & 0xffff00000000) >> 32, 32));
+    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, (((uint64_t)dispatch_table) & 0xffff000000000000) >> 48, 48));
+
+    std::cout << std::hex << reinterpret_cast<uint64_t>(dispatch_table) << std::endl;
 
     // generate the loop kernel around the primitives
     for (std::string const& root : operation.schedule.roots) {
         iterate(operation, root, {}, {});
     }
+
+    std::cout << std::hex << reinterpret_cast<uint64_t>(dispatch_table) << std::endl;
 
     // finish kernel
     kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x27, InstGen::gpr_t::x28, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
