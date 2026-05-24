@@ -39,6 +39,9 @@ struct teir_compiler {
         std::vector<uint64_t> resolve_tensor_labels(teir_operation const& operation, teir_primitive const& primitive) const;
         bool lower_zero_scalar(teir_operation const& operation, teir_primitive const& primitive);
         bool lower_zero_tile(teir_operation const& operation, teir_primitive const& primitive);
+        bool lower_identity_scalar(teir_operation const& operation, teir_primitive const& primitive);
+        bool lower_identity_tile_notrans(teir_operation const& operation, teir_primitive const& primitive);
+        bool lower_identity_tile_trans(teir_operation const& operation, teir_primitive const& primitive);
 
         void iterate(teir_operation const& operation, std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
         void invoke(teir_operation const& operation, teir_inv_node const* inv_node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
