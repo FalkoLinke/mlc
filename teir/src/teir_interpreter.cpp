@@ -250,7 +250,7 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
 
 uint64_t teir_interpreter::resolve_tensor_id_idx(teir_operation const& operation, std::string const& id) const {
     uint64_t result = operation.resolve_tensor_id_idx(id);
-    if (result == ~0) {
+    if (result == ~((uint64_t)0)) {
         throw teir_err_unresolved_tensor_id;
     }
     return result;
