@@ -229,14 +229,10 @@ void teir_compiler::compile(teir_operation const& operation) {
     kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, (((uint64_t)dispatch_table) & 0xffff00000000) >> 32, 32));
     kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, (((uint64_t)dispatch_table) & 0xffff000000000000) >> 48, 48));
 
-    std::cout << std::hex << reinterpret_cast<uint64_t>(dispatch_table) << std::endl;
-
     // generate the loop kernel around the primitives
     for (std::string const& root : operation.schedule.roots) {
         iterate(operation, root, {}, {});
     }
-
-    std::cout << std::hex << reinterpret_cast<uint64_t>(dispatch_table) << std::endl;
 
     // finish kernel
     kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x27, InstGen::gpr_t::x28, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
