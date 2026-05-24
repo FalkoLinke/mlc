@@ -11,10 +11,10 @@ namespace mini_jit {
 
 class mini_jit::Unary {
   public: 
-      /// error codes
+    /// error codes
     enum class error_t : int32_t {
       success = 0,
-      unsupported_args = 1,
+      unsupported_parameters = 1,
     };
     /// data type
     enum class dtype_t : uint32_t {
@@ -30,16 +30,31 @@ class mini_jit::Unary {
     };
 
   private:
+    /** The memory to write the instructions into. */
     Kernel kernel;
 
-    error_t generate_identity_notrans_fp32(uint32_t m, uint32_t n);
-    error_t generate_identity_fp32(uint32_t m, uint32_t n, uint32_t trans_b);
+    /**
+     * @brief Generate a microkernel for a unary primitive on 16x16 input matrices.
+     * 
+     * The generated kernel follows the default ABI.
+     * 
+     * The generated kernel has the signature of `Unary::kernel_t`.
+     * 
+     * @param ptype   Primitive type.
+     * @param trans_b 0 if B is stored in column-major order, 1 if B is stored in row-major order.
+     * @return error_t::success on success, another error_t value otherwise.
+     **/
     error_t generate_16x16_microkernel(ptype_t op, uint32_t trans_b);
 
   public:
 
     /**
      * @brief Generate a kernel for a unary primitive.
+     * 
+     * The generated kernel follows the default ABI.
+     * 
+     * The generated kernel has the signature of `Unary::kernel_t`.
+     * 
      * @param m       Number of rows in A and B.
      * @param n       Number of columns in A and B.
      * @param trans_b 0 if B is stored in column-major order, 1 if B is stored in row-major order.
@@ -71,6 +86,10 @@ class mini_jit::Unary {
      **/
     kernel_t get_kernel() const;
 
+    /**
+     * @brief Write the instruction words to a file.
+     * @param fp: The file path.
+     */
     void write(const char* fp) const;
 };
 
