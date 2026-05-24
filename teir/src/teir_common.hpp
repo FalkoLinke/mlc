@@ -196,7 +196,15 @@ void fill_indices(T* mat, uint64_t m, uint64_t n, int64_t ld) {
 
 
 
-
+/**
+ * @brief Checks if all of the elements of A and B are equal using the default equality operator.
+ * @param a: Column major matrix A.
+ * @param b: Column major matrix B.
+ * @param m: Number of rows of A.
+ * @param n: Number of columns of B.
+ * @param lda: Leading dimension of A.
+ * @param ldb: Leading dimension of B.
+ */
 template <typename T>
 bool mats_equal(T const* a, T const* b, uint64_t m, uint64_t n, int64_t lda, int64_t ldb) {
     for (uint64_t c = 0; c < n; c++) {
@@ -209,6 +217,13 @@ bool mats_equal(T const* a, T const* b, uint64_t m, uint64_t n, int64_t lda, int
     return true;
 }
 
+/**
+ * @brief Checks if all of the elements of A and B are equal using the default equality operator.
+ * @param a: Column major matrix A.
+ * @param b: Column major matrix B.
+ * @param m: Number of rows of A.
+ * @param n: Number of columns of B.
+ */
 template <typename T>
 bool mats_equal(T const* a, T const* b, uint64_t m, uint64_t n) {
     return mats_equal<T>(a, b, m, n, m, m);
@@ -222,7 +237,19 @@ bool mats_equal(T const* a, T const* b, uint64_t m, uint64_t n) {
 
 
 
-
+/**
+ * @brief Performs an identity operation from A into B.
+ * 
+ * `a` and `b` may point to the same matrix.
+ * 
+ * @param a: The column-major matrix A.
+ * @param b: The matrix B.
+ * @param m: Number of rows of A.
+ * @param n: Number of columns of A.
+ * @param lda: The leading dimension of A.
+ * @param ldb: The leading dimension of B.
+ * @param trans_b: Column-major matrix B if `false`, row-major otherwise.
+ */
 template <typename T>
 void identity(T const* a, T* b, uint64_t m, uint64_t n, int64_t lda, int64_t ldb, bool trans_b) {
     int64_t sbc = trans_b ? 1 : ldb;
@@ -235,11 +262,33 @@ void identity(T const* a, T* b, uint64_t m, uint64_t n, int64_t lda, int64_t ldb
     }
 }
 
+/**
+ * @brief Performs an zero operation on A.
+ * 
+ * @param a: The column-major matrix A.
+ * @param m: Number of rows of A.
+ * @param n: Number of columns of A.
+ * @param lda: The leading dimension of A.
+ */
 template <typename T>
 void zero(T* a, uint64_t m, uint64_t n, int64_t lda) {
     fill_const(a, m, n, lda, static_cast<T>(0));
 }
 
+
+/**
+ * @brief Performs an relu operation from A into B.
+ * 
+ * `a` and `b` may point to the same matrix.
+ * 
+ * @param a: The column-major matrix A.
+ * @param b: The matrix B.
+ * @param m: Number of rows of A.
+ * @param n: Number of columns of A.
+ * @param lda: The leading dimension of A.
+ * @param ldb: The leading dimension of B.
+ * @param trans_b: Column-major matrix B if `false`, row-major otherwise.
+ */
 template <typename T>
 void relu(T const* a, T* b, uint64_t m, uint64_t n, int64_t lda, int64_t ldb, bool trans_b) {
     int64_t sbc = trans_b ? 1 : ldb;
@@ -265,7 +314,13 @@ void relu(T const* a, T* b, uint64_t m, uint64_t n, int64_t lda, int64_t ldb, bo
 
 
 
-
+/**
+ * @brief Prints the m x n matrix A to stdout.
+ * @param a: The column major matrix A.
+ * @param m: The number of rows of A.
+ * @param n: The number of columns of A.
+ * @param lda: The leading dimension of A.
+ */
 template <typename T>
 void print_mat(T const* a, uint64_t m, uint64_t n, int64_t lda) {
     for (uint64_t r = 0; r < m; r++) {

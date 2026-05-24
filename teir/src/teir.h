@@ -142,7 +142,7 @@ struct teir_operation {
         teir_primitive const* resolve_primitive_id(std::string const& id) const;
         uint64_t resolve_primitive_id_idx(std::string const& id) const;
 
-        uint64_t resolve_tensor_id(std::string const& id) const;
+        uint64_t resolve_tensor_id_idx(std::string const& id) const;
 };
 
 

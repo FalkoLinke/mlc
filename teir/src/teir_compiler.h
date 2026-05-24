@@ -8,6 +8,7 @@
 #include "InstGen.h"
 #include "Unary.h"
 #include "Gemm.h"
+#include "UnaryCache.h"
 
 
 
@@ -29,14 +30,16 @@ struct teir_compiler {
             mini_jit::InstGen::gpr_t::x26,
         };
 
-        std::vector<std::unique_ptr<mini_jit::Unary>> unary_kernels;
-        std::vector<std::unique_ptr<mini_jit::Gemm>> gemm_kernels;
+        UnaryCache unary_cache;
 
         std::vector<void*> kernel_functions;
         mini_jit::Kernel kernel;
         mini_jit::InstGen ig;
 
-        void prepare_primitive(teir_operation const& operation, teir_primitive const& primitive);
+        std::vector<uint64_t> resolve_tensor_labels(teir_operation const& operation, teir_primitive const& primitive) const;
+        bool lower_zero_scalar(teir_operation const& operation, teir_primitive const& primitive);
+        bool lower_zero_tile(teir_operation const& operation, teir_primitive const& primitive);
+
         void iterate(teir_operation const& operation, std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
         void invoke(teir_operation const& operation, teir_inv_node const* inv_node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
 

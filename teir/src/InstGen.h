@@ -261,6 +261,8 @@ class mini_jit::InstGen {
 
     static uint32_t base_blr( gpr_t rn );
 
+    static uint32_t base_brk( uint32_t imm16 );
+
     static uint32_t base_b_cond( int32_t imm19, br_cond_t cond );
 
     static LabeledBranch base_b_cond( std::string label, br_cond_t cond );
@@ -286,7 +288,11 @@ class mini_jit::InstGen {
 
     static uint32_t base_ldr( gpr_t rt, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
+    static uint32_t base_lsl( gpr_t rd, gpr_t rn, gpr_t rm );
+
     static uint32_t base_mov( gpr_t rd, gpr_t rm );
+
+    static uint32_t base_movk( gpr_t rd, uint32_t imm16, uint32_t shift = 0x0);
 
     static uint32_t base_movz( gpr_t rd, uint32_t imm16, uint32_t shift = 0x0);
 
@@ -295,6 +301,8 @@ class mini_jit::InstGen {
     static uint32_t base_ret( gpr_t reg = gpr_t::x30 );
 
     static uint32_t base_stp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
+
+    static uint32_t base_str( gpr_t rt, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
     static uint32_t base_sub( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1 = 0x0);
 
