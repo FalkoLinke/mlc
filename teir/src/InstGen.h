@@ -286,6 +286,8 @@ class mini_jit::InstGen {
 
     static uint32_t base_ldr( gpr_t rt, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
+    static uint32_t base_lsl( gpr_t rd, gpr_t rn, gpr_t rm );
+
     static uint32_t base_mov( gpr_t rd, gpr_t rm );
 
     static uint32_t base_movk( gpr_t rd, uint32_t imm16, uint32_t shift = 0x0);
