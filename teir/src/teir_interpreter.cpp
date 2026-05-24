@@ -58,7 +58,7 @@ std::vector<void*> teir_interpreter::indexed_tensors(std::vector<teir_axis const
 void teir_interpreter::iterate(std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<uint64_t> index_path) {
     teir_iter_node const* iter_node = nullptr;
     if ((iter_node = operation.schedule.resolve_iter_id(node)) != nullptr) {
-        teir_axis const* axis = resolve_axis_id(operation, iter_node->axis);
+        teir_axis const* axis = resolve_axis_id(iter_node->axis);
 
         for (uint64_t i = 0; i < axis->extent; i++) {
             for (std::string const& child_id : iter_node->children) {
@@ -83,7 +83,7 @@ void teir_interpreter::iterate(std::string const& node, std::vector<teir_axis co
 
 
 void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axis const*> axis_path, std::vector<uint64_t> index_path) {
-    teir_primitive const* primitive = resolve_primitive_id(operation, inv_node->primitive);
+    teir_primitive const* primitive = resolve_primitive_id(inv_node->primitive);
 
     // compute tensor addresses to pass into the kernel
     std::vector<void*> tensors = indexed_tensors(axis_path, index_path);
@@ -91,7 +91,7 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
     // resolve primitive arguments
     std::vector<uint64_t> primitive_tensor_idxs;
     for (std::string const& tensor_id : primitive->tensors) {
-        uint64_t tensor_idx = resolve_tensor_id_idx(operation, tensor_id);
+        uint64_t tensor_idx = resolve_tensor_id_idx(tensor_id);
         primitive_tensor_idxs.push_back(tensor_idx);
     }
 
@@ -105,8 +105,8 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
 
     if (primitive->ptype == teir_ptype_t::ptype_zero) {
         if (primitive->axes.at("M").size() == 1 && primitive->axes.at("N").size() == 1) {
-            teir_axis const* axis_m = resolve_axis_id(operation, primitive->axes.at("M")[0]);
-            teir_axis const* axis_n = resolve_axis_id(operation, primitive->axes.at("N")[0]);
+            teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
+            teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4) {
                 Unary unary;
                 Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::zero);
@@ -136,8 +136,8 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
 
     if (primitive->ptype == teir_ptype_t::ptype_copy) {
         if (primitive->axes.at("M").size() == 1 && primitive->axes.at("N").size() == 1) {
-            teir_axis const* axis_m = resolve_axis_id(operation, primitive->axes.at("M")[0]);
-            teir_axis const* axis_n = resolve_axis_id(operation, primitive->axes.at("N")[0]);
+            teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
+            teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_m->strides[primitive_tensor_idxs[1]] == 4) {
                 Unary unary;
                 Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::identity);
@@ -159,8 +159,8 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
 
     if (primitive->ptype == teir_ptype_t::ptype_copy) {
         if (primitive->axes.at("M").size() == 1 && primitive->axes.at("N").size() == 1) {
-            teir_axis const* axis_m = resolve_axis_id(operation, primitive->axes.at("M")[0]);
-            teir_axis const* axis_n = resolve_axis_id(operation, primitive->axes.at("N")[0]);
+            teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
+            teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_n->strides[primitive_tensor_idxs[1]] == 4) {
                 Unary unary;
                 Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::identity);
@@ -198,8 +198,8 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
 
     if (primitive->ptype == teir_ptype_t::ptype_relu) {
         if (primitive->axes.at("M").size() == 1 && primitive->axes.at("N").size() == 1) {
-            teir_axis const* axis_m = resolve_axis_id(operation, primitive->axes.at("M")[0]);
-            teir_axis const* axis_n = resolve_axis_id(operation, primitive->axes.at("N")[0]);
+            teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
+            teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_m->strides[primitive_tensor_idxs[1]] == 4) {
                 Unary unary;
                 Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::relu);
@@ -221,8 +221,8 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
 
     if (primitive->ptype == teir_ptype_t::ptype_relu) {
         if (primitive->axes.at("M").size() == 1 && primitive->axes.at("N").size() == 1) {
-            teir_axis const* axis_m = resolve_axis_id(operation, primitive->axes.at("M")[0]);
-            teir_axis const* axis_n = resolve_axis_id(operation, primitive->axes.at("N")[0]);
+            teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
+            teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_n->strides[primitive_tensor_idxs[1]] == 4) {
                 Unary unary;
                 Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::relu);
@@ -259,7 +259,7 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
 
 
 
-uint64_t teir_interpreter::resolve_tensor_id_idx(teir_operation const& operation, std::string const& id) const {
+uint64_t teir_interpreter::resolve_tensor_id_idx(std::string const& id) const {
     uint64_t result = operation.resolve_tensor_id_idx(id);
     if (result == ~((uint64_t)0)) {
         throw teir_err_unresolved_tensor_id;
@@ -267,7 +267,7 @@ uint64_t teir_interpreter::resolve_tensor_id_idx(teir_operation const& operation
     return result;
 }
 
-teir_axis const* teir_interpreter::resolve_axis_id(teir_operation const& operation, std::string const& id) const {
+teir_axis const* teir_interpreter::resolve_axis_id(std::string const& id) const {
     teir_axis const* result = operation.resolve_axis_id(id);
     if (result == nullptr) {
         throw teir_err_unresolved_axis_id;
@@ -275,7 +275,7 @@ teir_axis const* teir_interpreter::resolve_axis_id(teir_operation const& operati
     return result;
 }
 
-teir_primitive const* teir_interpreter::resolve_primitive_id(teir_operation const& operation, std::string const& id) const {
+teir_primitive const* teir_interpreter::resolve_primitive_id(std::string const& id) const {
     teir_primitive const* result = operation.resolve_primitive_id(id);
     if (result == nullptr) {
         throw teir_err_unresolved_primitive_id;
@@ -283,7 +283,7 @@ teir_primitive const* teir_interpreter::resolve_primitive_id(teir_operation cons
     return result;
 }
 
-teir_iter_node const* teir_interpreter::resolve_iter_node_id(teir_operation const& operation, std::string const& id) const {
+teir_iter_node const* teir_interpreter::resolve_iter_node_id(std::string const& id) const {
     teir_iter_node const* result = operation.schedule.resolve_iter_id(id);
     if (result == nullptr) {
         throw teir_err_unresolved_iter_node_id;
@@ -291,7 +291,7 @@ teir_iter_node const* teir_interpreter::resolve_iter_node_id(teir_operation cons
     return result;
 }
 
-teir_inv_node const* teir_interpreter::resolve_inv_node_id(teir_operation const& operation, std::string const& id) const {
+teir_inv_node const* teir_interpreter::resolve_inv_node_id(std::string const& id) const {
     teir_inv_node const* result = operation.schedule.resolve_inv_id(id);
     if (result == nullptr) {
         throw teir_err_unresolved_inv_node_id;
