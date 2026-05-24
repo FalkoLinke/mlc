@@ -239,6 +239,26 @@ uint32_t mini_jit::InstGen::base_stp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t i
   return ins;
 }
 
+uint32_t mini_jit::InstGen::base_str( gpr_t rt, gpr_t rn, uint32_t imm, addr_mode_t addr_mode) {
+  uint32_t ins = 0xb9000000;
+
+  ins |= (rt & 0x1f);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (rt & 0x20) << (30-5);
+
+  if (addr_mode == addr_mode_t::unsigned_offset) {
+    uint32_t imm12 = imm >> (((rt & 0x20) == 0) ? 2 : 3);
+    ins |= (imm12 & 0xfff) << 10;
+    ins |= 1 << 24;
+
+  } else {
+    ins |= (addr_mode & 0x3) << 10;
+    ins |= (imm & 0x1ff) << 12;
+  }
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::base_smstart( ssve_spec_t spec ) {
   uint32_t ins = 0xD503417F;
 

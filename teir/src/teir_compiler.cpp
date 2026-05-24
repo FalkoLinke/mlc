@@ -41,6 +41,9 @@ void teir_compiler::prepare_primitive(teir_operation const& operation, teir_prim
 
 
 void teir_compiler::iterate(teir_operation const& operation, std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<InstGen::gpr_t> index_path) {
+    // TODO: handle bit length constraints on offsets, strides and extents
+
+    // check if id resolves to an iteration node
     teir_iter_node const* iter_node = nullptr;
     if ((iter_node = operation.schedule.resolve_iter_id(node)) != nullptr) {
         teir_axis const* axis = operation.resolve_axis_id(iter_node->axis);
@@ -49,10 +52,20 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
         std::string loop_start_label = iter_node->id + "_loop";
         std::string loop_end_label = iter_node->id + "_end";
 
+        // apply offsets to tensors
+        for (uint64_t i = 0; i < operation.tensors.size(); i++) {
+            kernel.add_instr(ig.base_movz(InstGen::gpr_t::x0, axis->offsets[i]));
+            kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
+            kernel.add_instr(ig.base_add(InstGen::gpr_t::x2, InstGen::gpr_t::x0, InstGen::gpr_t::x1));
+            kernel.add_instr(ig.base_str(InstGen::gpr_t::x2, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
+        }
+
+        // loop start
         kernel.add_instr(ig.base_movz(reg, axis->extent));
         kernel.add_label(loop_start_label);
         kernel.add_branch(ig.base_cbz(reg, loop_end_label));
 
+        // loop body
         for (std::string const& child_id : iter_node->children) {
             std::vector<teir_axis const*> ap = axis_path;
             std::vector<InstGen::gpr_t> ip = index_path;
@@ -61,19 +74,45 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
             iterate(operation, child_id, ap, ip);
         }
 
+        // apply strides to tensors
+        for (uint64_t i = 0; i < operation.tensors.size(); i++) {
+            kernel.add_instr(ig.base_movz(InstGen::gpr_t::x0, axis->strides[i]));
+            kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
+            kernel.add_instr(ig.base_add(InstGen::gpr_t::x2, InstGen::gpr_t::x0, InstGen::gpr_t::x1));
+            kernel.add_instr(ig.base_str(InstGen::gpr_t::x2, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
+        }
+
+        // loop end
         kernel.add_instr(ig.base_sub(reg, reg, 1));
         kernel.add_branch(ig.base_b(loop_start_label));
         kernel.add_label(loop_end_label);
 
+        // remove total strides from tensors
+        for (uint64_t i = 0; i < operation.tensors.size(); i++) {
+            kernel.add_instr(ig.base_movz(InstGen::gpr_t::x0, axis->strides[i] * axis->extent));
+            kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
+            kernel.add_instr(ig.base_sub(InstGen::gpr_t::x2, InstGen::gpr_t::x1, InstGen::gpr_t::x0));
+            kernel.add_instr(ig.base_str(InstGen::gpr_t::x2, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));        
+        }
+        // remove offsets from tensors
+        for (uint64_t i = 0; i < operation.tensors.size(); i++) {
+            kernel.add_instr(ig.base_movz(InstGen::gpr_t::x0, axis->offsets[i]));
+            kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
+            kernel.add_instr(ig.base_sub(InstGen::gpr_t::x2, InstGen::gpr_t::x1, InstGen::gpr_t::x0));
+            kernel.add_instr(ig.base_str(InstGen::gpr_t::x2, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
+        }
+
         return;
     }
 
+    // check if id resolves to an invocation node
     teir_inv_node const* inv_node = nullptr;
     if ((inv_node = operation.schedule.resolve_inv_id(node)) != nullptr) {
         invoke(operation, inv_node, axis_path, index_path);
         return;
     }
 
+    // no resolution possible
     std::cout << "could not resolve node id" << std::endl;
 }
 

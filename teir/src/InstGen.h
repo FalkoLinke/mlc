@@ -296,6 +296,8 @@ class mini_jit::InstGen {
 
     static uint32_t base_stp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
+    static uint32_t base_str( gpr_t rt, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
+
     static uint32_t base_sub( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1 = 0x0);
 
     static uint32_t base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1 = 0x0);
