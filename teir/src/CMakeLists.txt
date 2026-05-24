@@ -27,6 +27,7 @@ add_executable(teir_tests.out
   Kernel.cpp 
   LabeledBranch.cpp
   Unary.cpp
+  UnaryCache.cpp
 )
 target_compile_options(teir_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(teir_tests.out PRIVATE Catch2::Catch2WithMain)

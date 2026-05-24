@@ -15,6 +15,8 @@ teir_interpreter::teir_interpreter(teir_operation const& operation, std::vector<
 
 
 void teir_interpreter::run() {
+    unary_cache.clear();
+
     // Some sanity checks for better error reporting
     for (teir_axis const& axis : operation.axes) {
         if (!(axis.offsets.size() == operation.tensors.size())) {
@@ -108,10 +110,8 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
             teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
             teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4) {
-                Unary unary;
-                Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::zero);
-                if (err == Unary::error_t::success) {
-                    Unary::kernel_t kernel = unary.get_kernel();
+                Unary::kernel_t kernel = unary_cache.get_kernel(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::zero);
+                if (kernel != nullptr) {
                     kernel(nullptr, (float*)tensors[primitive_tensor_idxs[0]], 0, axis_n->strides[primitive_tensor_idxs[0]] / 4);
                     return;
                 }
@@ -139,18 +139,14 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
             teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
             teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_m->strides[primitive_tensor_idxs[1]] == 4) {
-                Unary unary;
-                Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::identity);
-                if (err == Unary::error_t::success) {
-                    Unary::kernel_t kernel = unary.get_kernel();
-
+                Unary::kernel_t kernel = unary_cache.get_kernel(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::identity);
+                if (kernel != nullptr) {
                     kernel(
                         (float const*)tensors[primitive_tensor_idxs[0]],
                         (float*)tensors[primitive_tensor_idxs[1]],
                         axis_n->strides[primitive_tensor_idxs[0]] / 4,
                         axis_n->strides[primitive_tensor_idxs[1]] / 4
                     );
-
                     return;
                 }
             }
@@ -162,18 +158,14 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
             teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
             teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_n->strides[primitive_tensor_idxs[1]] == 4) {
-                Unary unary;
-                Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::identity);
-                if (err == Unary::error_t::success) {
-                    Unary::kernel_t kernel = unary.get_kernel();
-
+                Unary::kernel_t kernel = unary_cache.get_kernel(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::identity);
+                if (kernel != nullptr) {
                     kernel(
                         (float const*)tensors[primitive_tensor_idxs[0]],
                         (float*)tensors[primitive_tensor_idxs[1]],
                         axis_n->strides[primitive_tensor_idxs[0]] / 4,
                         axis_m->strides[primitive_tensor_idxs[1]] / 4
                     );
-
                     return;
                 }
             }
@@ -202,17 +194,14 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
             teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_m->strides[primitive_tensor_idxs[1]] == 4) {
                 Unary unary;
-                Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::relu);
-                if (err == Unary::error_t::success) {
-                    Unary::kernel_t kernel = unary.get_kernel();
-
+                Unary::kernel_t kernel = unary_cache.get_kernel(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::relu);
+                if (kernel != nullptr) {
                     kernel(
                         (float const*)tensors[primitive_tensor_idxs[0]],
                         (float*)tensors[primitive_tensor_idxs[1]],
                         axis_n->strides[primitive_tensor_idxs[0]] / 4,
                         axis_n->strides[primitive_tensor_idxs[1]] / 4
                     );
-
                     return;
                 }
             }
@@ -224,18 +213,14 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
             teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
             teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
             if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_n->strides[primitive_tensor_idxs[1]] == 4) {
-                Unary unary;
-                Unary::error_t err = unary.generate(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::relu);
-                if (err == Unary::error_t::success) {
-                    Unary::kernel_t kernel = unary.get_kernel();
-
+                Unary::kernel_t kernel = unary_cache.get_kernel(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::relu);
+                if (kernel != nullptr) {
                     kernel(
                         (float const*)tensors[primitive_tensor_idxs[0]],
                         (float*)tensors[primitive_tensor_idxs[1]],
                         axis_n->strides[primitive_tensor_idxs[0]] / 4,
                         axis_m->strides[primitive_tensor_idxs[1]] / 4
                     );
-
                     return;
                 }
             }

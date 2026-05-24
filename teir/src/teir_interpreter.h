@@ -5,6 +5,7 @@
 
 #include "teir.h"
 #include "Unary.h"
+#include "UnaryCache.h"
 
 
 
@@ -30,6 +31,8 @@ enum teir_interpreter_error_t {
 
 struct teir_interpreter {
     private:
+        UnaryCache unary_cache;
+
         uint64_t resolve_tensor_id_idx(std::string const& id) const;
         teir_axis const* resolve_axis_id(std::string const& id) const;
         teir_primitive const* resolve_primitive_id(std::string const& id) const;
