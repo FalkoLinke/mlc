@@ -183,10 +183,10 @@ void teir_compiler::compile(teir_operation const& operation) {
     // we make sure to store this after we finished processing the primitives to avoid the data pointer changing
     // due to vector reallocations
     void** dispatch_table = kernel_functions.data();
-    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff));
-    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff00, 16));
-    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff0000, 32));
-    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff000000, 48));
+    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff));
+    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff00, 16));
+    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff0000, 32));
+    kernel.add_instr(ig.base_movk(InstGen::gpr_t::x27, ((uint64_t)dispatch_table) & 0xff000000, 48));
 
     // generate the loop kernel around the primitives
     for (std::string const& root : operation.schedule.roots) {

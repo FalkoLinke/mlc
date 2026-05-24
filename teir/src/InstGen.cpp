@@ -159,6 +159,23 @@ uint32_t mini_jit::InstGen::base_mov( gpr_t rd, gpr_t rm ) {
   }
 }
 
+uint32_t mini_jit::InstGen::base_movk( gpr_t rd, uint32_t imm16, uint32_t shift ) {
+  uint32_t ins = 0x72800000;
+
+  uint32_t rd_id = rd & 0x1f;
+  ins |= rd_id;
+
+  ins |= (imm16 & 0xffff) << 5;
+
+  uint32_t sf = rd & 0x20;
+  ins |= sf << (32-6);
+
+  uint32_t hw = (shift / 16) & (((rd & 0x20) == 0) ? 0x1 : 0x3);
+  ins |= hw << 21;
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::base_movz( gpr_t rd, uint32_t imm16, uint32_t shift ) {
   uint32_t ins = 0x52800000;
 
