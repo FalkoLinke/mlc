@@ -18,6 +18,8 @@ enum teir_interpreter_error_t {
     teir_err_unresolved_schedule_node_id = 4,
     teir_err_unresolved_tensor_id = 5,
     teir_err_missing_primitive_lowering = 6,
+    teir_err_missing_strides = 7,
+    teir_err_missing_offsets = 8,
 };
 
 

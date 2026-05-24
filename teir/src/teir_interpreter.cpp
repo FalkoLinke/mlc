@@ -15,6 +15,17 @@ teir_interpreter::teir_interpreter(teir_operation const& operation, std::vector<
 
 
 void teir_interpreter::run() {
+    // Some sanity checks for better error reporting
+    for (teir_axis const& axis : operation.axes) {
+        if (!(axis.offsets.size() == operation.tensors.size())) {
+            throw teir_err_missing_offsets;
+        }
+        if (!(axis.strides.size() == operation.tensors.size())) {
+            throw teir_err_missing_strides;
+        }
+    }
+
+    // Perform the iteration for each root node
     for (std::string const& root : operation.schedule.roots) {
         iterate(root, {}, {});
     }
