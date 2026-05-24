@@ -207,13 +207,6 @@ void teir_compiler::compile(teir_operation const& operation) {
     // pointer to tensors in x28
     kernel.add_instr(ig.base_mov(InstGen::gpr_t::x28, InstGen::gpr_t::x0));
 
-    /*
-    // compile kernels for the used primitives
-    for (teir_primitive const& primitive : operation.primitives) {
-        prepare_primitive(operation, primitive);
-    }
-    */
-
     // initialize the kernel dispatch table
     for (teir_primitive const& primitive : operation.primitives) {
         kernel_functions.push_back(nullptr);
