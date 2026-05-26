@@ -293,6 +293,9 @@ bool teir_compiler::lower_zero_tile(teir_operation const& operation, teir_primit
     }
 
     Unary::kernel_t kernel_function = unary_cache.get_kernel(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::zero);
+    if (kernel_function == nullptr) {
+        return false;
+    }
     kernel_functions[primitive_idx] = (void*)kernel_function;
 
     kernel.add_instr(ig.base_movz(InstGen::gpr_t::x0, 0));
@@ -355,6 +358,9 @@ bool teir_compiler::lower_identity_tile_notrans(teir_operation const& operation,
     }
 
     Unary::kernel_t kernel_function = unary_cache.get_kernel(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::identity);
+    if (kernel_function == nullptr) {
+        return false;
+    }
     kernel_functions[primitive_idx] = (void*)kernel_function;
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
@@ -394,6 +400,9 @@ bool teir_compiler::lower_identity_tile_trans(teir_operation const& operation, t
     }
 
     Unary::kernel_t kernel_function = unary_cache.get_kernel(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::identity);
+    if (kernel_function == nullptr) {
+        return false;
+    }
     kernel_functions[primitive_idx] = (void*)kernel_function;
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
@@ -462,6 +471,9 @@ bool teir_compiler::lower_relu_tile_notrans(teir_operation const& operation, tei
     }
 
     Unary::kernel_t kernel_function = unary_cache.get_kernel(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::relu);
+    if (kernel_function == nullptr) {
+        return false;
+    }
     kernel_functions[primitive_idx] = (void*)kernel_function;
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
@@ -501,6 +513,9 @@ bool teir_compiler::lower_relu_tile_trans(teir_operation const& operation, teir_
     }
 
     Unary::kernel_t kernel_function = unary_cache.get_kernel(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::relu);
+    if (kernel_function == nullptr) {
+        return false;
+    }
     kernel_functions[primitive_idx] = (void*)kernel_function;
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
