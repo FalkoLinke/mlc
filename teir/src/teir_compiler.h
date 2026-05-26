@@ -55,6 +55,16 @@ struct teir_compiler {
         /** An instruction generator. */
         mini_jit::InstGen ig;
 
+
+
+
+
+
+
+
+
+
+
         /**
          * Converts each tensor id stored in `primitive` to it's index into the tensor pointer array.
          * @param operation: The operation which defines the tensor identifiers.
@@ -102,10 +112,45 @@ struct teir_compiler {
         void iterate(teir_operation const& operation, std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
         void invoke(teir_operation const& operation, teir_inv_node const* inv_node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
 
+
+
+
+
+        /** The label which may be used to access the shape data. */
+        std::string const shape_data_label = "shape_data";
+
+        /**
+         * @brief Appends the extends, strides and offsets of the axes to the executable memory of the kernel.
+         * @param operation: The operation definining the axes and tensors.
+         */
         void append_shape_data(teir_operation const& operation);
+        /**
+         * @brief Obtains an offset which may be added to the resolved `shape_data_label` to access the extend for the axis.
+         * @param operation: The operation defining the axes and tensors.
+         * @param axis_id: The ID of the axis for which to obtain the offset.
+         * @return An offset to the extend of `axis_id`.
+         */
         int32_t get_offset_for_extend(teir_operation const& operation, std::string const& axis_id);
+        /**
+         * @brief Obtains an offset which may be added to the resolved `shape_data_label` to access the stride for the axis and tensor.
+         * @param operation: The operation defining the axes and tensors.
+         * @param axis_id: The ID of the axis for which to obtain the offset.
+         * @param tensor_id: The ID of the tensor for which to obtain the offset.
+         * @return An offset to the stride of the tensor `tensor_id` of the axis `axis_id`.
+         */
         int32_t get_offset_for_stride(teir_operation const& operation, std::string const& axis_id, std::string const& tensor_id);
+        /**
+         * @brief Obtains an offset which may be added to the resolved `shape_data_label` to access the offset-data for the axis and tensor.
+         * @param operation: The operation defining the axes and tensors.
+         * @param axis_id: The ID of the axis for which to obtain the offset.
+         * @param tensor_id: The ID of the tensor for which to obtain the offset.
+         * @return An offset to the offset-data of the tensor `tensor_id` of the axis `axis_id`.
+         */
         int32_t get_offset_for_offset(teir_operation const& operation, std::string const& axis_id, std::string const& tensor_id);
+
+
+
+
 
     public:
 

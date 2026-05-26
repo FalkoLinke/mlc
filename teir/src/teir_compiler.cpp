@@ -43,12 +43,18 @@ void teir_compiler::compile(teir_operation const& operation) {
      * It accepts the following parameters:
      * x0: Pointer to an array of pointers to the tensor memory areas.
      * 
+     * 
      * The resulting function makes use of the AArch64 registers as follows:
      * 
      * x28: Pointer to the tensor array.
      * x27: Pointer to the array of function pointers stored in `kernel_functions`.
      * x19 - x26: Loop index registers.
      * x0 - x7: Scratch registers for intermediate computations and parameter registers to the JIT kernels.
+     * 
+     * 
+     * The compiler appends the extends, strides, offsets and other needed data
+     * in the executable memory area of `kernel` after the function.
+     * Use LDR (label) instructions to load such data into registers.
      */
 
     // function prologue
@@ -125,14 +131,14 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
             if (axis->offsets[i] == 0) {
                 continue;
             }
-            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, "shape_data", get_offset_for_offset(operation, axis->id, tensor.id)));
+            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, shape_data_label, get_offset_for_offset(operation, axis->id, tensor.id)));
             kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
             kernel.add_instr(ig.base_add(InstGen::gpr_t::x2, InstGen::gpr_t::x0, InstGen::gpr_t::x1));
             kernel.add_instr(ig.base_str(InstGen::gpr_t::x2, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
         }
 
         // loop start
-        kernel.add_labeled_instr(ig.base_ldr(loop_reg, "shape_data", get_offset_for_extend(operation, axis->id)));
+        kernel.add_labeled_instr(ig.base_ldr(loop_reg, shape_data_label, get_offset_for_extend(operation, axis->id)));
         kernel.add_label(loop_start_label);
         kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
 
@@ -151,7 +157,7 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
             if (axis->strides[i] == 0) {
                 continue;
             }
-            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, "shape_data", get_offset_for_stride(operation, axis->id, tensor.id)));
+            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, shape_data_label, get_offset_for_stride(operation, axis->id, tensor.id)));
             kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
             kernel.add_instr(ig.base_add(InstGen::gpr_t::x2, InstGen::gpr_t::x0, InstGen::gpr_t::x1));
             kernel.add_instr(ig.base_str(InstGen::gpr_t::x2, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
@@ -168,8 +174,8 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
             if (axis->strides[i] == 0) {
                 continue;
             }
-            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, "shape_data", get_offset_for_stride(operation, axis->id, tensor.id)));
-            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x1, "shape_data", get_offset_for_extend(operation, axis->id)));
+            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, shape_data_label, get_offset_for_stride(operation, axis->id, tensor.id)));
+            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x1, shape_data_label, get_offset_for_extend(operation, axis->id)));
             kernel.add_instr(ig.base_mul(InstGen::gpr_t::x0, InstGen::gpr_t::x0, InstGen::gpr_t::x1));
             kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
             kernel.add_instr(ig.base_sub(InstGen::gpr_t::x2, InstGen::gpr_t::x1, InstGen::gpr_t::x0));
@@ -181,7 +187,7 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
             if (axis->offsets[i] == 0) {
                 continue;
             }
-            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, "shape_data", get_offset_for_offset(operation, axis->id, tensor.id)));
+            kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, shape_data_label, get_offset_for_offset(operation, axis->id, tensor.id)));
             kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
             kernel.add_instr(ig.base_sub(InstGen::gpr_t::x2, InstGen::gpr_t::x1, InstGen::gpr_t::x0));
             kernel.add_instr(ig.base_str(InstGen::gpr_t::x2, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
@@ -292,7 +298,7 @@ bool teir_compiler::lower_zero_tile(teir_operation const& operation, teir_primit
     kernel.add_instr(ig.base_movz(InstGen::gpr_t::x0, 0));
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
     kernel.add_instr(ig.base_movz(InstGen::gpr_t::x2, 0));
-    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, "shape_data", get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
+    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, shape_data_label, get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
     kernel.add_instr(ig.base_asr(InstGen::gpr_t::x3, InstGen::gpr_t::x3, 2));
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x7, InstGen::gpr_t::x27, primitive_idx * 8, InstGen::addr_mode_t::unsigned_offset));
@@ -353,9 +359,9 @@ bool teir_compiler::lower_identity_tile_notrans(teir_operation const& operation,
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, tensor_idxs[1] * 8, InstGen::addr_mode_t::unsigned_offset));
-    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x2, "shape_data", get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
+    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x2, shape_data_label, get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
     kernel.add_instr(ig.base_asr(InstGen::gpr_t::x2, InstGen::gpr_t::x2, 2));
-    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, "shape_data", get_offset_for_stride(operation, axis_n->id, primitive.tensors[1])));
+    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, shape_data_label, get_offset_for_stride(operation, axis_n->id, primitive.tensors[1])));
     kernel.add_instr(ig.base_asr(InstGen::gpr_t::x3, InstGen::gpr_t::x3, 2));
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x7, InstGen::gpr_t::x27, primitive_idx * 8, InstGen::addr_mode_t::unsigned_offset));
@@ -392,9 +398,9 @@ bool teir_compiler::lower_identity_tile_trans(teir_operation const& operation, t
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, tensor_idxs[1] * 8, InstGen::addr_mode_t::unsigned_offset));
-    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x2, "shape_data", get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
+    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x2, shape_data_label, get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
     kernel.add_instr(ig.base_asr(InstGen::gpr_t::x2, InstGen::gpr_t::x2, 2));
-    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, "shape_data", get_offset_for_stride(operation, axis_m->id, primitive.tensors[1])));
+    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, shape_data_label, get_offset_for_stride(operation, axis_m->id, primitive.tensors[1])));
     kernel.add_instr(ig.base_asr(InstGen::gpr_t::x3, InstGen::gpr_t::x3, 2));
 
 
@@ -460,9 +466,9 @@ bool teir_compiler::lower_relu_tile_notrans(teir_operation const& operation, tei
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, tensor_idxs[1] * 8, InstGen::addr_mode_t::unsigned_offset));
-    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x2, "shape_data", get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
+    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x2, shape_data_label, get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
     kernel.add_instr(ig.base_asr(InstGen::gpr_t::x2, InstGen::gpr_t::x2, 2));
-    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, "shape_data", get_offset_for_stride(operation, axis_n->id, primitive.tensors[1])));
+    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, shape_data_label, get_offset_for_stride(operation, axis_n->id, primitive.tensors[1])));
     kernel.add_instr(ig.base_asr(InstGen::gpr_t::x3, InstGen::gpr_t::x3, 2));
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x7, InstGen::gpr_t::x27, primitive_idx * 8, InstGen::addr_mode_t::unsigned_offset));
@@ -499,9 +505,9 @@ bool teir_compiler::lower_relu_tile_trans(teir_operation const& operation, teir_
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, tensor_idxs[1] * 8, InstGen::addr_mode_t::unsigned_offset));
-    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x2, "shape_data", get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
+    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x2, shape_data_label, get_offset_for_stride(operation, axis_n->id, primitive.tensors[0])));
     kernel.add_instr(ig.base_asr(InstGen::gpr_t::x2, InstGen::gpr_t::x2, 2));
-    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, "shape_data", get_offset_for_stride(operation, axis_m->id, primitive.tensors[1])));
+    kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x3, shape_data_label, get_offset_for_stride(operation, axis_m->id, primitive.tensors[1])));
     kernel.add_instr(ig.base_asr(InstGen::gpr_t::x3, InstGen::gpr_t::x3, 2));
 
     kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x7, InstGen::gpr_t::x27, primitive_idx * 8, InstGen::addr_mode_t::unsigned_offset));
@@ -550,14 +556,12 @@ std::vector<uint64_t> teir_compiler::resolve_tensor_labels(teir_operation const&
 
 void teir_compiler::append_shape_data(teir_operation const& operation) {
     // append the extends of the axes
-    kernel.add_label("shape_data");
-    kernel.add_label("axis_extends");
+    kernel.add_label(shape_data_label);
     for (teir_axis const& axis : operation.axes) {
         kernel.add_data(axis.extent);
     }
 
     // append the strides of the axes
-    kernel.add_label("axis_strides");
     for (teir_axis const& axis : operation.axes) {
         for (uint64_t stride : axis.strides) {
             kernel.add_data(stride);
@@ -565,7 +569,6 @@ void teir_compiler::append_shape_data(teir_operation const& operation) {
     }
 
     // append the offsets of the axes
-    kernel.add_label("axis_offsets");
     for (teir_axis const& axis : operation.axes) {
         for (uint64_t offset : axis.offsets) {
             kernel.add_data(offset);
