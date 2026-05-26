@@ -56,6 +56,7 @@ TEST_CASE("zero abc", "[test]") {
     teir_compiler compiler;
     compiler.compile(zero_abc);
     teir_compiler::teir_function_t func = compiler.get_function();
+    compiler.write("test.bin");
 
     std::vector<void*> args = {a.data()};
     func(args.data());

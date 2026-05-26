@@ -102,6 +102,11 @@ struct teir_compiler {
         void iterate(teir_operation const& operation, std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
         void invoke(teir_operation const& operation, teir_inv_node const* inv_node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
 
+        void append_shape_data(teir_operation const& operation);
+        int32_t get_offset_for_extend(teir_operation const& operation, std::string const& axis_id);
+        int32_t get_offset_for_stride(teir_operation const& operation, std::string const& axis_id, std::string const& tensor_id);
+        int32_t get_offset_for_offset(teir_operation const& operation, std::string const& axis_id, std::string const& tensor_id);
+
     public:
 
         /** 

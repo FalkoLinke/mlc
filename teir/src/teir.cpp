@@ -80,6 +80,15 @@ teir_axis const* teir_operation::resolve_axis_id(std::string const& id) const {
     return nullptr;
 }
 
+uint64_t teir_operation::resolve_axis_id_idx(std::string const& id) const {
+    for (uint64_t i = 0; i < axes.size(); i++) {
+        if (axes[i].id == id) {
+            return i;
+        }
+    }
+    return ~0;
+}
+
 teir_primitive const* teir_operation::resolve_primitive_id(std::string const& id) const {
     for (auto it = primitives.begin(); it != primitives.end(); it++) {
         if (it->id == id) {

@@ -255,6 +255,8 @@ class mini_jit::InstGen {
 
     static uint32_t base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1 = 0x0);
 
+    static uint32_t base_asr( gpr_t rd, gpr_t rn, uint32_t shift6);
+
     static uint32_t base_b( int32_t imm26 );
 
     static LabeledInstruction base_b( std::string label );
@@ -299,6 +301,8 @@ class mini_jit::InstGen {
     static uint32_t base_movk( gpr_t rd, uint32_t imm16, uint32_t shift = 0x0);
 
     static uint32_t base_movz( gpr_t rd, uint32_t imm16, uint32_t shift = 0x0);
+
+    static uint32_t base_mul( gpr_t rd, gpr_t rn, gpr_t rm);
 
     static uint32_t base_orr( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t imm6 = 0x0);
 

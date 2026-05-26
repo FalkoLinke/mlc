@@ -55,6 +55,13 @@ void mini_jit::Kernel::add_label( std::string label ) {
   unresolved_instructions[label] = std::vector<InsRef>();
 }
 
+void mini_jit::Kernel::add_data( uint64_t value ) {
+  uint32_t low = value & 0xffffffff;
+  uint32_t high = value & (0xffffffffULL << 32);
+  m_buffer.push_back(low);
+  m_buffer.push_back(high);
+}
+
 void mini_jit::Kernel::resolve_instruction( InsRef insRef ) {
   uint32_t ins_idx = insRef.idx;
   uint32_t label_idx = label_indices[insRef.labeled_ins.label];
