@@ -11,8 +11,6 @@
 
 
 
-
-
 TEST_CASE("zero abc", "[test]") {
     uint64_t da = 16;
     uint64_t db = 16;
@@ -58,6 +56,7 @@ TEST_CASE("zero abc", "[test]") {
     teir_compiler compiler;
     compiler.compile(zero_abc);
     teir_compiler::teir_function_t func = compiler.get_function();
+    compiler.write("test.bin");
 
     std::vector<void*> args = {a.data()};
     func(args.data());
@@ -267,6 +266,323 @@ TEST_CASE( "abc->acb", "[test]") {
     teir_abc_acb(a.data(), c.data(), da, db, dc);
 
     bool result = b == c;
+    REQUIRE(result);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEST_CASE( "16x16 identity fp32 notrans", "[test]") {
+    uint64_t da = 16;
+    uint64_t db = 16;
+
+    uint64_t in0_sb = sizeof(float);
+    uint64_t in0_sa = db * in0_sb;
+    uint64_t out_sb = sizeof(float);
+    uint64_t out_sa = db * out_sb;
+
+    std::vector<float> a(da * db, 0.0f);
+    std::vector<float> b(da * db, 0.0f);
+    std::vector<float> c(da * db, 0.0f);
+    fill_indices(a.data(), a.size());
+
+    teir_operation op(
+        "16x16_identity_fp32_notrans",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
+            teir_axis("b", db, {in0_sb, out_sb}, {0, 0}),
+        },
+        {
+            teir_primitive(
+                "copy",
+                teir_ptype_t::ptype_copy,
+                {"in0", "out"},
+                {{"M", {"b"}}, {"N", {"a"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"inv_copy"},
+            {},
+            {
+                teir_inv_node("inv_copy", "copy")
+            }
+        )
+    );
+    teir_compiler compiler;
+    compiler.compile(op);
+    teir_compiler::teir_function_t func = compiler.get_function();
+
+    std::vector<void*> args = {a.data(), b.data()};
+    func(args.data());
+    identity(a.data(), c.data(), db, da, da, da, false);
+
+    bool result = b == c;
+    REQUIRE(result);
+}
+
+TEST_CASE( "16x16 identity fp32 trans", "[test]") {
+    uint64_t da = 16;
+    uint64_t db = 16;
+
+    uint64_t in0_sb = sizeof(float);
+    uint64_t in0_sa = db * in0_sb;
+    uint64_t out_sa = sizeof(float);
+    uint64_t out_sb = da * out_sa;
+
+    std::vector<float> a(da * db, 0.0f);
+    std::vector<float> b(da * db, 0.0f);
+    std::vector<float> c(da * db, 0.0f);
+    fill_indices(a.data(), a.size());
+
+    teir_operation op(
+        "16x16_identity_fp32_trans",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
+            teir_axis("b", db, {in0_sb, out_sb}, {0, 0}),
+        },
+        {
+            teir_primitive(
+                "copy",
+                teir_ptype_t::ptype_copy,
+                {"in0", "out"},
+                {{"M", {"b"}}, {"N", {"a"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"inv_copy"},
+            {},
+            {
+                teir_inv_node("inv_copy", "copy")
+            }
+        )
+    );
+    teir_compiler compiler;
+    compiler.compile(op);
+    teir_compiler::teir_function_t func = compiler.get_function();
+
+    std::vector<void*> args = {a.data(), b.data()};
+    func(args.data());
+    identity(a.data(), c.data(), db, da, da, db, true);
+
+    bool result = b == c;
+    REQUIRE(result);
+}
+
+TEST_CASE( "16x16 relu fp32 notrans", "[test]") {
+    uint64_t da = 16;
+    uint64_t db = 16;
+
+    uint64_t in0_sb = sizeof(float);
+    uint64_t in0_sa = db * in0_sb;
+    uint64_t out_sb = sizeof(float);
+    uint64_t out_sa = db * out_sb;
+
+    std::vector<float> a(da * db, 0.0f);
+    std::vector<float> b(da * db, 0.0f);
+    std::vector<float> c(da * db, 0.0f);
+    for (uint64_t i = 0; i < a.size(); i++) {
+        a[i] = (i % 2 == 0) ? (float)i : (float)-i;
+    }
+
+    teir_operation op(
+        "16x16_relu_fp32_notrans",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
+            teir_axis("b", db, {in0_sb, out_sb}, {0, 0}),
+        },
+        {
+            teir_primitive(
+                "relu",
+                teir_ptype_t::ptype_relu,
+                {"in0", "out"},
+                {{"M", {"b"}}, {"N", {"a"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"inv_relu"},
+            {},
+            {
+                teir_inv_node("inv_relu", "relu")
+            }
+        )
+    );
+    teir_compiler compiler;
+    compiler.compile(op);
+    teir_compiler::teir_function_t func = compiler.get_function();
+
+    std::vector<void*> args = {a.data(), b.data()};
+    func(args.data());
+    relu(a.data(), c.data(), db, da, da, da, false);
+
+    bool result = b == c;
+    REQUIRE(result);
+}
+
+TEST_CASE( "16x16 relu fp32 trans", "[test]") {
+    uint64_t da = 16;
+    uint64_t db = 16;
+
+    uint64_t in0_sb = sizeof(float);
+    uint64_t in0_sa = db * in0_sb;
+    uint64_t out_sa = sizeof(float);
+    uint64_t out_sb = da * out_sa;
+
+    std::vector<float> a(da * db, 0.0f);
+    std::vector<float> b(da * db, 0.0f);
+    std::vector<float> c(da * db, 0.0f);
+    for (uint64_t i = 0; i < a.size(); i++) {
+        a[i] = (i % 2 == 0) ? (float)i : (float)-i;
+    }
+
+    teir_operation op(
+        "16x16_relu_fp32_notrans",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
+            teir_axis("b", db, {in0_sb, out_sb}, {0, 0}),
+        },
+        {
+            teir_primitive(
+                "relu",
+                teir_ptype_t::ptype_relu,
+                {"in0", "out"},
+                {{"M", {"b"}}, {"N", {"a"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"inv_relu"},
+            {},
+            {
+                teir_inv_node("inv_relu", "relu")
+            }
+        )
+    );
+    teir_compiler compiler;
+    compiler.compile(op);
+    teir_compiler::teir_function_t func = compiler.get_function();
+
+    std::vector<void*> args = {a.data(), b.data()};
+    func(args.data());
+    relu(a.data(), c.data(), db, da, da, db, true);
+
+    bool result = b == c;
+    REQUIRE(result);
+}
+
+TEST_CASE( "16x16 zero fp32", "[test]") {
+    uint64_t da = 16;
+    uint64_t db = 16;
+
+    uint64_t out_sb = sizeof(float);
+    uint64_t out_sa = db * out_sb;
+
+    std::vector<float> a(da * db, -1.0f);
+    std::vector<float> b(da * db, -1.0f);
+
+    teir_operation op(
+        "16x16_zero_fp32",
+        {
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", da, {out_sa}, {0}),
+            teir_axis("b", db, {out_sb}, {0}),
+        },
+        {
+            teir_primitive(
+                "zero",
+                teir_ptype_t::ptype_zero,
+                {"out"},
+                {{"M", {"b"}}, {"N", {"a"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"inv_zero"},
+            {},
+            {
+                teir_inv_node("inv_zero", "zero")
+            }
+        )
+    );
+    teir_compiler compiler;
+    compiler.compile(op);
+    teir_compiler::teir_function_t func = compiler.get_function();
+
+    std::vector<void*> args = {a.data()};
+    func(args.data());
+    zero(b.data(), db, da, da);
+
+    bool result = a == b;
     REQUIRE(result);
 }
 

@@ -116,13 +116,13 @@ Unary::error_t Unary::generate( uint32_t m, uint32_t n, uint32_t trans_b, dtype_
 
     kernel.add_instr(ig.base_movz(gpr_t::x9, n / 16));          // This instruction only allows 16 bits in its immediate.
     kernel.add_label("loop01_start");
-    kernel.add_branch(ig.base_cbz(gpr_t::x9, "loop01_end"));
+    kernel.add_labeled_instr(ig.base_cbz(gpr_t::x9, "loop01_end"));
     kernel.add_instr(ig.base_mov(gpr_t::x0, gpr_t::x4));
     kernel.add_instr(ig.base_mov(gpr_t::x1, gpr_t::x5));
 
     kernel.add_instr(ig.base_movz(gpr_t::x10, m / 16));          // This instruction only allows 16 bits in its immediate.
     kernel.add_label("loop02_start");
-    kernel.add_branch(ig.base_cbz(gpr_t::x10, "loop02_end"));
+    kernel.add_labeled_instr(ig.base_cbz(gpr_t::x10, "loop02_end"));
 
     err = generate_16x16_microkernel(ptype, trans_b);
     if (err != error_t::success) {
@@ -136,7 +136,7 @@ Unary::error_t Unary::generate( uint32_t m, uint32_t n, uint32_t trans_b, dtype_
     }
     kernel.add_instr(ig.base_add(gpr_t::x0, gpr_t::x0, 64));
     kernel.add_instr(ig.base_sub(gpr_t::x10, gpr_t::x10, 1));
-    kernel.add_branch(ig.base_b("loop02_start"));
+    kernel.add_labeled_instr(ig.base_b("loop02_start"));
     kernel.add_label("loop02_end");
 
     if (trans_b) {
@@ -146,7 +146,7 @@ Unary::error_t Unary::generate( uint32_t m, uint32_t n, uint32_t trans_b, dtype_
     }
     kernel.add_instr(ig.base_add(gpr_t::x4, gpr_t::x4, gpr_t::x2, shift_kind_t::lsl, 6));
     kernel.add_instr(ig.base_sub(gpr_t::x9, gpr_t::x9, 1));
-    kernel.add_branch(ig.base_b("loop01_start"));
+    kernel.add_labeled_instr(ig.base_b("loop01_start"));
     kernel.add_label("loop01_end");
 
     kernel.add_instr(ig.base_smstop());

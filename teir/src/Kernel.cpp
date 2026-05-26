@@ -6,7 +6,7 @@
 #include <cstring>
 #include <string>
 
-#include "BranchRef.h"
+#include "InsRef.h"
 
 
 
@@ -28,41 +28,49 @@ void mini_jit::Kernel::add_instr( uint32_t ins ) {
   m_buffer.push_back( ins );
 }
 
-void mini_jit::Kernel::add_branch( LabeledBranch branch ) {
-  uint32_t ins = branch.ins;
+void mini_jit::Kernel::add_labeled_instr( LabeledInstruction labeled_ins ) {
+  uint32_t ins = labeled_ins.ins;
 
-  uint32_t offs_mask = (0x1 << branch.offs_bits) - 1;
-  ins &= ~(offs_mask << branch.offs_shift);
+  uint32_t offs_mask = (0x1 << labeled_ins.offs_bits) - 1;
+  ins &= ~(offs_mask << labeled_ins.offs_shift);
   m_buffer.push_back( ins );
 
-  BranchRef branchRef(m_buffer.size()-1, branch.label, branch.offs_bits, branch.offs_shift);
+  InsRef insRef(m_buffer.size()-1, labeled_ins);
 
-  if (label_indices.find(branch.label) != label_indices.end()) {
-    resolve_branch(branchRef);
+  if (label_indices.find(labeled_ins.label) != label_indices.end()) {
+    resolve_instruction(insRef);
   } else {
-    unresolved_branches[branch.label].push_back( branchRef );
+    unresolved_instructions[labeled_ins.label].push_back( insRef );
   }
 }
 
 void mini_jit::Kernel::add_label( std::string label ) {
   label_indices[label] = m_buffer.size();
 
-  std::vector<BranchRef> branches = unresolved_branches[label];
+  std::vector<InsRef> branches = unresolved_instructions[label];
   for (auto it = branches.begin(); it != branches.end(); it++) {
-    BranchRef branch = *it;
-    resolve_branch(branch);
+    InsRef branch = *it;
+    resolve_instruction(branch);
   }
-  unresolved_branches[label] = std::vector<BranchRef>();
+  unresolved_instructions[label] = std::vector<InsRef>();
 }
 
-void mini_jit::Kernel::resolve_branch( BranchRef branch ) {
-  uint32_t branch_idx = branch.idx;
-  uint32_t label_idx = label_indices[branch.label];
+void mini_jit::Kernel::add_data( uint64_t value ) {
+  uint32_t low = value & 0xffffffff;
+  uint32_t high = value & (0xffffffffULL << 32);
+  m_buffer.push_back(low);
+  m_buffer.push_back(high);
+}
 
-  int32_t offs = label_idx - branch_idx;
-  uint32_t offs_mask = (0x1 << branch.offs_bits) - 1;
+void mini_jit::Kernel::resolve_instruction( InsRef insRef ) {
+  uint32_t ins_idx = insRef.idx;
+  uint32_t label_idx = label_indices[insRef.labeled_ins.label];
 
-  m_buffer[branch_idx] |= (offs & offs_mask) << branch.offs_shift;
+  int32_t offs = label_idx - ins_idx;
+  offs += insRef.labeled_ins.bias;
+  uint32_t offs_mask = (0x1 << insRef.labeled_ins.offs_bits) - 1;
+
+  m_buffer[ins_idx] |= (offs & offs_mask) << insRef.labeled_ins.offs_shift;
 }
 
 std::size_t mini_jit::Kernel::get_size() const {
