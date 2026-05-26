@@ -92,6 +92,12 @@ struct teir_compiler {
         bool lower_identity_tile_notrans(teir_operation const& operation, teir_primitive const& primitive);
         /** Conforms to `lower_func_t`. */
         bool lower_identity_tile_trans(teir_operation const& operation, teir_primitive const& primitive);
+        /** Conforms to `lower_func_t`. */
+        bool lower_relu_scalar(teir_operation const& operation, teir_primitive const& primitive);
+        /** Conforms to `lower_func_t`. */
+        bool lower_relu_tile_notrans(teir_operation const& operation, teir_primitive const& primitive);
+        /** Conforms to `lower_func_t`. */
+        bool lower_relu_tile_trans(teir_operation const& operation, teir_primitive const& primitive);
 
         void iterate(teir_operation const& operation, std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
         void invoke(teir_operation const& operation, teir_inv_node const* inv_node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);

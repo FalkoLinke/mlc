@@ -213,6 +213,21 @@ void teir_compiler::invoke(teir_operation const& operation, teir_inv_node const*
         return;
     }
 
+    success = lower_relu_scalar(operation, *primitive);
+    if (success) {
+        return;
+    }
+
+    success = lower_relu_tile_notrans(operation, *primitive);
+    if (success) {
+        return;
+    }
+
+    success = lower_relu_tile_trans(operation, *primitive);
+    if (success) {
+        return;
+    }
+
     std::cout << "missing lowering" << std::endl;
 }
 
@@ -371,6 +386,107 @@ bool teir_compiler::lower_identity_tile_trans(teir_operation const& operation, t
     return true;
 }
 
+bool teir_compiler::lower_relu_scalar(teir_operation const& operation, teir_primitive const& primitive) {
+    if (primitive.ptype != teir_ptype_t::ptype_relu) {
+        return false;
+    }
+    if (primitive.axes.at("M").size() != 0) {
+        return false;
+    }
+    if (primitive.axes.at("N").size() != 0) {
+        return false;
+    }
+
+    std::vector<uint64_t> tensor_idxs = resolve_tensor_labels(operation, primitive);
+
+    // load tensor pointers
+    kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
+    kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, tensor_idxs[1] * 8, InstGen::addr_mode_t::unsigned_offset));
+
+    // perform operation
+    kernel.add_instr(ig.base_smstart());
+    kernel.add_instr(ig.ssve_ptrue(InstGen::pr_t::p0, InstGen::sve_size_t::s, InstGen::pr_pattern_t::vl1));
+    kernel.add_instr(ig.sve_ld1w(InstGen::sve_zr_t::z0, InstGen::pr_t::p0, InstGen::gpr_t::x0, InstGen::gpr_t::xzr));
+    kernel.add_instr(ig.sve_fmax(InstGen::sve_zr_t::z0, InstGen::sve_size_t::s, InstGen::pr_t::p0, 0));
+    kernel.add_instr(ig.sve_st1w(InstGen::sve_zr_t::z0, InstGen::sve_size_t::s, InstGen::pr_t::p0, InstGen::gpr_t::x1, InstGen::gpr_t::xzr));
+    kernel.add_instr(ig.base_smstop());
+
+    return true;
+}
+
+bool teir_compiler::lower_relu_tile_notrans(teir_operation const& operation, teir_primitive const& primitive) {
+    if (primitive.ptype != teir_ptype_t::ptype_relu) {
+        return false;
+    }   
+    if (primitive.axes.at("M").size() != 1) {
+        return false;
+    }
+    if (primitive.axes.at("N").size() != 1) {
+        return false;
+    }
+    teir_axis const* axis_m = operation.resolve_axis_id(primitive.axes.at("M")[0]);
+    teir_axis const* axis_n = operation.resolve_axis_id(primitive.axes.at("N")[0]);
+    uint64_t primitive_idx = operation.resolve_primitive_id_idx(primitive.id);
+
+    std::vector<uint64_t> tensor_idxs = resolve_tensor_labels(operation, primitive);
+
+    if (axis_m->strides[tensor_idxs[0]] != 4) {
+        return false;
+    }
+    if (axis_m->strides[tensor_idxs[1]] != 4) {
+        return false;
+    }
+
+    Unary::kernel_t kernel_function = unary_cache.get_kernel(axis_m->extent, axis_n->extent, false, Unary::dtype_t::fp32, Unary::ptype_t::relu);
+    kernel_functions[primitive_idx] = (void*)kernel_function;
+
+    kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
+    kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, tensor_idxs[1] * 8, InstGen::addr_mode_t::unsigned_offset));
+    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x2, axis_n->strides[tensor_idxs[0]] / 4));
+    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x3, axis_n->strides[tensor_idxs[1]] / 4));
+
+    kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x7, InstGen::gpr_t::x27, primitive_idx * 8, InstGen::addr_mode_t::unsigned_offset));
+    kernel.add_instr(ig.base_blr(InstGen::gpr_t::x7));
+
+    return true;
+}
+
+bool teir_compiler::lower_relu_tile_trans(teir_operation const& operation, teir_primitive const& primitive) {
+    if (primitive.ptype != teir_ptype_t::ptype_relu) {
+        return false;
+    }   
+    if (primitive.axes.at("M").size() != 1) {
+        return false;
+    }
+    if (primitive.axes.at("N").size() != 1) {
+        return false;
+    }
+    teir_axis const* axis_m = operation.resolve_axis_id(primitive.axes.at("M")[0]);
+    teir_axis const* axis_n = operation.resolve_axis_id(primitive.axes.at("N")[0]);
+    uint64_t primitive_idx = operation.resolve_primitive_id_idx(primitive.id);
+
+    std::vector<uint64_t> tensor_idxs = resolve_tensor_labels(operation, primitive);
+
+    if (axis_m->strides[tensor_idxs[0]] != 4) {
+        return false;
+    }
+    if (axis_n->strides[tensor_idxs[1]] != 4) {
+        return false;
+    }
+
+    Unary::kernel_t kernel_function = unary_cache.get_kernel(axis_m->extent, axis_n->extent, true, Unary::dtype_t::fp32, Unary::ptype_t::relu);
+    kernel_functions[primitive_idx] = (void*)kernel_function;
+
+    kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x0, InstGen::gpr_t::x28, tensor_idxs[0] * 8, InstGen::addr_mode_t::unsigned_offset));
+    kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x1, InstGen::gpr_t::x28, tensor_idxs[1] * 8, InstGen::addr_mode_t::unsigned_offset));
+    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x2, axis_n->strides[tensor_idxs[0]] / 4));
+    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x3, axis_m->strides[tensor_idxs[1]] / 4));
+
+    kernel.add_instr(ig.base_ldr(InstGen::gpr_t::x7, InstGen::gpr_t::x27, primitive_idx * 8, InstGen::addr_mode_t::unsigned_offset));
+    kernel.add_instr(ig.base_blr(InstGen::gpr_t::x7));
+
+    return true;
+}
 
 
 
