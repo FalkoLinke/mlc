@@ -83,6 +83,7 @@ class mini_jit::InstGen {
       sp  = 64+32+31
     } gpr_t;
 
+    //! branch conditions
     typedef enum : uint32_t {
       eq = 0,
       ne = 1,
@@ -102,6 +103,7 @@ class mini_jit::InstGen {
       nv = 15,
     } br_cond_t;
 
+    //! addressing modes
     typedef enum : uint32_t {
       post_index = 1,
       pre_index = 3,
@@ -145,6 +147,7 @@ class mini_jit::InstGen {
       v31 = 31
     } simd_fp_t;
 
+    //! SVE scalable vector registers
     typedef enum : uint32_t {
       z0 = 0,
       z1 = 1,
@@ -180,6 +183,7 @@ class mini_jit::InstGen {
       z31 = 31,
     } sve_zr_t;
 
+    //! SVE predicate registers
     typedef enum : uint32_t {
       p0 = 0,
       p1 = 1,
@@ -199,6 +203,7 @@ class mini_jit::InstGen {
       p15 = 15,
     } pr_t;
 
+    //! SVE predicate patterns (used for ptrue)
     typedef enum : uint32_t {
       pow2 = 0,
       vl1 = 1,
@@ -219,6 +224,7 @@ class mini_jit::InstGen {
       all = 31,
     } pr_pattern_t;
 
+    //! SVE floating point size specifier
     typedef enum : uint32_t {
       b = 0b00,
       h = 0b01,
@@ -240,33 +246,107 @@ class mini_jit::InstGen {
       smza = 0x3,
     } ssve_spec_t;
 
+    //! shift kind (used for base arithmetic instructions)
     typedef enum : uint32_t {
       lsl = 0x0,
       lsr = 0x1,
       asr = 0x2,
     } shift_kind_t;
 
+    //! Horizontal or Vertical slice indicator
     typedef enum : uint32_t {
       horz = 0,
       vert = 1,
     } sme_hv_kind_t;
 
+    /**
+     * @brief Generate an `ADD (immediate)` or `ADDS (immediate)` instruction.
+     * ```s
+     * add(s) rd, rn, #imm12
+     * ```
+     */
     static uint32_t base_add( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1 = 0x0);
 
+    /**
+     * @brief Generate an `ADD (shifted register)` or `ADDS (shifted register)` instruction.
+     * ```s
+     * add(s) rd, rn, rm{, sk #shift6}
+     * ```
+     */
     static uint32_t base_add( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1 = 0x0);
 
+    /**
+     * @brief Generate an `ASR (immediate)` instruction.
+     * ```s
+     * asr rd, rn, #shift6
+     * ```
+     */
     static uint32_t base_asr( gpr_t rd, gpr_t rn, uint32_t shift6);
 
+    /**
+     * @brief Generate a `B` instruction.
+     * 
+     * ```s
+     * b imm26
+     * ```
+     * 
+     * @param imm26: 26 bit signed offset (not in bytes, but as instruction index).
+     * @return The instruction.
+     */
     static uint32_t base_b( int32_t imm26 );
 
+    /**
+     * @brief Generate a `B` instruction to be resolved using a label.
+     * 
+     * ```s
+     * b label
+     * ```
+     * 
+     * @param label: The label used to determine the offset to be encoded in the instruction.
+     * @return An instruction to be resolved.
+     */
     static LabeledInstruction base_b( std::string label );
 
+    /**
+     * @brief Generate a `BLR` instruction.
+     * ```s
+     * blr rn
+     * ```
+     */
     static uint32_t base_blr( gpr_t rn );
 
+    /**
+     * @brief Generate a `BRK` instruction.
+     * ```s
+     * brk imm16
+     * ```
+     */
     static uint32_t base_brk( uint32_t imm16 );
 
+    /**
+     * @brief Generate a `B.cond` instruction.
+     * 
+     * ```s
+     * b.cond imm19
+     * ```
+     * 
+     * @param imm19: 19 bit signed offset (not in bytes, but as instruction index).
+     * @param cond: The condition to branch on.
+     * @return The instruction.
+     */
     static uint32_t base_b_cond( int32_t imm19, br_cond_t cond );
 
+    /**
+     * @brief Generate a `B.cond` instruction to be resolved using a label.
+     * 
+     * ```s
+     * b.cond label
+     * ```
+     * 
+     * @param label: The label used to determine the offset to be encoded in the instruction.
+     * @param cond: The condition to branch on.
+     * @return An instruction to be resolved.
+     */
     static LabeledInstruction base_b_cond( std::string label, br_cond_t cond );
 
     /**
@@ -277,47 +357,199 @@ class mini_jit::InstGen {
      *
      * @return instruction.
      **/
-    static uint32_t base_br_cbnz( gpr_t   reg,
-                                  int32_t imm19 );
+    static uint32_t base_br_cbnz( gpr_t reg, int32_t imm19 );
 
+    /**
+     * @brief Generate a `cbnz` instruction to be resolved using a label.
+     * 
+     * ```s
+     * cbnz reg, label
+     * ```
+     * 
+     * @param reg: The argument register.
+     * @param label: The label used to determine the offset to be encoded in the instruction.
+     * @return An instruction to be resolved.
+     */
     static LabeledInstruction base_br_cbnz( gpr_t reg, std::string label );
 
+
+    /**
+     * @brief Generate a `cbz` instruction.
+     * 
+     * ```s
+     * cbz rt, imm19
+     * ```
+     * 
+     * @param rt: The argument register.
+     * @param imm19: 19 bit signed offset (not in bytes, but as instruction index).
+     * @return The instruction.
+     */
     static uint32_t base_cbz( gpr_t rt, int32_t imm19);
 
+    /**
+     * @brief Generate a `cbz` instruction to be resolved using a label.
+     * 
+     * ```s
+     * cbz rt, label
+     * ```
+     * 
+     * @param rt: The argument register.
+     * @param label: The label used to determine the offset to be encoded in the instruction.
+     * @return An instruction to be resolved.
+     */
     static LabeledInstruction base_cbz( gpr_t rt, std::string label );
 
+    /**
+     * @brief Generate an `LDP` instruction using post-index, pre-index or signed-offset addressing modes.
+     * ```s
+     * post-index:    ldp rt1 ,rt2, [rn], #imm
+     * pre-index:     ldp rt1, rt2, [rn, #imm]!
+     * signed-offset: ldp rt1, rt2, [rn, #imm]
+     * ```
+     */
     static uint32_t base_ldp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
+    /**
+     * @brief Generate an `LDR (immediate)` instruction using post-index, pre-index or unsigned-offset addressing modes.
+     * ```s
+     * post-index:      ldr rt, [rn], #imm
+     * pre-index:       ldr rt, [rn, #imm]!
+     * unsigned-offset: ldr rt, [rn, #imm]
+     * ```
+     */
     static uint32_t base_ldr( gpr_t rt, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
+    /**
+     * @brief Generate an `LDR (literal)` instruction.
+     * ```s
+     * ldr rt, imm19
+     * ```
+     * 
+     * @param rt: The destination register.
+     * @param imm19: 19 bit signed PC-offset (not in bytes, but in instruction index).
+     * @return The instruction.
+     */
     static uint32_t base_ldr( gpr_t rt, int32_t imm19);
 
+    /**
+     * @brief Generate an `LDR (literal)` instruction to be resolved using a label and bias.
+     * ```s
+     * ldr rt, label + bias
+     * ```
+     * 
+     * @param rt: The destination register.
+     * @param label: The label to be used to resolve the instruction.
+     * @param bias: The signed value in bytes to add onto the offset obtained from the label.
+     * @return The instruction to be resolved.
+     */
     static LabeledInstruction base_ldr( gpr_t rt, std::string label, int32_t bias);
 
+    /**
+     * @brief Generate an `LSL (register)` instruction.
+     * ```
+     * lsl rd, rn, rm
+     * ```
+     */
     static uint32_t base_lsl( gpr_t rd, gpr_t rn, gpr_t rm );
 
+    /**
+     * @brief Generate a `MOV (register)` or `MOV (to/from SP)` instruction.
+     * ```s
+     * mov rd, rm
+     * ```
+     */
     static uint32_t base_mov( gpr_t rd, gpr_t rm );
 
+    /**
+     * @brief Generate a `MOVK` instruction.
+     * ```s
+     * movk rd, #imm16, { LSL shift }
+     * ```
+     */
     static uint32_t base_movk( gpr_t rd, uint32_t imm16, uint32_t shift = 0x0);
 
+    /**
+     * @brief Generate a `MOVZ` instruction.
+     * ```s
+     * movz rd, #imm16, { LSL shift }
+     * ```
+     */
     static uint32_t base_movz( gpr_t rd, uint32_t imm16, uint32_t shift = 0x0);
 
+    /**
+     * @brief Generate a `MUL` instruction.
+     * ```s
+     * mul rd, rn, rm
+     * ```
+     */
     static uint32_t base_mul( gpr_t rd, gpr_t rn, gpr_t rm);
 
+    /**
+     * @brief Generate an `ORR (shifted register)` instruction.
+     * ```s
+     * orr rd, rn, rm{, sk #imm6}
+     * ```
+     */
     static uint32_t base_orr( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t imm6 = 0x0);
 
+    /**
+     * @brief Generate a `RET` instruction.
+     * ```s
+     * ret reg
+     * ```
+     */
     static uint32_t base_ret( gpr_t reg = gpr_t::x30 );
 
+    /**
+     * @brief Generate an `STP` instruction in post-index, pre-index or signed-offset addressing modes.
+     * ```s
+     * post-index:    stp rt1, rt2, [rn], #imm
+     * pre-index:     stp rt1, rt2, [rn, #imm]!
+     * signed-offset: stp rt1, rt2, [rn, #imm]
+     * ```
+     */
     static uint32_t base_stp( gpr_t rt1, gpr_t rt2, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
+    /**
+     * @brief Generate an `STR (immediate)` instruction in post-index, pre-index or unsigned-offset addressing modes.
+     * ```s
+     * post-index:      str rt, [rn], #imm
+     * pre-index:       str rt, [rn, #imm]!
+     * unsigned-offset: str rt, [rn, #imm]
+     * ```
+     */
     static uint32_t base_str( gpr_t rt, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
+    /**
+     * @brief Generate a `SUB (immediate)` or `SUBS (immediate)` instruction.
+     * ```s
+     * sub(s) rd, rn, #imm12
+     * ```
+     */
     static uint32_t base_sub( gpr_t rd, gpr_t rn, uint32_t imm12, uint32_t flags1 = 0x0);
 
+    /**
+     * @brief Generate a `SUB (shifted register)` or `SUBS (shifted register)` instruction.
+     * ```s
+     * sub(s) rd, rn, rm{, sk, #shift6}
+     * ```
+     */
     static uint32_t base_sub( gpr_t rd, gpr_t rn, gpr_t rm, shift_kind_t sk = shift_kind_t::lsl, uint32_t shift6 = 0x0, uint32_t flags1 = 0x0);
 
+    /**
+     * @brief Generate an `SMSTART` instruction.
+     * ```s
+     * smstart spec
+     * ```
+     */
     static uint32_t base_smstart( ssve_spec_t spec = ssve_spec_t::smza );
 
+    /**
+     * @brief Generate an `SMSTOP` instruction.
+     * ```s
+     * smstop spec
+     * ```
+     */
     static uint32_t base_smstop( ssve_spec_t spec = ssve_spec_t::smza );
 
     /**
@@ -337,26 +569,96 @@ class mini_jit::InstGen {
 
 
 
+
+    /**
+     * @brief Generate an SVE `FMAX (immediate)` instruction.
+     * ```s
+     * const1 = 0:     fmax zt.sz, pg/m, zt.sz, #0.0
+     * const1 = 1:     fmax zt.sz, pg/m, zt.sz, #1.0
+     * ```
+     */
     static uint32_t sve_fmax( sve_zr_t zt, sve_size_t sz, pr_t pg, uint32_t const1);
 
+    /**
+     * @brief Generate an SVE `LD1W (scalar plus immediate, single register)` instruction.
+     * ```s
+     * ld1w zt.s, pg/z, [rn{, #imm4, MUL VL}]
+     * ```
+     */
     static uint32_t sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, uint32_t imm4);
 
+    /**
+     * @brief Generate an SVE `LD1W (scalar plus scalar, single register)` instruction.
+     * ```s
+     * ld1w zt.s, pg/z, [rn, rm, LSL #2]
+     * ```
+     */
     static uint32_t sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, gpr_t rm);
 
+    /**
+     * @brief Generate an SVE `PFALSE` instruction.
+     * ```s
+     * pfalse pd.b
+     * ```
+     */
     static uint32_t ssve_pfalse( pr_t pd );
 
+    /**
+     * @brief Generate an SVE `PTRUE (predicate)` or `PTRUES` instruction.
+     * ```s
+     * ptrue(s) pd.sz{, pattern}
+     * ```
+     */
     static uint32_t ssve_ptrue( pr_t pd, sve_size_t sz, pr_pattern_t pattern = pr_pattern_t::all, uint32_t flags1 = 0x0);
 
+    /**
+     * @brief Generate an SVE `ST1W (scalar plus immediate, single register)` instruction.
+     * ```s
+     * st1w zt.sz, pg, [rn{, #imm4, MUL VL}]
+     * ```
+     */
     static uint32_t sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, uint32_t imm4);
 
+    /**
+     * @brief Generate an SVE `ST1W (scalar plus scalar, single register)` instruction.
+     * ```s
+     * st1w zt.sz, pg, [rn, rm, LSL #2]
+     * ```
+     */
     static uint32_t sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, gpr_t rm);
 
+    /**
+     * @brief Generate an SME `MOV (vector to tile, single)` instruction.
+     * ```s
+     * mov <za_tile2><hv>.s[rs, offs2], pg/m, zn.s
+     * ```
+     */
     static uint32_t sme_mov_s( uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg, sve_zr_t zn);
 
+    /**
+     * @brief Generate an SME `LD1W (scalar plus scalar, tile slice)` instruction.
+     * ```s
+     * ld1w <za_tile2><hv>.s[rs, offs2], pg3/z, [rn, rm, LSL #2]
+     * ```
+     * Only the lower 3 bits of pg3 are used.
+     */
     static uint32_t sme_ld1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm);
 
+    /**
+     * @brief Generate an SME `ST1W (scalar plus scalar, tile slice)` instruction.
+     * ```s
+     * st1w <za_tile2><hv>.s[rs, offs2], pg3, [rn, rm, LSL #2]
+     * ```
+     * Only the lower 3 bits of pg3 are used.
+     */
     static uint32_t sme_st1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm);
 
+    /**
+     * @brief Generate an SME `ZERO (tiles)` instruction.
+     * ```s
+     * zero mask8
+     * ```
+     */
     static uint32_t sme_zero( uint32_t mask8 );
 
     /**
