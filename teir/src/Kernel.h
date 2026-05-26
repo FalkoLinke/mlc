@@ -3,8 +3,8 @@
 #include <vector>
 #include <map>
 
-#include "LabeledBranch.h"
-#include "BranchRef.h"
+#include "LabeledInstruction.h"
+#include "InsRef.h"
 
 #ifndef MINI_JIT_KERNEL_H
 #define MINI_JIT_KERNEL_H
@@ -30,9 +30,9 @@ class mini_jit::Kernel {
     std::map<std::string, uint32_t> label_indices;
 
     //! unresolved branch instructions
-    std::map<std::string, std::vector<BranchRef>> unresolved_branches;
+    std::map<std::string, std::vector<InsRef>> unresolved_instructions;
 
-    void resolve_branch( BranchRef branch );
+    void resolve_instruction( InsRef ins );
 
     /**
      * Allocates memory through POSIX mmap.
@@ -87,7 +87,7 @@ class mini_jit::Kernel {
      **/
     void add_instr( uint32_t ins );
 
-    void add_branch( LabeledBranch branch );
+    void add_labeled_instr( LabeledInstruction branch );
 
     void add_label( std::string label );
 

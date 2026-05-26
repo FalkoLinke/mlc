@@ -131,7 +131,7 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
         // loop start
         kernel.add_instr(ig.base_movz(loop_reg, axis->extent));
         kernel.add_label(loop_start_label);
-        kernel.add_branch(ig.base_cbz(loop_reg, loop_end_label));
+        kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
 
         // loop body
         for (std::string const& child_id : iter_node->children) {
@@ -155,7 +155,7 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
 
         // loop end
         kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
-        kernel.add_branch(ig.base_b(loop_start_label));
+        kernel.add_labeled_instr(ig.base_b(loop_start_label));
         kernel.add_label(loop_end_label);
 
         // remove total strides from tensors

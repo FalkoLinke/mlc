@@ -20,11 +20,11 @@ add_executable(teir_interpreter_tests.out
   teir_interpreter_tests.cpp 
   teir.cpp 
   teir_interpreter.cpp 
-  BranchRef.cpp 
+  InsRef.cpp 
   Gemm.cpp 
   InstGen.cpp 
   Kernel.cpp 
-  LabeledBranch.cpp
+  LabeledInstruction.cpp
   Unary.cpp
   UnaryCache.cpp
 )
@@ -37,11 +37,11 @@ add_executable(teir_compiler_tests.out
   teir_compiler_tests.cpp
   teir.cpp
   teir_compiler.cpp
-  BranchRef.cpp
+  InsRef.cpp
   Gemm.cpp
   InstGen.cpp
   Kernel.cpp
-  LabeledBranch.cpp
+  LabeledInstruction.cpp
   Unary.cpp
   UnaryCache.cpp
 )
