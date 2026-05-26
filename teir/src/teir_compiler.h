@@ -109,7 +109,21 @@ struct teir_compiler {
         /** Conforms to `lower_func_t`. */
         bool lower_relu_tile_trans(teir_operation const& operation, teir_primitive const& primitive);
 
+        /**
+         * @brief Recursively iterates over the schedule nodes to generate the loop nest.
+         * @param operation: The operation to compile.
+         * @param node: The current node.
+         * @param axis_path: The axes iterated over up to but not including the current node.
+         * @param index_path: The registers holding the loop indices for the axes in `axis_path`.
+         */
         void iterate(teir_operation const& operation, std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
+        /**
+         * @brief Lowers the primitive invoked by the invocation node.
+         * @param operation: The operation to compile.
+         * @param inv_node: The invocation node whose primitive is to be lowered.
+         * @param axis_path: The axes iterated over up to but not including the current node.
+         * @param index_path: The registers holding the loop indices for the axes in `axis_path`.
+         */
         void invoke(teir_operation const& operation, teir_inv_node const* inv_node, std::vector<teir_axis const*> axis_path, std::vector<mini_jit::InstGen::gpr_t> index_path);
 
 
