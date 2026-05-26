@@ -166,7 +166,7 @@ int main() {
     // ==========================================
     std::cout << "Starte Benchmark...\n";
 
-    int const num_iterations = 100000; 
+    int const num_iterations = 50000; 
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
