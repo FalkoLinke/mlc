@@ -37,6 +37,12 @@ void teir_compiler::write(const char* fp) const {
 
 void teir_compiler::compile(teir_operation const& operation) {
     /**
+     * The resulting function has the following signature
+     * void func(void**)
+     * 
+     * It accepts the following parameters:
+     * x0: Pointer to an array of pointers to the tensor memory areas.
+     * 
      * The resulting function makes use of the AArch64 registers as follows:
      * 
      * x28: Pointer to the tensor array.
@@ -58,9 +64,7 @@ void teir_compiler::compile(teir_operation const& operation) {
     kernel.add_instr(ig.base_mov(InstGen::gpr_t::x28, InstGen::gpr_t::x0));
 
     // initialize the kernel dispatch table
-    for (teir_primitive const& primitive : operation.primitives) {
-        kernel_functions.push_back(nullptr);
-    }
+    kernel_functions = std::vector<void*>(operation.primitives.size(), nullptr);
 
     // pointer to kernel dispatch table in x27
     // 
