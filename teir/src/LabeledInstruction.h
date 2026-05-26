@@ -19,7 +19,7 @@ public:
     std::string const label;
 
     //! Value to add onto the offset before writing it to the instruction.
-    uint32_t const bias;
+    int32_t const bias;
 
     //! the number of bits allowed for the offset
     uint32_t const offs_bits;
@@ -27,7 +27,7 @@ public:
     //! the place in the instruction to insert the offset at
     uint32_t const offs_shift;
 
-    LabeledInstruction(uint32_t const ins, std::string const label, uint32_t bias, uint32_t offs_bits, uint32_t offs_shift);
+    LabeledInstruction(uint32_t const ins, std::string const label, int32_t bias, uint32_t offs_bits, uint32_t offs_shift);
 
     ~LabeledInstruction() = default;
 

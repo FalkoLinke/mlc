@@ -59,7 +59,8 @@ void mini_jit::Kernel::resolve_instruction( InsRef insRef ) {
   uint32_t ins_idx = insRef.idx;
   uint32_t label_idx = label_indices[insRef.labeled_ins.label];
 
-  int32_t offs = label_idx - ins_idx + insRef.labeled_ins.bias;
+  int32_t offs = label_idx - ins_idx;
+  offs += insRef.labeled_ins.bias;
   uint32_t offs_mask = (0x1 << insRef.labeled_ins.offs_bits) - 1;
 
   m_buffer[ins_idx] |= (offs & offs_mask) << insRef.labeled_ins.offs_shift;

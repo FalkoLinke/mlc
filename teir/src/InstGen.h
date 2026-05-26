@@ -288,6 +288,10 @@ class mini_jit::InstGen {
 
     static uint32_t base_ldr( gpr_t rt, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
+    static uint32_t base_ldr( gpr_t rt, int32_t imm19);
+
+    static LabeledInstruction base_ldr( gpr_t rt, std::string label, int32_t bias);
+
     static uint32_t base_lsl( gpr_t rd, gpr_t rn, gpr_t rm );
 
     static uint32_t base_mov( gpr_t rd, gpr_t rm );

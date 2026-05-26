@@ -159,6 +159,20 @@ uint32_t mini_jit::InstGen::base_ldr( gpr_t rt, gpr_t rn, uint32_t imm, addr_mod
   return ins;
 }
 
+uint32_t mini_jit::InstGen::base_ldr( gpr_t rt, int32_t imm19) {
+  uint32_t ins = 0x18000000;
+
+  ins |= (rt & 0x1f);
+  ins |= (imm19 & 0x7ffff) << 5;
+  ins |= (rt & 0x20) << (30 - 5);
+
+  return ins;
+}
+
+mini_jit::LabeledInstruction mini_jit::InstGen::base_ldr( gpr_t rt, std::string label, int32_t bias) {
+  return LabeledInstruction(base_ldr(rt, 0), label, bias / 4, 19, 5);
+}
+
 uint32_t mini_jit::InstGen::base_lsl( gpr_t rd, gpr_t rn, gpr_t rm ) {
   uint32_t ins = 0x1ac02000;
 
