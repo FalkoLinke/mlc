@@ -55,28 +55,78 @@ std::vector<void*> teir_interpreter::indexed_tensors(std::vector<teir_axis const
 
 
 
+bool teir_interpreter::guard_matches_index(teir_axis const& axis, uint64_t idx, teir_guard const& guard) {
+    if (guard.axis_id != axis.id) {
+        return true;
+    }
 
+    switch (guard.kind) {
+    case teir_guard_kind::first:
+        return idx == 0;
+    case teir_guard_kind::last:
+        return idx == axis.extent - 1;
+    default:
+        throw teir_err_invalid_guard;
+    }
+}
+
+bool teir_interpreter::guard_satisfied(std::vector<teir_axis const*> const& axis_path, std::vector<uint64_t> const& index_path, teir_guard const& guard) {
+    std::vector<uint64_t> path_indices;
+    for (uint64_t i = 0; i < axis_path.size(); i++) {
+        if (axis_path[i]->id == guard.axis_id) {
+            path_indices.push_back(i);
+        }
+    }
+
+    if (path_indices.size() == 0) {
+        throw teir_err_invalid_guard;
+    }
+
+    // Check if all iterations over the axis specified by guard match its expression
+    for (uint64_t i : path_indices) {
+        uint64_t axis_idx = index_path[i];
+        teir_axis const& axis = *axis_path[i];
+        if (!guard_matches_index(axis, axis_idx, guard)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool teir_interpreter::guards_satisfied(std::vector<teir_axis const*> const& axis_path, std::vector<uint64_t> const& index_path, std::vector<teir_guard> const& guards) {
+    for (teir_guard const& guard : guards) {
+        if (!guard_satisfied(axis_path, index_path, guard)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 void teir_interpreter::iterate(std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<uint64_t> index_path) {
     teir_iter_node const* iter_node = nullptr;
     if ((iter_node = operation.schedule.resolve_iter_id(node)) != nullptr) {
         teir_axis const* axis = resolve_axis_id(iter_node->axis);
 
-        for (uint64_t i = 0; i < axis->extent; i++) {
-            for (std::string const& child_id : iter_node->children) {
-                std::vector<teir_axis const*> ap = axis_path;
-                std::vector<uint64_t> ip = index_path;
-                ap.push_back(axis);
-                ip.push_back(i);
-                iterate(child_id, ap, ip);
+        if (guards_satisfied(axis_path, index_path, iter_node->guards)) {
+            for (uint64_t i = 0; i < axis->extent; i++) {
+                for (std::string const& child_id : iter_node->children) {
+                    std::vector<teir_axis const*> ap = axis_path;
+                    std::vector<uint64_t> ip = index_path;
+                    ap.push_back(axis);
+                    ip.push_back(i);
+                    iterate(child_id, ap, ip);
+                }
             }
         }
+
         return;
     }
 
     teir_inv_node const* inv_node = nullptr;
     if ((inv_node = operation.schedule.resolve_inv_id(node)) != nullptr) {
-        lower(inv_node, axis_path, index_path);
+        if (guards_satisfied(axis_path, index_path, inv_node->guards)) {
+            lower(inv_node, axis_path, index_path);
+        }
         return;
     }
 
