@@ -637,12 +637,14 @@ void teir_compiler::append_branch_if_not_guard(teir_operation const& operation, 
 
     if (guard.kind == teir_guard_kind::first) {
 
+        // the first iteration index is axis.extend
         kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, shape_data_label, get_offset_for_extend(operation, guard.axis_id)));
         kernel.add_instr(ig.base_sub(InstGen::gpr_t::x0, InstGen::gpr_t::x0, axis_reg, InstGen::shift_kind_t::lsl, 0, 1));
         kernel.add_labeled_instr(ig.base_b_cond(label, InstGen::br_cond_t::ne));
 
     } else if (guard.kind == teir_guard_kind::last) {
 
+        // the last iteration index is 1
         kernel.add_instr(ig.base_sub(InstGen::gpr_t::x0, axis_reg, 1, 1));
         kernel.add_labeled_instr(ig.base_b_cond(label, InstGen::br_cond_t::ne));
         
