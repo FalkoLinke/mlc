@@ -165,6 +165,11 @@ struct teir_compiler {
 
 
 
+        void append_branch_if_not_guard(teir_operation const& operation, teir_axis const& axis, mini_jit::InstGen::gpr_t axis_reg, teir_guard const& guard, std::string label);
+        void append_branch_if_not_guard(teir_operation const& operation, std::vector<teir_axis const*> const& axis_path, std::vector<mini_jit::InstGen::gpr_t> const& index_path, teir_guard const& guard, std::string const& label);
+        void append_branch_if_not_guards(teir_operation const& operation, std::vector<teir_axis const*> const& axis_path, std::vector<mini_jit::InstGen::gpr_t> const& index_path, std::vector<teir_guard> const& guards, std::string const& label);
+
+
 
     public:
 

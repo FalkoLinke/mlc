@@ -56,7 +56,6 @@ TEST_CASE("zero abc", "[test]") {
     teir_compiler compiler;
     compiler.compile(zero_abc);
     teir_compiler::teir_function_t func = compiler.get_function();
-    compiler.write("test.bin");
 
     std::vector<void*> args = {a.data()};
     func(args.data());
@@ -586,3 +585,145 @@ TEST_CASE( "16x16 zero fp32", "[test]") {
     REQUIRE(result);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TEST_CASE( "abc->abc with guard", "[test]") {
+    uint64_t const da = 64;
+    uint64_t const db = 64;
+    uint64_t const dc = 64;
+    
+    uint64_t const in0_sc = sizeof(float);
+    uint64_t const in0_sb = dc * in0_sc;
+    uint64_t const in0_sa = db * in0_sb;
+
+    uint64_t const out_sc = sizeof(float);
+    uint64_t const out_sb = dc * out_sc;
+    uint64_t const out_sa = db * out_sb;
+
+    std::vector<float> a(da * db * dc, 0.0f);
+    std::vector<float> b(da * db * dc, 0.0f);
+    std::vector<float> c(da * db * dc, 0.0f);
+    fill_indices(a.data(), a.size());
+
+    teir_operation abc_abc_op(
+        "abc->abc",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
+            teir_axis("b", db, {in0_sb, out_sb}, {0, 0}),
+            teir_axis("c", dc, {in0_sc, out_sc}, {0, 0}),
+        },
+        {
+            teir_primitive(
+                "copy",
+                teir_ptype_t::ptype_copy,
+                { "in0", "out" },
+                {{"M", {"c"}}, {"N", {"b"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"iter_a"},
+            {
+                teir_iter_node("iter_a", "a", teir_policy_t::policy_sequential, {"inv_copy"}),
+            },
+            {
+                teir_inv_node("inv_copy", "copy", {teir_guard(teir_guard_kind::first, "a")})
+            }
+        )
+    );
+
+    teir_compiler compiler;
+    compiler.compile(abc_abc_op);
+    teir_compiler::teir_function_t func = compiler.get_function();
+
+    std::vector<void*> args = {a.data(), b.data()};
+    func(args.data());
+    
+    identity(a.data(), c.data(), dc, db, db, db, false);
+
+    bool result = b == c;
+    REQUIRE(result);
+}
+
+
+TEST_CASE( "abc->abc with guard last", "[test]") {
+    uint64_t const da = 64;
+    uint64_t const db = 64;
+    uint64_t const dc = 64;
+    
+    uint64_t const in0_sc = sizeof(float);
+    uint64_t const in0_sb = dc * in0_sc;
+    uint64_t const in0_sa = db * in0_sb;
+
+    uint64_t const out_sc = sizeof(float);
+    uint64_t const out_sb = dc * out_sc;
+    uint64_t const out_sa = db * out_sb;
+
+    std::vector<float> a(da * db * dc, 0.0f);
+    std::vector<float> b(da * db * dc, 0.0f);
+    std::vector<float> c(da * db * dc, 0.0f);
+    fill_indices(a.data(), a.size());
+
+    teir_operation abc_abc_op(
+        "abc->abc",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", da, {in0_sa, out_sa}, {0, 0}),
+            teir_axis("b", db, {in0_sb, out_sb}, {0, 0}),
+            teir_axis("c", dc, {in0_sc, out_sc}, {0, 0}),
+        },
+        {
+            teir_primitive(
+                "copy",
+                teir_ptype_t::ptype_copy,
+                { "in0", "out" },
+                {{"M", {"c"}}, {"N", {"b"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"iter_a"},
+            {
+                teir_iter_node("iter_a", "a", teir_policy_t::policy_sequential, {"inv_copy"}),
+            },
+            {
+                teir_inv_node("inv_copy", "copy", {teir_guard(teir_guard_kind::last, "a")})
+            }
+        )
+    );
+
+    teir_compiler compiler;
+    compiler.compile(abc_abc_op);
+    teir_compiler::teir_function_t func = compiler.get_function();
+    compiler.write("test.bin");
+
+    std::vector<void*> args = {a.data(), b.data()};
+    func(args.data());
+    
+    identity(a.data() + (da - 1) * in0_sa / sizeof(float), c.data() + (da - 1) * out_sa / sizeof(float), dc, db, db, db, false);
+
+    bool result = b == c;
+    REQUIRE(result);
+}

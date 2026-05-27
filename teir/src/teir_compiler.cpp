@@ -112,7 +112,10 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
     // check if `node` resolves to an invocation node
     teir_inv_node const* inv_node = nullptr;
     if ((inv_node = operation.schedule.resolve_inv_id(node)) != nullptr) {
+        std::string skip_label = inv_node->id + "_skip";
+        append_branch_if_not_guards(operation, axis_path, index_path, inv_node->guards, skip_label);
         invoke(operation, inv_node, axis_path, index_path);
+        kernel.add_label(skip_label);
         return;
     }
 
@@ -124,6 +127,9 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
         InstGen::gpr_t loop_reg = (InstGen::gpr_t)loop_registers[axis_path.size()];
         std::string loop_start_label = iter_node->id + "_loop";
         std::string loop_end_label = iter_node->id + "_end";
+        std::string skip_label = iter_node->id + "_skip";
+
+        append_branch_if_not_guards(operation, axis_path, index_path, iter_node->guards, skip_label);
 
         // apply offsets to tensors
         for (uint64_t i = 0; i < operation.tensors.size(); i++) {
@@ -192,6 +198,8 @@ void teir_compiler::iterate(teir_operation const& operation, std::string const& 
             kernel.add_instr(ig.base_sub(InstGen::gpr_t::x2, InstGen::gpr_t::x1, InstGen::gpr_t::x0));
             kernel.add_instr(ig.base_str(InstGen::gpr_t::x2, InstGen::gpr_t::x28, i * 8, InstGen::addr_mode_t::unsigned_offset));
         }
+
+        kernel.add_label(skip_label);
 
         return;
     }
@@ -610,4 +618,56 @@ int32_t teir_compiler::get_offset_for_offset(teir_operation const& operation, st
 
     uint64_t base = operation.axes.size() * sizeof(uint64_t) + operation.axes.size() * operation.tensors.size() * sizeof(uint64_t);
     return base + axis_idx * operation.tensors.size() * sizeof(uint64_t) + tensor_idx * sizeof(uint64_t);
+}
+
+
+
+
+
+
+
+
+
+
+
+void teir_compiler::append_branch_if_not_guard(teir_operation const& operation, teir_axis const& axis, InstGen::gpr_t axis_reg, teir_guard const& guard, std::string label) {
+    if (axis.id != guard.axis_id) {
+        return;
+    }
+
+    if (guard.kind == teir_guard_kind::first) {
+
+        kernel.add_labeled_instr(ig.base_ldr(InstGen::gpr_t::x0, shape_data_label, get_offset_for_extend(operation, guard.axis_id)));
+        kernel.add_instr(ig.base_sub(InstGen::gpr_t::x0, InstGen::gpr_t::x0, axis_reg, InstGen::shift_kind_t::lsl, 0, 1));
+        kernel.add_labeled_instr(ig.base_b_cond(label, InstGen::br_cond_t::ne));
+
+    } else if (guard.kind == teir_guard_kind::last) {
+
+        kernel.add_instr(ig.base_sub(InstGen::gpr_t::x0, axis_reg, 1, 1));
+        kernel.add_labeled_instr(ig.base_b_cond(label, InstGen::br_cond_t::ne));
+        
+    } else {
+
+    }
+}
+
+void teir_compiler::append_branch_if_not_guard(teir_operation const& operation, std::vector<teir_axis const*> const& axis_path, std::vector<InstGen::gpr_t> const& index_path, teir_guard const& guard, std::string const& label) {
+    std::vector<uint64_t> path_indices;
+    for (uint64_t i = 0; i < axis_path.size(); i++) {
+        if (axis_path[i]->id == guard.axis_id) {
+            path_indices.push_back(i);
+        }
+    }
+
+    for (uint64_t i : path_indices) {
+        teir_axis const& axis = *axis_path[i];
+        InstGen::gpr_t axis_reg = index_path[i];
+        append_branch_if_not_guard(operation, axis, axis_reg, guard, label);
+    }
+}
+
+void teir_compiler::append_branch_if_not_guards(teir_operation const& operation, std::vector<teir_axis const*> const& axis_path, std::vector<InstGen::gpr_t> const& index_path, std::vector<teir_guard> const& guards, std::string const& label) {
+    for (teir_guard const& guard : guards) {
+        append_branch_if_not_guard(operation, axis_path, index_path, guard, label);
+    }
 }
