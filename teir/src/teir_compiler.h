@@ -165,6 +165,44 @@ struct teir_compiler {
 
 
 
+        /**
+         * @brief Appends a code segment that branches to `label` if the guard is not satisfied.
+         * 
+         * The code segment must respect caller- and callee-saved registers.
+         * 
+         * @param operation: The operation being compiled.
+         * @param axis: The axis corresponding to guard.
+         * @param index_path: The register holding the iteration index for `axis`.
+         * @param guard: The guard to check.
+         * @param label: The label to branch to.
+         */
+        void append_branch_if_not_guard(teir_operation const& operation, teir_axis const& axis, mini_jit::InstGen::gpr_t axis_reg, teir_guard const& guard, std::string label);
+        /**
+         * @brief Appends a code segment that branches to `label` if the guard is not satisfied.
+         * 
+         * The code segment must respect caller- and callee-saved registers.
+         * 
+         * @param operation: The operation being compiled.
+         * @param axis_path: The ancestor axes of the node containing the guards.
+         * @param index_path: The registers holding the iteration indices for each of the axes in `axis_path`.
+         * @param guard: The guard to check.
+         * @param label: The label to branch to.
+         */
+        void append_branch_if_not_guard(teir_operation const& operation, std::vector<teir_axis const*> const& axis_path, std::vector<mini_jit::InstGen::gpr_t> const& index_path, teir_guard const& guard, std::string const& label);
+        /**
+         * @brief Appends a code segment that branches to `label` if the any of the guards is not satisfied.
+         * 
+         * The code segment must respect caller- and callee-saved registers.
+         * 
+         * @param operation: The operation being compiled.
+         * @param axis_path: The ancestor axes of the node containing the guards.
+         * @param index_path: The registers holding the iteration indices for each of the axes in `axis_path`.
+         * @param guards: The guards to check.
+         * @param label: The label to branch to.
+         */
+        void append_branch_if_not_guards(teir_operation const& operation, std::vector<teir_axis const*> const& axis_path, std::vector<mini_jit::InstGen::gpr_t> const& index_path, std::vector<teir_guard> const& guards, std::string const& label);
+
+
 
     public:
 

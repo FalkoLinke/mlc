@@ -80,6 +80,20 @@ struct teir_primitive {
 
 
 
+enum teir_guard_kind {
+    first,
+    last,
+};
+
+struct teir_guard {
+    private:
+    public:
+        teir_guard_kind kind;
+        std::string axis_id;
+
+        teir_guard(teir_guard_kind kind, std::string axis_id);
+};
+
 
 
 struct teir_iter_node {
@@ -89,8 +103,9 @@ struct teir_iter_node {
         std::string axis;
         teir_policy_t policy;
         std::vector<std::string> children;
+        std::vector<teir_guard> guards;
 
-        teir_iter_node(std::string id, std::string axis, teir_policy_t policy, std::vector<std::string> children);
+        teir_iter_node(std::string id, std::string axis, teir_policy_t policy, std::vector<std::string> children, std::vector<teir_guard> guards = {});
 };
 
 struct teir_inv_node {
@@ -98,8 +113,9 @@ struct teir_inv_node {
     public:
         std::string id;
         std::string primitive;
+        std::vector<teir_guard> guards;
 
-        teir_inv_node(std::string id, std::string primitive);
+        teir_inv_node(std::string id, std::string primitive, std::vector<teir_guard> guards = {});
 };
 
 

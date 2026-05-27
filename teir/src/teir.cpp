@@ -18,11 +18,15 @@ teir_primitive::teir_primitive(std::string id, teir_ptype_t ptype, std::vector<s
 
 }
 
-teir_iter_node::teir_iter_node(std::string id, std::string axis, teir_policy_t policy, std::vector<std::string> children) : id(std::move(id)), axis(std::move(axis)), policy(std::move(policy)), children(std::move(children)) {
+teir_guard::teir_guard(teir_guard_kind kind, std::string axis_id) : kind(kind), axis_id(axis_id) {
 
 }
 
-teir_inv_node::teir_inv_node(std::string id, std::string primitive) : id(std::move(id)), primitive(std::move(primitive)) {
+teir_iter_node::teir_iter_node(std::string id, std::string axis, teir_policy_t policy, std::vector<std::string> children, std::vector<teir_guard> guards) : id(std::move(id)), axis(std::move(axis)), policy(std::move(policy)), children(std::move(children)), guards(std::move(guards)) {
+
+}
+
+teir_inv_node::teir_inv_node(std::string id, std::string primitive, std::vector<teir_guard> guards) : id(std::move(id)), primitive(std::move(primitive)), guards(std::move(guards)) {
 
 }
 
