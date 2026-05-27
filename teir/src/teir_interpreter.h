@@ -40,8 +40,29 @@ struct teir_interpreter {
         teir_iter_node const* resolve_iter_node_id(std::string const& id) const;
         teir_inv_node const* resolve_inv_node_id(std::string const& id) const;
 
+        /**
+         * @brief Checks if the index and axis satisfy the guard.
+         * 
+         * If the ID of `axis` and `guard.axis_id` do not match returns `true`.
+         * Otherwise checks if `idx` satisfies the constraint imposed by `guard`.
+         * 
+         */
         bool guard_matches_index(teir_axis const& axis, uint64_t idx, teir_guard const& guard);
+        /**
+         * @brief Checks if the index path satisfies the given guard.
+         * @param axis_path: The axes currently being iterated over.
+         * @param index_path: The current indices of the iteration for the axes in axis_path.
+         * @param guard: The guard to check.
+         * @return `true` if the guard is satisfied, `false` otherwise.
+         */
         bool guard_satisfied(std::vector<teir_axis const*> const& axis_path, std::vector<uint64_t> const& index_path, teir_guard const& guard);
+        /**
+         * @brief Checks if the index path satisfies all of the given guards.
+         * @param axis_path: The axes currently being iterated over.
+         * @param index_path: The current indices of the iteration for the axes in axis_path.
+         * @param guards: The guards to check.
+         * @return `true` if the guards are satisfied, `false` otherwise.
+         */
         bool guards_satisfied(std::vector<teir_axis const*> const& axis_path, std::vector<uint64_t> const& index_path, std::vector<teir_guard> const& guards);
         void iterate(std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<uint64_t> index_path);    
         void lower(teir_inv_node const* inv_node, std::vector<teir_axis const*> axis_path, std::vector<uint64_t> index_path);
