@@ -87,16 +87,20 @@ bool run_test_and_benchmark(int M, int N, int K) {
     fill_sequential(c_asm); 
     c_ref = c_asm;
 
+
     std::cout << "------------------------------------------------------------\n";
     std::cout << " Teste M=" << M << ", N=" << N << ", K=" << K << "\n";
 
     // 1. KERNEL GENERIEREN & LADEN
+
     mini_jit::Gemm gemm;
     auto status = gemm.generate(
         M, N, K, 
         trans_A, trans_B, trans_C,
         mini_jit::Gemm::dtype_t::fp32
     );
+
+    std::cout << "generated";
 
     if (status != mini_jit::Gemm::error_t::success) {
         std::cerr << " [!] Fehler bei der Kernel-Generierung! Code: " 
@@ -178,7 +182,7 @@ int main() {
     srand(time(nullptr)); 
 
     // Die zu testenden Dimensionen
-    std::vector<int> sizes = {64, 128, 512};
+    std::vector<int> sizes = {16, 528};
     
     std::cout << "============================================================\n";
     std::cout << " STARTE JIT GEMM TESTS FÜR ALLE KOMBINATIONEN\n";
