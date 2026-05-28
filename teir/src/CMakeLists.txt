@@ -27,6 +27,7 @@ add_executable(teir_interpreter_tests.out
   LabeledInstruction.cpp
   Unary.cpp
   UnaryCache.cpp
+  GemmCache.cpp
 )
 target_compile_options(teir_interpreter_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(teir_interpreter_tests.out PRIVATE Catch2::Catch2WithMain)
@@ -44,6 +45,7 @@ add_executable(teir_compiler_tests.out
   LabeledInstruction.cpp
   Unary.cpp
   UnaryCache.cpp
+  GemmCache.cpp
 )
 target_compile_options(teir_compiler_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(teir_compiler_tests.out PRIVATE Catch2::Catch2WithMain)
@@ -62,6 +64,7 @@ add_executable(benchmark_contraction.out
   LabeledInstruction.cpp
   Unary.cpp
   UnaryCache.cpp
+  GemmCache.cpp
 )
 target_compile_options(benchmark_contraction.out PRIVATE ${CXX_FLAGS})
 

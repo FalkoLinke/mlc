@@ -4,7 +4,7 @@
 
 #include <cstdint>
 #include <iostream>
-
+#include <math.h>
 
 
 
@@ -125,6 +125,38 @@ void teir_abc_acb(T const* in0, T* out, uint64_t da, uint64_t db, uint64_t dc) {
 
 
 
+template <typename T>
+void teir_bkm_bkn_bnm(T const* in0, T const* in1, T* out, uint64_t db, uint64_t dk, uint64_t dm, uint64_t dn) {
+    uint64_t const in0_sm = 1;
+    uint64_t const in0_sk = dm * in0_sm;
+    uint64_t const in0_sb = dk * in0_sk;
+    uint64_t const in0_sn = 0;
+    
+    uint64_t const in1_sn = 1;
+    uint64_t const in1_sk = dn * in1_sn;
+    uint64_t const in1_sb = dk * in1_sk;
+    uint64_t const in1_sm = 0;
+
+    uint64_t const out_sm = 1;
+    uint64_t const out_sn = dm * out_sm;
+    uint64_t const out_sb = dn * out_sn;
+    uint64_t const out_sk = 0;
+
+    for (uint64_t ib = 0; ib < db; ib++) {
+        for (uint64_t im = 0; im < dm; im++) {
+            for (uint64_t in = 0; in < dn; in++) {
+                for (uint64_t ik = 0; ik < dk; ik++) {
+                    T const* in0_ptr = in0 + ib * in0_sb + im * in0_sm + in * in0_sn + ik * in0_sk;
+                    T const* in1_ptr = in1 + ib * in1_sb + im * in1_sm + in * in1_sn + ik * in1_sk;
+                    T* out_ptr       = out + ib * out_sb + im * out_sm + in * out_sn + ik * out_sk;
+                    *out_ptr += *in0_ptr * *in1_ptr;
+                }
+            }
+        }
+    }
+}
+
+
 
 
 
@@ -227,6 +259,17 @@ bool mats_equal(T const* a, T const* b, uint64_t m, uint64_t n, int64_t lda, int
 template <typename T>
 bool mats_equal(T const* a, T const* b, uint64_t m, uint64_t n) {
     return mats_equal<T>(a, b, m, n, m, m);
+}
+
+template <typename T>
+double max_abs_diff(T const* a, T const* b, uint64_t size) {
+    double result = 0.0;
+    for (uint64_t i = 0; i < size; i++) {
+        double va = static_cast<double>(a[i]);
+        double vb = static_cast<double>(b[i]);
+        result = fmax(result, fabs(va - vb));
+    }
+    return result;
 }
 
 

@@ -3,6 +3,7 @@
 
 
 using mini_jit::Unary;
+using mini_jit::Gemm;
 
 
 
@@ -16,6 +17,7 @@ teir_interpreter::teir_interpreter(teir_operation const& operation, std::vector<
 
 void teir_interpreter::run() {
     unary_cache.clear();
+    gemm_cache.clear();
 
     // Some sanity checks for better error reporting
     for (teir_axis const& axis : operation.axes) {
@@ -270,6 +272,54 @@ void teir_interpreter::lower(teir_inv_node const* inv_node, std::vector<teir_axi
                         (float*)tensors[primitive_tensor_idxs[1]],
                         axis_n->strides[primitive_tensor_idxs[0]] / 4,
                         axis_m->strides[primitive_tensor_idxs[1]] / 4
+                    );
+                    return;
+                }
+            }
+        }
+    }
+
+    if (primitive->ptype == teir_ptype_t::ptype_contract) {
+        uint64_t ms_count = primitive->axes.at("M").size();
+        uint64_t ns_count = primitive->axes.at("N").size();
+        uint64_t ks_count = primitive->axes.at("K").size();
+        if (ms_count == 0 && ns_count == 0 && ks_count == 0) {
+            float const* in0 = (float const*)tensors[primitive_tensor_idxs[0]];
+            float const* in1 = (float const*)tensors[primitive_tensor_idxs[1]];
+            float* out = (float*)tensors[primitive_tensor_idxs[2]];
+            *out += (*in0) * (*in1);
+            return;
+        }
+    }
+
+    if (primitive->ptype == teir_ptype_t::ptype_contract) {
+        uint64_t ms_count = primitive->axes.at("M").size();
+        uint64_t ns_count = primitive->axes.at("N").size();
+        uint64_t ks_count = primitive->axes.at("K").size();
+        if (ms_count == 1 && ns_count == 1 && ks_count == 1) {
+            teir_axis const* axis_m = resolve_axis_id(primitive->axes.at("M")[0]);
+            teir_axis const* axis_n = resolve_axis_id(primitive->axes.at("N")[0]);
+            teir_axis const* axis_k = resolve_axis_id(primitive->axes.at("K")[0]);
+
+            // km,kn->nm
+            if (axis_m->strides[primitive_tensor_idxs[0]] == 4 && axis_n->strides[primitive_tensor_idxs[1]] == 4 && axis_m->strides[primitive_tensor_idxs[2]] == 4) {
+                Gemm::kernel_t kernel = gemm_cache.get_kernel(
+                    axis_m->extent,
+                    axis_n->extent,
+                    axis_k->extent,
+                    false,
+                    true,
+                    false,
+                    Gemm::dtype_t::fp32
+                );
+                if (kernel != nullptr) {
+                    kernel(
+                        (float const*)tensors[primitive_tensor_idxs[0]],
+                        (float const*)tensors[primitive_tensor_idxs[1]],
+                        (float*)tensors[primitive_tensor_idxs[2]],
+                        axis_k->strides[primitive_tensor_idxs[0]] / 4,
+                        axis_k->strides[primitive_tensor_idxs[1]] / 4,
+                        axis_n->strides[primitive_tensor_idxs[2]] / 4
                     );
                     return;
                 }

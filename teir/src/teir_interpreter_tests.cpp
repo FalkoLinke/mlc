@@ -395,3 +395,87 @@ TEST_CASE( "abc->abc with guard", "[test]") {
     bool result = b == c;
     REQUIRE(result);
 }
+
+
+
+
+
+
+
+
+TEST_CASE( "bkm,bkn->bnm", "[test]") {
+    uint64_t const db = 32;
+    uint64_t const dk = 32;
+    uint64_t const dm = 32;
+    uint64_t const dn = 32;
+
+    uint64_t const in0_sm = sizeof(float);
+    uint64_t const in0_sk = dm * in0_sm;
+    uint64_t const in0_sb = dk * in0_sk;
+    uint64_t const in0_sn = 0;
+    
+    uint64_t const in1_sn = sizeof(float);
+    uint64_t const in1_sk = dn * in1_sn;
+    uint64_t const in1_sb = dk * in1_sk;
+    uint64_t const in1_sm = 0;
+
+    uint64_t const out_sm = sizeof(float);
+    uint64_t const out_sn = dm * out_sm;
+    uint64_t const out_sb = dn * out_sn;
+    uint64_t const out_sk = 0;
+
+    std::vector<float> a(db * dk * dm, 0.0f);
+    std::vector<float> b(db * dk * dn, 0.0f);
+    std::vector<float> c(db * dn * dm, 0.0f);
+    std::vector<float> d(db * dn * dm, 0.0f);
+    for (uint64_t i = 0; i < a.size(); i++) {
+        a[i] = i % (dk * dm);
+    }
+    for (uint64_t ib = 0; ib < db; ib++) {
+        for (uint64_t d = 0; d < std::min(dn, dk); d++) {
+            b[ib * in1_sb / 4 + d * in1_sn / 4 + d * in1_sk / 4] = 1.0;
+        }
+    }
+
+    teir_operation bkm_bkn_bnm(
+        "bkm_bkn_bnm",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("in1", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("b", db, {in0_sb, in1_sb, out_sb}, {0, 0, 0}),
+            teir_axis("m", dm, {in0_sm, in1_sm, out_sm}, {0, 0, 0}),
+            teir_axis("n", dn, {in0_sn, in1_sn, out_sn}, {0, 0, 0}),
+            teir_axis("k", dk, {in0_sk, in1_sk, out_sk}, {0, 0, 0}),
+        },
+        {
+            teir_primitive(
+                "gemm",
+                teir_ptype_t::ptype_contract,
+                { "in0", "in1", "out" },
+                {{"M", {"m"}}, {"N", {"n"}}, {"K", {"k"}}},
+                {}
+            )
+        },
+        teir_schedule(
+            {"iter_b"},
+            {
+                teir_iter_node("iter_b", "b", teir_policy_t::policy_sequential, {"inv_gemm"}),
+            },
+            {
+                teir_inv_node("inv_gemm", "gemm")
+            }
+        )
+    );
+
+    std::vector<void*> args = {a.data(), b.data(), c.data()};
+    teir_interpreter interpreter(bkm_bkn_bnm, args);
+    interpreter.run();
+
+    teir_bkm_bkn_bnm(a.data(), b.data(), d.data(), db, dk, dm, dn);
+
+    double err = max_abs_diff(c.data(), d.data(), c.size());
+    REQUIRE(err < 1e-6);
+}
