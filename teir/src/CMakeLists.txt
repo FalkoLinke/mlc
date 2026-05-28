@@ -80,6 +80,7 @@ add_executable(benchmark_matmul.out
   LabeledInstruction.cpp
   Unary.cpp
   UnaryCache.cpp
+  GemmCache.cpp
 )
 target_compile_options(benchmark_matmul.out PRIVATE ${CXX_FLAGS})
 
@@ -95,6 +96,7 @@ add_executable(benchmark_transposition.out
   LabeledInstruction.cpp
   Unary.cpp
   UnaryCache.cpp
+  GemmCache.cpp
 )
 target_compile_options(benchmark_transposition.out PRIVATE ${CXX_FLAGS})
 
