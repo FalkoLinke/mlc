@@ -51,6 +51,7 @@ target_link_libraries(teir_compiler_tests.out PRIVATE Catch2::Catch2WithMain)
 
 
 add_executable(benchmark_contraction.out
+  benchmark_contraction.cpp
   teir_interpreter.cpp 
   teir.cpp
   teir_compiler.cpp
