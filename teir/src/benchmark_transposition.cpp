@@ -90,7 +90,7 @@ static teir_operation build_transposition() {
 // main
 // ---------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
-    int repetitions = 5000000;
+    int repetitions = 5000;
     if (argc >= 2) {
         repetitions = std::stoi(argv[1]);
         if (repetitions < 1) repetitions = 1;
@@ -119,31 +119,63 @@ int main(int argc, char* argv[]) {
         static_cast<void*>(out.data()),
     };
 
+    // Helferfunktion für das Enum
+    auto print_teir_error = [](teir_interpreter_error_t e) {
+        switch (e) {
+            case teir_err_unresolved_axis_id: return "teir_err_unresolved_axis_id";
+            case teir_err_unresolved_primitive_id: return "teir_err_unresolved_primitive_id";
+            case teir_err_unresolved_iter_node_id: return "teir_err_unresolved_iter_node_id";
+            case teir_err_unresolved_inv_node_id: return "teir_err_unresolved_inv_node_id";
+            case teir_err_unresolved_schedule_node_id: return "teir_err_unresolved_schedule_node_id";
+            case teir_err_unresolved_tensor_id: return "teir_err_unresolved_tensor_id";
+            case teir_err_missing_primitive_lowering: return "teir_err_missing_primitive_lowering";
+            case teir_err_missing_strides: return "teir_err_missing_strides";
+            case teir_err_missing_offsets: return "teir_err_missing_offsets";
+            case teir_err_invalid_guard: return "teir_err_invalid_guard";
+            default: return "UNKNOWN_ERROR_CODE";
+        }
+    };
+
     std::cout << "Warmup ... " << std::flush;
-    {
+    try {
         std::fill(out.begin(), out.end(), 0.0f);
         teir_interpreter interp(op, args);
         interp.run();
+        std::cout << "done\n\n";
+    } 
+    catch (teir_interpreter_error_t e) {
+        std::cerr << "\n[TEIR ERROR während Warmup]: " << print_teir_error(e) << "\n";
+        return 1;
     }
-    std::cout << "done\n\n";
+    catch (const std::exception& e) {
+        std::cerr << "\n[C++ ERROR]: " << e.what() << "\n";
+        return 1;
+    }
 
     std::vector<double> times_s(repetitions);
 
     for (int rep = 0; rep < repetitions; rep++) {
         std::fill(out.begin(), out.end(), 0.0f);
-        teir_interpreter interp(op, args);
+        
+        try {
+            teir_interpreter interp(op, args);
 
-        auto t0 = std::chrono::high_resolution_clock::now();
-        interp.run();
-        auto t1 = std::chrono::high_resolution_clock::now();
+            auto t0 = std::chrono::high_resolution_clock::now();
+            interp.run();
+            auto t1 = std::chrono::high_resolution_clock::now();
 
-        double elapsed = std::chrono::duration<double>(t1 - t0).count();
-        times_s[rep] = elapsed;
+            double elapsed = std::chrono::duration<double>(t1 - t0).count();
+            times_s[rep] = elapsed;
 
-        std::cout << "  rep " << std::setw(2) << (rep + 1) << "/" << repetitions
-                  << "  time: " << std::fixed << std::setprecision(3) << elapsed << " s"
-                  << "   GB/s: " << std::setprecision(2) << compute_gbps(elapsed)
-                  << "\n";
+            std::cout << "  rep " << std::setw(2) << (rep + 1) << "/" << repetitions
+                      << "  time: " << std::fixed << std::setprecision(3) << elapsed << " s"
+                      << "   GB/s: " << std::setprecision(2) << compute_gbps(elapsed)
+                      << "\n";
+        } 
+        catch (teir_interpreter_error_t e) {
+            std::cerr << "\n[TEIR ERROR in rep " << rep+1 << "]: " << print_teir_error(e) << "\n";
+            return 1;
+        }
     }
 
     double avg  = std::accumulate(times_s.begin(), times_s.end(), 0.0) / repetitions;

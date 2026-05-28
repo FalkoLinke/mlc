@@ -175,7 +175,7 @@ static teir_operation build_contraction() {
 // main
 // ---------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
-    int repetitions = 5000000;
+    int repetitions = 50000;
     if (argc >= 2) {
         repetitions = std::stoi(argv[1]);
         if (repetitions < 1) repetitions = 1;
