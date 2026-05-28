@@ -139,6 +139,7 @@ M_loop:
 
 
 
+    #mov x13, #16
     // K Variables loop counter in x29
     mov x14, x5
 K_loop:
@@ -156,7 +157,6 @@ K_loop:
 
     //tile 1
     #ldr z1, [x7, #1, mul vl]
-    #mov x13, #16
     #ld1w z1.S, p0/Z, [x7, x13, lsl #2]
     fmopa za1.s, p0/m, p0/m, z2.s, z1.s
 
