@@ -20,6 +20,7 @@ documentation for details.
    weeks/week03
    weeks/week05
    weeks/week06
+   weeks/week07
 
 
 
