@@ -54,16 +54,27 @@ static teir_operation build_matmul() {
         teir_tensor("out", teir_dtype_t::dtype_fp32),
     };
 
+
     // ---- axes --------------------------------------------------------------
     // order: [in0, in1, out]
     std::vector<teir_axis> axes = {
         teir_axis("m0", M0, { 1048576, 0,        1048576 }, { 0, 0, 0 }),
-        teir_axis("m1", M1, { 2048,    0,        256     }, { 0, 0, 0 }),
+        teir_axis("m1", M1, { 4,       0,        4       }, { 0, 0, 0 }), // m1 stride is now 4 for in0 and out
         teir_axis("n0", N0, { 0,       131072,   8192    }, { 0, 0, 0 }),
-        teir_axis("n1", N1, { 0,       4,        4       }, { 0, 0, 0 }),
+        teir_axis("n1", N1, { 0,       4,        128     }, { 0, 0, 0 }), // n1 stride scales by M1 for out
         teir_axis("k0", K0, { 65536,   16777216, 0       }, { 0, 0, 0 }),
-        teir_axis("k1", K1, { 4,       256,      0       }, { 0, 0, 0 }),
+        teir_axis("k1", K1, { 128,     256,      0       }, { 0, 0, 0 }), // k1 stride scales by M1 for in0
     };
+    // ---- axes --------------------------------------------------------------
+    // // order: [in0, in1, out]
+    // std::vector<teir_axis> axes = {
+    //     teir_axis("m0", M0, { 1048576, 0,        1048576 }, { 0, 0, 0 }),
+    //     teir_axis("m1", M1, { 2048,    0,        256     }, { 0, 0, 0 }),
+    //     teir_axis("n0", N0, { 0,       131072,   8192    }, { 0, 0, 0 }),
+    //     teir_axis("n1", N1, { 0,       4,        4       }, { 0, 0, 0 }),
+    //     teir_axis("k0", K0, { 65536,   16777216, 0       }, { 0, 0, 0 }),
+    //     teir_axis("k1", K1, { 4,       256,      0       }, { 0, 0, 0 }),
+    // };
 
     // ---- primitives --------------------------------------------------------
     std::vector<teir_primitive> primitives = {
@@ -109,7 +120,7 @@ static teir_operation build_matmul() {
 // main
 // ---------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
-    int repetitions = 50000;
+    int repetitions = 10;
     if (argc >= 2) {
         repetitions = std::stoi(argv[1]);
         if (repetitions < 1) repetitions = 1;
