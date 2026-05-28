@@ -8,7 +8,7 @@
 
 // --- Deklarationen ---
 extern "C" {
-    void gemm_512_512_512( float const * a,
+    void gemm_M_N_K_16( float const * a,
                        float const * b,
                        float       * c,
                        int64_t       ld_a,
@@ -16,20 +16,44 @@ extern "C" {
                        int64_t       ld_c );
 }
 
-// --- C++ Referenz-Implementierung für die Verifizierung ---
-void gemm_512_512_512_reference(float const* a, float const* b, float* c, int64_t ld_a, int64_t ld_b, int64_t ld_c) {
-    int const K = 512; // Da es gemm_512_512_512 ist, ist K=512
-    
-    for (int j = 0; j < 512; j++) {         
-        for (int i = 0; i < 512; i++) {
+// --- Universelle C++ Referenz-Implementierung für beliebige Layouts ---
+// trans_x: 0 = Column-Major (Spaltenweise), 1 = Row-Major (Zeilenweise)
+void gemm_flexible_reference(
+    float const* a, 
+    float const* b, 
+    float*       c, 
+    uint32_t     M, 
+    uint32_t     N, 
+    uint32_t     K, 
+    uint32_t     trans_a, 
+    uint32_t     trans_b, 
+    uint32_t     trans_c, 
+    int64_t      ld_a, 
+    int64_t      ld_b, 
+    int64_t      ld_c
+) {
+    // m läuft über die Zeilen von C und A
+    for (uint32_t m = 0; m < M; m++) {         
+        // n läuft über die Spalten von C und B
+        for (uint32_t n = 0; n < N; n++) {
             float sum = 0.0f;
-            for (int k = 0; k < K; k++) {
-                // A ist Column-Major: Spalte k, Zeile i -> Index [k * ld_a + i]
-                // B ist Row-Major:    Zeile k, Spalte j -> Index[k * ld_b + j]
-                sum += a[k * ld_a + i] * b[k * ld_b + j];
+            
+            // k läuft über die mathematische Innen-Dimension
+            for (uint32_t k = 0; k < K; k++) {
+                // A: Row-Major benötigt (m * ld + k), Column-Major benötigt (k * ld + m)
+                int64_t idx_a = (trans_a == 1) ? (m * ld_a + k) : (k * ld_a + m);
+                
+                // B: Row-Major benötigt (k * ld + n), Column-Major benötigt (n * ld + k)
+                int64_t idx_b = (trans_b == 1) ? (k * ld_b + n) : (n * ld_b + k);
+                
+                sum += a[idx_a] * b[idx_b];
             }
-            // C ist Column-Major: Spalte j, Zeile i -> Index[j * ld_c + i]
-            c[j * ld_c + i] += sum;
+            
+            // C: Row-Major benötigt (m * ld + n), Column-Major benötigt (n * ld + m)
+            int64_t idx_c = (trans_c == 1) ? (m * ld_c + n) : (n * ld_c + m);
+            
+            // Ergebnis akkumulieren
+            c[idx_c] += sum;
         }
     }
 }
@@ -110,10 +134,10 @@ int main() {
     // ==========================================
     
     // Kernel aufrufen 
-    gemm_512_512_512(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
+    gemm_M_N_K_16(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     
     // C++ Referenz aufrufen
-    gemm_512_512_512_reference(a.data(), b.data(), c_ref.data(), ld_a, ld_b, ld_c);
+    gemm_flexible_reference(a.data(), b.data(), c_ref.data(), M, N, K, 0, 1, 0 ,ld_a, ld_b, ld_c);
 
     bool passed = true;
     float max_diff = 0.0f;
@@ -171,7 +195,7 @@ int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < num_iterations; i++) {
-        gemm_512_512_512(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
+        gemm_M_N_K_16(a.data(), b.data(), c_asm.data(), ld_a, ld_b, ld_c);
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();

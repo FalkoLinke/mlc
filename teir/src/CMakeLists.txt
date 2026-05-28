@@ -13,7 +13,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 
-set(CXX_FLAGS -Wall -Wextra -march=armv9.2-a+nosve+sme -O3)
+set(CXX_FLAGS -Wall -Wextra -march=armv9.2-a+nosve+sme+sme2 -O3)
 
 
 add_executable(teir_interpreter_tests.out 
@@ -47,4 +47,22 @@ add_executable(teir_compiler_tests.out
 )
 target_compile_options(teir_compiler_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(teir_compiler_tests.out PRIVATE Catch2::Catch2WithMain)
+
+
+
+add_executable(benchmark_contraction.out
+  teir_interpreter.cpp 
+  teir.cpp
+  teir_compiler.cpp
+  InsRef.cpp
+  Gemm.cpp
+  InstGen.cpp
+  Kernel.cpp
+  LabeledInstruction.cpp
+  Unary.cpp
+  UnaryCache.cpp
+)
+target_compile_options(benchmark_contraction.out PRIVATE ${CXX_FLAGS})
+
+
 

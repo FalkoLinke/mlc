@@ -12,7 +12,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 
-set(CXX_FLAGS -Wall -Wextra -march=armv9.2-a+nosve+sme -O3)
+set(CXX_FLAGS -Wall -Wextra -march=armv9.2-a+nosve+sme+sme2 -O3)
 
 
 add_executable(kernel_examples.out kernel_examples.cpp Kernel.cpp InstGen.cpp LabeledBranch.cpp BranchRef.cpp)
