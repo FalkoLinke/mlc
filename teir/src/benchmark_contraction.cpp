@@ -35,6 +35,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
+#include <cfenv>
 
 #include "teir.h"
 #include "teir_interpreter.h"
@@ -85,38 +86,37 @@ static teir_operation build_contraction() {
     };
 
     // ---- axes --------------------------------------------------------------
-    // strides / offsets vectors: [in0, in1, out]  (same order as tensors)
-    // A stride of 0 means the axis does not stride over that tensor.
+    // strides / offsets vectors: [in0, in1, out]
     std::vector<teir_axis> axes = {
-        // @p  extent 128   in0:3145728  in1:0        out:2359296
+        // @p  extent 128
         teir_axis("p", P,
             /* strides */ { 3145728, 0,       2359296 },
             /* offsets */ { 0,       0,       0       }),
 
-        // @q  extent 96    in0:32768    in1:0        out:24576
+        // @q  extent 96   (Now inner-most for in0 and out -> stride 4)
         teir_axis("q", Q,
-            /* strides */ { 32768, 0,     24576 },
-            /* offsets */ { 0,     0,     0     }),
+            /* strides */ { 4,       0,       4       },
+            /* offsets */ { 0,       0,       0       }),
 
-        // @r  extent 96    in0:0        in1:65536    out:256
+        // @r  extent 96
         teir_axis("r", R,
-            /* strides */ { 0, 65536, 256 },
-            /* offsets */ { 0, 0,     0   }),
+            /* strides */ { 0,       65536,   24576   },
+            /* offsets */ { 0,       0,       0       }),
 
-        // @s  extent 64    in0:0        in1:4        out:4
+        // @s  extent 64   (Inner-most for in1 -> stride 4)
         teir_axis("s", S,
-            /* strides */ { 0, 4, 4 },
-            /* offsets */ { 0, 0, 0 }),
+            /* strides */ { 0,       4,       384     },
+            /* offsets */ { 0,       0,       0       }),
 
-        // @t  extent 32    in0:1024     in1:6291456  out:0
+        // @t  extent 32
         teir_axis("t", T,
-            /* strides */ { 1024, 6291456, 0 },
-            /* offsets */ { 0,    0,       0 }),
+            /* strides */ { 98304,   6291456, 0       },
+            /* offsets */ { 0,       0,       0       }),
 
-        // @u  extent 256   in0:4        in1:256      out:0
+        // @u  extent 256
         teir_axis("u", U,
-            /* strides */ { 4, 256, 0 },
-            /* offsets */ { 0, 0,   0 }),
+            /* strides */ { 384,     256,     0       },
+            /* offsets */ { 0,       0,       0       }),
     };
 
     // ---- primitives --------------------------------------------------------
@@ -175,7 +175,7 @@ static teir_operation build_contraction() {
 // main
 // ---------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
-    int repetitions = 50000;
+    int repetitions = 10;
     if (argc >= 2) {
         repetitions = std::stoi(argv[1]);
         if (repetitions < 1) repetitions = 1;
@@ -211,12 +211,13 @@ int main(int argc, char* argv[]) {
         static_cast<void*>(out.data()),
     };
 
-    // ---- warmup ------------------------------------------------------------
+// ---- warmup ------------------------------------------------------------
     std::cout << "Warmup ... " << std::flush;
     {
         std::fill(out.begin(), out.end(), 0.0f);
         teir_interpreter interp(op, args);
         interp.run();
+        std::fesetenv(FE_DFL_ENV); // 2. Reset the FPU/MXCSR registers after warmup
     }
     std::cout << "done\n\n";
 
@@ -231,16 +232,21 @@ int main(int argc, char* argv[]) {
         auto t0 = std::chrono::high_resolution_clock::now();
         interp.run();
         auto t1 = std::chrono::high_resolution_clock::now();
+        
+        std::fesetenv(FE_DFL_ENV); // 3. Reset registers after every timed run
 
-        double elapsed = std::chrono::duration<double>(t1 - t0).count();
+        std::chrono::duration<double> elapsed_seconds = t1 - t0;
+        double elapsed = elapsed_seconds.count();
         times_s[rep] = elapsed;
 
+        u_int64_t flops = 2 * P * Q * R * S * T * U;
+
+     
         std::cout << "  rep " << std::setw(2) << (rep + 1) << "/" << repetitions
                   << "  time: " << std::fixed << std::setprecision(3) << elapsed << " s"
-                  << "   GFLOP/s: " << std::setprecision(2) << compute_gflops(elapsed)
+                  << "    GFLOP/s: " << std::setprecision(2) << ((flops / elapsed) / 1e9)
                   << "\n";
     }
-
     // ---- summary -----------------------------------------------------------
     double avg  = std::accumulate(times_s.begin(), times_s.end(), 0.0) / repetitions;
     double best = *std::min_element(times_s.begin(), times_s.end());

@@ -64,7 +64,7 @@ static teir_operation build_transposition() {
             "copy",
             teir_ptype_t::ptype_copy,
             { "in", "out" },
-            { {"M", {"c"}}, {"N", {"d"}} },
+            { {"M", {"d"}}, {"N", {"c"}} }, // Swap "c" and "d" here
             { {"data_type", "f32"} }
         ),
     };
@@ -90,7 +90,7 @@ static teir_operation build_transposition() {
 // main
 // ---------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
-    int repetitions = 5000;
+    int repetitions = 10;
     if (argc >= 2) {
         repetitions = std::stoi(argv[1]);
         if (repetitions < 1) repetitions = 1;
