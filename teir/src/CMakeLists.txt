@@ -65,5 +65,35 @@ add_executable(benchmark_contraction.out
 )
 target_compile_options(benchmark_contraction.out PRIVATE ${CXX_FLAGS})
 
+add_executable(benchmark_matmul.out
+  benchmark_matmul.cpp
+  teir_interpreter.cpp 
+  teir.cpp
+  teir_compiler.cpp
+  InsRef.cpp
+  Gemm.cpp
+  InstGen.cpp
+  Kernel.cpp
+  LabeledInstruction.cpp
+  Unary.cpp
+  UnaryCache.cpp
+)
+target_compile_options(benchmark_matmul.out PRIVATE ${CXX_FLAGS})
+
+add_executable(benchmark_transposition.out
+  benchmark_transposition.cpp
+  teir_interpreter.cpp 
+  teir.cpp
+  teir_compiler.cpp
+  InsRef.cpp
+  Gemm.cpp
+  InstGen.cpp
+  Kernel.cpp
+  LabeledInstruction.cpp
+  Unary.cpp
+  UnaryCache.cpp
+)
+target_compile_options(benchmark_transposition.out PRIVATE ${CXX_FLAGS})
+
 
 

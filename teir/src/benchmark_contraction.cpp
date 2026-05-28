@@ -26,14 +26,6 @@
  *     }
  *   }
  *
- * Compile (example):
- *   g++ -O2 -std=c++17 benchmark_contraction.cpp \
- *       -I<path/to/teir/include> -L<path/to/teir/lib> -lteir \
- *       -o benchmark_contraction
- *
- * Run:
- *   ./benchmark_contraction [repetitions]
- *   ./benchmark_contraction 5
  */
 
 #include <chrono>
@@ -183,7 +175,7 @@ static teir_operation build_contraction() {
 // main
 // ---------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
-    int repetitions = 3;
+    int repetitions = 5000000;
     if (argc >= 2) {
         repetitions = std::stoi(argv[1]);
         if (repetitions < 1) repetitions = 1;
