@@ -233,8 +233,6 @@ int main(int argc, char* argv[]) {
         interp.run();
         auto t1 = std::chrono::high_resolution_clock::now();
         
-        std::fesetenv(FE_DFL_ENV); // 3. Reset registers after every timed run
-
         std::chrono::duration<double> elapsed_seconds = t1 - t0;
         double elapsed = elapsed_seconds.count();
         times_s[rep] = elapsed;
