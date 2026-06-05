@@ -39,7 +39,7 @@ Run these three contractions in order:
 1. Compile the three contractions using the einsums above. Load the four `eng_*.bin` files into aligned `FP32` buffers. Execute them in the given order.
 2. Check the following element for reference: T[x=256, a=4, c=0, b=4, y=256] = 0.91
 3. Report your performance in GFLOPS
-4. Write the reconstructed light field to **PNG**. One **PNG** per camera index.
+4. Write the reconstructed light field to **PNG**. One **PNG** per camera index. Do not upload the **PNG**. Provide a script to generate the **PNG**.
 
 
 ```
