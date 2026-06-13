@@ -16,6 +16,10 @@ set_property(SOURCE transpose_za.s transpose_tbl.s PROPERTY COMPILE_FLAGS "-x as
 
 
 
+add_executable(benchmarks_driver benchmarks_driver.cpp transpose_za.s transpose_tbl.s)
+target_compile_options(benchmarks_driver PRIVATE ${CXX_FLAGS})
+
+
 
 
 
