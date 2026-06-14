@@ -45,6 +45,7 @@ int main() {
 
     std::cout << "GiBs\t\tBytes transferred [GiBs]\t\tDuration [s]" << std::endl;
 
+    benchmark_kernel(&copy_sve, reps);
     benchmark_kernel(&transpose_16x16_fp32_za, reps);
     benchmark_kernel(&transpose_16x16_fp32_tbl, reps);
     benchmark_kernel(&transpose_16x16_fp32_simd, reps);

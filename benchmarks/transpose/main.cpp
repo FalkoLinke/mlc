@@ -28,7 +28,7 @@ int main() {
         a[i] = (float)i;
     }
 
-    transpose_16x16_fp32_simd(a.data(), b.data(), 16, 16);
+    copy_sve(a.data(), b.data(), 16, 16);
 
     print_mat(a.data(), 16, 16);
     std::cout << std::endl;
