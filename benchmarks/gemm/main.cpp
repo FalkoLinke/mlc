@@ -92,7 +92,7 @@ bool verify_gemm(gemm_kernel_desc_t desc) {
 
 
 int main() {
-    bool result = verify_gemm(desc_gemm_km_kn_nm_fp32_m16_n32_k512_v2);
+    bool result = verify_gemm(desc_gemm_km_kn_nm_fp32_m16_n64_k512);
     if (result) {
         std::cout << "SUCCESS" << std::endl;
     } else {
