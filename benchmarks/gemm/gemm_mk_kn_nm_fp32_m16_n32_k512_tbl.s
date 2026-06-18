@@ -38,7 +38,7 @@ _loop02:
     cbz x7, _end02
     mov x0, x9
 
-    // load A into ZA tile
+    // load 16x16 tile of A
     // load input matrix
     ld1w z0.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
