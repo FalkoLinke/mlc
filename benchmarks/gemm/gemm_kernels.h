@@ -104,6 +104,17 @@ extern "C" {
         .trans_c = false,
         .func = gemm_mk_kn_nm_fp32_m16_n32_k512_za,
     };
+
+    void gemm_mk_kn_nm_fp32_m16_n32_k512_tbl(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_mk_kn_nm_fp32_m16_n32_k512_tbl = {
+        .m = 16,
+        .n = 32,
+        .k = 512,
+        .trans_a = true,
+        .trans_b = true,
+        .trans_c = false,
+        .func = gemm_mk_kn_nm_fp32_m16_n32_k512_tbl,
+    };
 }
 
 

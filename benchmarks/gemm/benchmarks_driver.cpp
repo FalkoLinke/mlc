@@ -47,6 +47,7 @@ int main() {
     benchmark_gemm_kernel(desc_gemm_km_kn_nm_fp32_m16_n64_k512, 10000000);
     benchmark_gemm_kernel(desc_gemm_mk_kn_nm_fp32_m16_n32_k16_za, 10000000);
     benchmark_gemm_kernel(desc_gemm_mk_kn_nm_fp32_m16_n32_k512_za, 10000000);
+    benchmark_gemm_kernel(desc_gemm_mk_kn_nm_fp32_m16_n32_k512_tbl, 10000000);
 
     return 0;
 }

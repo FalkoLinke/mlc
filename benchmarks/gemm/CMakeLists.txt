@@ -17,6 +17,7 @@ set(KERNELS
     gemm_km_kn_nm_fp32_m16_n64_k512.s
     gemm_mk_kn_nm_fp32_m16_n32_k16_za.s
     gemm_mk_kn_nm_fp32_m16_n32_k512_za.s
+    gemm_mk_kn_nm_fp32_m16_n32_k512_tbl.s
 )
 set_source_files_properties(${KERNELS} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 
