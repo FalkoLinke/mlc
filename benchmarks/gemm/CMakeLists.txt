@@ -11,9 +11,12 @@ set(CXX_FLAGS -Wall -Wextra -march=armv9.2-a+nosve+sme+sme2 -O3)
 
 set(KERNELS 
     gemm_km_kn_nm_fp32_m16_n32_k1.s 
+    gemm_km_kn_nm_fp32_m16_n32_k16.s 
     gemm_km_kn_nm_fp32_m16_n32_k512.s 
     gemm_km_kn_nm_fp32_m16_n32_k512_v2.s
     gemm_km_kn_nm_fp32_m16_n64_k512.s
+    gemm_mk_kn_nm_fp32_m16_n32_k16_za.s
+    gemm_mk_kn_nm_fp32_m16_n32_k512_za.s
 )
 set_source_files_properties(${KERNELS} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 
