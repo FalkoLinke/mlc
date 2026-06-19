@@ -180,124 +180,101 @@ _loop02:
     tbl z12.s, {z6.s, z7.s}, z5.s
     tbl z11.s, {z6.s, z7.s}, z4.s
 
-    mov z3.d, z0.d
-    mov z0.d, z11.d
-    mov z11.d, z1.d
-    mov z1.d, z13.d
-    mov z13.d, z2.d
-    mov z2.d, z15.d
-    mov z15.d, z3.d
-    mov z3.d, z17.d
-    mov z4.d, z19.d
-    mov z5.d, z21.d
-    mov z6.d, z23.d
-    mov z7.d, z11.d
-
-    mov z8.d, z12.d
-    mov z9.d, z14.d
-    mov z10.d, z16.d
-    mov z11.d, z18.d
-    mov z12.d, z20.d
-    mov z20.d, z13.d
-    mov z13.d, z22.d
-    mov z14.d, z15.d
-    mov z15.d, z20.d
-
     // compute outer products
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z0.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z0.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z11.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z11.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z1.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z1.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z13.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z13.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z2.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z2.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z15.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z15.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z3.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z3.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z17.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z17.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z4.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z4.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z19.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z19.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z5.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z5.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z21.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z21.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z6.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z6.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z23.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z23.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z7.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z7.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z1.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z1.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z8.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z8.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z12.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z12.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z9.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z9.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z14.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z14.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z10.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z10.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z16.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z16.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z11.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z11.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z18.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z18.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z12.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z12.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z20.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z20.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z13.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z13.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z22.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z22.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z14.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z14.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z0.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z0.s
     add x1, x1, x4, LSL #2
 
-    ld1w z16.s, p0/z, [x1]
-    ld1w z17.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z16.s, z15.s
-    fmopa za1.s, p0/m, p0/m, z17.s, z15.s
+    ld1w z3.s, p0/z, [x1]
+    ld1w z4.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z3.s, z2.s
+    fmopa za1.s, p0/m, p0/m, z4.s, z2.s
     add x1, x1, x4, LSL #2
 
     add x9, x9, #64
