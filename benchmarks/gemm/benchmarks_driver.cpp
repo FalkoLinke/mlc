@@ -28,8 +28,14 @@ void benchmark_gemm_kernel(gemm_kernel_desc_t const desc, uint64_t const reps) {
     double gflops_computed = (reps * 1e-9) * flops_per_rep;
     double gflops = gflops_computed / duration.count();
 
-    std::cout << gflops << "\t\t";
-    std::cout << gflops_computed << "\t\t";
+    std::cout << desc.m << "\t";
+    std::cout << desc.n << "\t";
+    std::cout << desc.k << "\t";
+    std::cout << desc.trans_a << "\t";
+    std::cout << desc.trans_b << "\t";
+    std::cout << desc.trans_c << "\t";
+    std::cout << desc.desc << "\t";
+    std::cout << gflops << "\t";
     std::cout << duration.count() << std::endl;
 }
 
@@ -38,7 +44,7 @@ void benchmark_gemm_kernel(gemm_kernel_desc_t const desc, uint64_t const reps) {
 
 
 int main() {
-    std::cout << "GFlops\t\tOperations computed [GFlop]\t\tDuration [s]" << std::endl;
+    std::cout << "m\tn\tk\ttrans_a\ttrans_b\ttrans_c\tDescription\tGFlops\tDuration [s]" << std::endl;
 
     benchmark_gemm_kernel(desc_gemm_km_kn_nm_fp32_m16_n32_k1, 100000000);
     benchmark_gemm_kernel(desc_gemm_km_kn_nm_fp32_m16_n32_k16, 10000000);

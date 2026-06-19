@@ -17,6 +17,7 @@ typedef struct gemm_kernel_desc {
     bool trans_a;
     bool trans_b;
     bool trans_c;
+    std::string desc;
     gemm_kernel_t* func;
 } gemm_kernel_desc_t;
 
@@ -36,6 +37,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
+        .desc = "default",
         .func = gemm_km_kn_nm_fp32_m16_n32_k1,
     };
 
@@ -47,6 +49,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
+        .desc = "default",
         .func = gemm_km_kn_nm_fp32_m16_n32_k16,
     };
 
@@ -58,6 +61,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
+        .desc = "default",
         .func = gemm_km_kn_nm_fp32_m16_n32_k512,
     };
 
@@ -69,6 +73,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
+        .desc = "default",
         .func = gemm_km_kn_nm_fp32_m16_n32_k512_v2,
     };
 
@@ -80,6 +85,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
+        .desc = "default",
         .func = gemm_km_kn_nm_fp32_m16_n64_k512,
     };
 
@@ -91,6 +97,7 @@ extern "C" {
         .trans_a = true,
         .trans_b = true,
         .trans_c = false,
+        .desc = "ZA transpose",
         .func = gemm_mk_kn_nm_fp32_m16_n32_k16_za,
     };
 
@@ -102,6 +109,7 @@ extern "C" {
         .trans_a = true,
         .trans_b = true,
         .trans_c = false,
+        .desc = "ZA transpose",
         .func = gemm_mk_kn_nm_fp32_m16_n32_k512_za,
     };
 
@@ -113,6 +121,7 @@ extern "C" {
         .trans_a = true,
         .trans_b = true,
         .trans_c = false,
+        .desc = "TBL transpose",
         .func = gemm_mk_kn_nm_fp32_m16_n32_k512_tbl,
     };
 }
