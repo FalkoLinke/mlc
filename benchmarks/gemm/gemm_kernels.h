@@ -124,6 +124,18 @@ extern "C" {
         .desc = "TBL transpose",
         .func = gemm_mk_kn_nm_fp32_m16_n32_k512_tbl,
     };
+
+    void gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_stack(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_stack = {
+        .m = 16,
+        .n = 16,
+        .k = 512,
+        .trans_a = true,
+        .trans_b = false,
+        .trans_c = false,
+        .desc = "TBL stack transpose",
+        .func = gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_stack,
+    };
 }
 
 
