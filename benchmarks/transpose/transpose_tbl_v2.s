@@ -137,8 +137,6 @@ _transpose_16x16_fp32_tbl_v2:
     mov z7.d, z6.d
     mov z6.d, z22.d
 
-
-
     // 16x16 submatrix transpose
     adr x12, _trn1_16x16
     ld1w z4.s, p0/z, [x12]
@@ -162,62 +160,38 @@ _transpose_16x16_fp32_tbl_v2:
     tbl z12.s, {z6.s, z7.s}, z5.s
     tbl z11.s, {z6.s, z7.s}, z4.s
 
-    mov z3.d, z0.d
-    mov z0.d, z11.d
-    mov z11.d, z1.d
-    mov z1.d, z13.d
-    mov z13.d, z2.d
-    mov z2.d, z15.d
-    mov z15.d, z3.d
-    mov z3.d, z17.d
-    mov z4.d, z19.d
-    mov z5.d, z21.d
-    mov z6.d, z23.d
-    mov z7.d, z11.d
-
-    mov z8.d, z12.d
-    mov z9.d, z14.d
-    mov z10.d, z16.d
-    mov z11.d, z18.d
-    mov z12.d, z20.d
-    mov z20.d, z13.d
-    mov z13.d, z22.d
-    mov z14.d, z15.d
-    mov z15.d, z20.d
-
-
     // store matrix
-    st1w z0.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z1.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z2.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z3.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z4.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z5.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z6.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z7.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z8.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z9.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z10.s, p0, [x1]
-    add x1, x1, x3, LSL #2
     st1w z11.s, p0, [x1]
-    add x1, x1, x3, LSL #2
-    st1w z12.s, p0, [x1]
     add x1, x1, x3, LSL #2
     st1w z13.s, p0, [x1]
     add x1, x1, x3, LSL #2
+    st1w z15.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z17.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z19.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z21.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z23.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z1.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z12.s, p0, [x1]
+    add x1, x1, x3, LSL #2
     st1w z14.s, p0, [x1]
     add x1, x1, x3, LSL #2
-    st1w z15.s, p0, [x1]
+    st1w z16.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z18.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z20.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z22.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z0.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z2.s, p0, [x1]
     add x1, x1, x3, LSL #2
 
 
