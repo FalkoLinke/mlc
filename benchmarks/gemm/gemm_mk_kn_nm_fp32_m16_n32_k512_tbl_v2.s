@@ -42,239 +42,236 @@ _loop02:
     // load input matrix
     ld1w z0.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z1.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z2.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z3.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z4.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z5.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z6.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z7.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
     ld1w z8.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
+    ld1w z1.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
     ld1w z9.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
+    ld1w z2.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
     ld1w z10.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
+    ld1w z3.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
     ld1w z11.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
+    ld1w z4.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
     ld1w z12.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
+    ld1w z5.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
     ld1w z13.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
+    ld1w z6.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
     ld1w z14.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
+    ld1w z7.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
     ld1w z15.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
 
-    // transpose
+
     // 2x2 submatrix transpose
-    trn2 z23.s, z14.s, z15.s
-    trn1 z21.s, z14.s, z15.s
-    trn2 z22.s, z12.s, z13.s
-    trn1 z20.s, z12.s, z13.s
+    // input: z0 - z15
+    // stack: z16 - z23
+    // output: z8 - z23
 
-    trn2 z19.s, z10.s, z11.s
-    trn1 z17.s, z10.s, z11.s
-    trn2 z18.s, z8.s, z9.s
-    trn1 z16.s, z8.s, z9.s
-    
-    trn2 z15.s, z6.s, z7.s
-    trn1 z13.s, z6.s, z7.s
-    trn2 z14.s, z4.s, z5.s
-    trn1 z12.s, z4.s, z5.s
-
-    trn2 z11.s, z2.s, z3.s
-    trn1 z9.s, z2.s, z3.s
-    trn2 z10.s, z0.s, z1.s
-    trn1 z8.s, z0.s, z1.s
+    trn2 z23.s, z7.s, z15.s
+    trn1 z15.s, z7.s, z15.s
+    trn2 z22.s, z6.s, z14.s
+    trn1 z14.s, z6.s, z14.s
+    trn2 z21.s, z5.s, z13.s
+    trn1 z13.s, z5.s, z13.s
+    trn2 z20.s, z4.s, z12.s
+    trn1 z12.s, z4.s, z12.s
+    trn2 z19.s, z3.s, z11.s
+    trn1 z11.s, z3.s, z11.s
+    trn2 z18.s, z2.s, z10.s
+    trn1 z10.s, z2.s, z10.s
+    trn2 z17.s, z1.s, z9.s
+    trn1 z9.s, z1.s, z9.s
+    trn2 z16.s, z0.s, z8.s
+    trn1 z8.s, z0.s, z8.s
 
     // 4x4 submatrix transpose
-    trn2 z7.d, z22.d, z23.d
-    trn1 z3.d, z22.d, z23.d    
-    trn2 z5.d, z20.d, z21.d
-    trn1 z1.d, z20.d, z21.d
+    // input: z8 - z23 
+    // stack: z0 - z7
+    // output: z16 - z7
 
-    trn2 z6.d, z18.d, z19.d
-    trn1 z2.d, z18.d, z19.d
+    trn2 z7.d, z22.d, z23.d
+    trn2 z6.d, z20.d, z21.d
+    trn2 z5.d, z18.d, z19.d
     trn2 z4.d, z16.d, z17.d
+    trn1 z3.d, z22.d, z23.d
+    trn1 z2.d, z20.d, z21.d
+    trn1 z1.d, z18.d, z19.d
     trn1 z0.d, z16.d, z17.d
 
     trn2 z23.d, z14.d, z15.d
-    trn1 z19.d, z14.d, z15.d
-    trn2 z21.d, z12.d, z13.d
-    trn1 z17.d, z12.d, z13.d
-
-    trn2 z22.d, z10.d, z11.d
-    trn1 z18.d, z10.d, z11.d
+    trn2 z22.d, z12.d, z13.d
+    trn2 z21.d, z10.d, z11.d
     trn2 z20.d, z8.d, z9.d
+    trn1 z19.d, z14.d, z15.d
+    trn1 z18.d, z12.d, z13.d
+    trn1 z17.d, z10.d, z11.d
     trn1 z16.d, z8.d, z9.d
 
     // 8x8 submatrix transpose
+    // input: z16 - z7
+    // indices: z8, z9
+    // output: z22 - z7, z10 - z16
+
     adr x12, _trn1_8x8
-    ld1w z14.s, p0/z, [x12]
+    ld1w z8.s, p0/z, [x12]
     adr x13, _trn2_8x8
-    ld1w z15.s, p0/z, [x13]
+    ld1w z9.s, p0/z, [x13]
 
-    tbl z13.s, {z6.s, z7.s}, z15.s
-    tbl z12.s, {z6.s, z7.s}, z14.s
-    tbl z11.s, {z4.s, z5.s}, z15.s
-    tbl z10.s, {z4.s, z5.s}, z14.s
-    tbl z9.s, {z2.s, z3.s}, z15.s
-    tbl z8.s, {z2.s, z3.s}, z14.s
-    tbl z7.s, {z0.s, z1.s}, z15.s
-    tbl z6.s, {z0.s, z1.s}, z14.s
-    tbl z5.s, {z22.s, z23.s}, z15.s
-    tbl z4.s, {z22.s, z23.s}, z14.s
-    tbl z3.s, {z20.s, z21.s}, z15.s
-    tbl z2.s, {z20.s, z21.s}, z14.s
-    tbl z1.s, {z18.s, z19.s}, z15.s
-    tbl z0.s, {z18.s, z19.s}, z14.s
-    tbl z23.s, {z16.s, z17.s}, z15.s
-    tbl z22.s, {z16.s, z17.s}, z14.s
+    tbl z15.s, {z6.s, z7.s}, z9.s
+    tbl z13.s, {z6.s, z7.s}, z8.s
+    tbl z14.s, {z4.s, z5.s}, z9.s
+    tbl z12.s, {z4.s, z5.s}, z8.s
 
-    mov z21.d, z13.d
-    mov z20.d, z5.d
-    mov z19.d, z11.d
-    mov z18.d, z3.d
-    mov z17.d, z9.d
-    mov z16.d, z1.d
-    mov z15.d, z7.d
-    mov z14.d, z23.d
+    tbl z11.s, {z2.s, z3.s}, z9.s
+    tbl z10.s, {z0.s, z1.s}, z9.s
+    tbl z7.s, {z2.s, z3.s}, z8.s
+    tbl z6.s, {z0.s, z1.s}, z8.s
 
-    mov z13.d, z12.d
-    mov z12.d, z4.d
-    mov z11.d, z10.d
-    mov z10.d, z2.d
-    mov z9.d, z8.d
-    mov z8.d, z0.d
-    mov z7.d, z6.d
-    mov z6.d, z22.d
+    tbl z5.s, {z22.s, z23.s}, z9.s
+    tbl z4.s, {z20.s, z21.s}, z9.s
+    tbl z3.s, {z22.s, z23.s}, z8.s
+    tbl z2.s, {z20.s, z21.s}, z8.s
+
+    tbl z1.s, {z18.s, z19.s}, z9.s
+    tbl z0.s, {z16.s, z17.s}, z9.s
+    tbl z23.s, {z18.s, z19.s}, z8.s
+    tbl z22.s, {z16.s, z17.s}, z8.s
 
     // 16x16 submatrix transpose
-    adr x12, _trn1_16x16
-    ld1w z4.s, p0/z, [x12]
-    adr x13, _trn2_16x16
-    ld1w z5.s, p0/z, [x13]
+    // input: z22 - z7, z10 - z16
+    // indices: z8, z9
+    // output: z4 - z7, z10 - z22
 
-    tbl z2.s, {z20.s, z21.s}, z5.s
-    tbl z1.s, {z20.s, z21.s}, z4.s
-    tbl z0.s, {z18.s, z19.s}, z5.s
-    tbl z23.s, {z18.s, z19.s}, z4.s
-    tbl z22.s, {z16.s, z17.s}, z5.s
-    tbl z21.s, {z16.s, z17.s}, z4.s
-    tbl z20.s, {z14.s, z15.s}, z5.s
-    tbl z19.s, {z14.s, z15.s}, z4.s
-    tbl z18.s, {z12.s, z13.s}, z5.s
-    tbl z17.s, {z12.s, z13.s}, z4.s
-    tbl z16.s, {z10.s, z11.s}, z5.s
-    tbl z15.s, {z10.s, z11.s}, z4.s
-    tbl z14.s, {z8.s, z9.s}, z5.s
-    tbl z13.s, {z8.s, z9.s}, z4.s
-    tbl z12.s, {z6.s, z7.s}, z5.s
-    tbl z11.s, {z6.s, z7.s}, z4.s
+    adr x12, _trn1_16x16
+    ld1w z8.s, p0/z, [x12]
+    adr x13, _trn2_16x16
+    ld1w z9.s, p0/z, [x13]
+
+    tbl z21.s, {z14.s, z15.s}, z9.s
+    tbl z20.s, {z14.s, z15.s}, z8.s
+    tbl z19.s, {z12.s, z13.s}, z9.s
+    tbl z18.s, {z12.s, z13.s}, z8.s
+    tbl z17.s, {z10.s, z11.s}, z9.s
+    tbl z16.s, {z10.s, z11.s}, z8.s
+    tbl z15.s, {z6.s, z7.s}, z9.s
+    tbl z14.s, {z6.s, z7.s}, z8.s
+    tbl z13.s, {z4.s, z5.s}, z9.s
+    tbl z12.s, {z4.s, z5.s}, z8.s
+    tbl z11.s, {z2.s, z3.s}, z9.s
+    tbl z10.s, {z2.s, z3.s}, z8.s
+    tbl z7.s, {z0.s, z1.s}, z9.s
+    tbl z6.s, {z0.s, z1.s}, z8.s
+    tbl z5.s, {z22.s, z23.s}, z9.s
+    tbl z4.s, {z22.s, z23.s}, z8.s
+
 
     // compute outer products
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z11.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z11.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z4.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z4.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z13.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z13.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z14.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z14.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z15.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z15.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z10.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z10.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z17.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z17.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z18.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z18.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z19.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z19.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z6.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z6.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z21.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z21.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z16.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z16.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z23.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z23.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z12.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z12.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z1.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z1.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z20.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z20.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z12.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z12.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z5.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z5.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z14.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z14.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z15.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z15.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z16.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z16.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z11.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z11.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z18.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z18.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z19.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z19.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z20.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z20.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z7.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z7.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z22.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z22.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z17.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z17.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z0.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z0.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z13.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z13.s
     add x1, x1, x4, LSL #2
 
-    ld1w z3.s, p0/z, [x1]
-    ld1w z4.s, p0/z, [x1, #1, MUL VL]
-    fmopa za0.s, p0/m, p0/m, z3.s, z2.s
-    fmopa za1.s, p0/m, p0/m, z4.s, z2.s
+    ld1w z8.s, p0/z, [x1]
+    ld1w z9.s, p0/z, [x1, #1, MUL VL]
+    fmopa za0.s, p0/m, p0/m, z8.s, z21.s
+    fmopa za1.s, p0/m, p0/m, z9.s, z21.s
     add x1, x1, x4, LSL #2
 
     add x9, x9, #64
