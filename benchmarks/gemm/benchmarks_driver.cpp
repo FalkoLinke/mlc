@@ -55,7 +55,9 @@ int main() {
     benchmark_gemm_kernel(desc_gemm_mk_kn_nm_fp32_m16_n32_k512_za, 1000000);
     benchmark_gemm_kernel(desc_gemm_mk_kn_nm_fp32_m16_n32_k512_tbl, 10000000);
     benchmark_gemm_kernel(desc_gemm_mk_kn_nm_fp32_m16_n32_k512_tbl_v2, 10000000);
+    benchmark_gemm_kernel(desc_gemm_km_kn_nm_fp32_m16_n16_k512, 10000000);
     benchmark_gemm_kernel(desc_gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_stack, 10000000);
+    benchmark_gemm_kernel(desc_gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_regs, 10000000);
 
     return 0;
 }
