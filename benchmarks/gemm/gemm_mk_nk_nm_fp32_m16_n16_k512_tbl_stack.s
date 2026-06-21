@@ -39,174 +39,191 @@ _loop02:
     // load input matrix
     ld1w z0.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z1.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z2.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z3.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z4.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z5.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z6.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
-    ld1w z7.s, p0/z, [x0]
-    add x0, x0, x3, LSL #2
     ld1w z8.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
+    ld1w z1.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
     ld1w z9.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
+    ld1w z2.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
     ld1w z10.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
+    ld1w z3.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
     ld1w z11.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
+    ld1w z4.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
     ld1w z12.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
+    ld1w z5.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
     ld1w z13.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
+    ld1w z6.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
     ld1w z14.s, p0/z, [x0]
+    add x0, x0, x3, LSL #2
+    ld1w z7.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
     ld1w z15.s, p0/z, [x0]
     add x0, x0, x3, LSL #2
 
-    // transpose
 
     // 2x2 submatrix transpose
-    trn1 z16.s, z0.s, z1.s
-    trn2 z17.s, z0.s, z1.s
-    trn1 z18.s, z2.s, z3.s
-    trn2 z19.s, z2.s, z3.s
-    trn1 z20.s, z4.s, z5.s
-    trn2 z21.s, z4.s, z5.s
-    trn1 z22.s, z6.s, z7.s
-    trn2 z23.s, z6.s, z7.s
-    trn1 z24.s, z8.s, z9.s
-    trn2 z25.s, z8.s, z9.s
-    trn1 z26.s, z10.s, z11.s
-    trn2 z27.s, z10.s, z11.s
-    trn1 z28.s, z12.s, z13.s
-    trn2 z29.s, z12.s, z13.s
-    trn1 z30.s, z14.s, z15.s
-    trn2 z31.s, z14.s, z15.s
+    // input: z0 - z15
+    // stack: z16 - z23
+    // output: z8 - z23
+
+    trn2 z23.s, z7.s, z15.s
+    trn1 z15.s, z7.s, z15.s
+    trn2 z22.s, z6.s, z14.s
+    trn1 z14.s, z6.s, z14.s
+    trn2 z21.s, z5.s, z13.s
+    trn1 z13.s, z5.s, z13.s
+    trn2 z20.s, z4.s, z12.s
+    trn1 z12.s, z4.s, z12.s
+    trn2 z19.s, z3.s, z11.s
+    trn1 z11.s, z3.s, z11.s
+    trn2 z18.s, z2.s, z10.s
+    trn1 z10.s, z2.s, z10.s
+    trn2 z17.s, z1.s, z9.s
+    trn1 z9.s, z1.s, z9.s
+    trn2 z16.s, z0.s, z8.s
+    trn1 z8.s, z0.s, z8.s
 
     // 4x4 submatrix transpose
-    trn1 z0.d, z16.d, z18.d
-    trn1 z2.d, z17.d, z19.d
-    trn2 z4.d, z16.d, z18.d
-    trn2 z6.d, z17.d, z19.d
-    trn1 z1.d, z20.d, z22.d
-    trn1 z3.d, z21.d, z23.d
-    trn2 z5.d, z20.d, z22.d
-    trn2 z7.d, z21.d, z23.d
-    trn1 z8.d, z24.d, z26.d
-    trn1 z10.d, z25.d, z27.d
-    trn2 z12.d, z24.d, z26.d
-    trn2 z14.d, z25.d, z27.d
-    trn1 z9.d, z28.d, z30.d
-    trn1 z11.d, z29.d, z31.d
-    trn2 z13.d, z28.d, z30.d
-    trn2 z15.d, z29.d, z31.d
+    // input: z8 - z23 
+    // stack: z0 - z7
+    // output: z16 - z7
+
+    trn2 z7.d, z22.d, z23.d
+    trn2 z6.d, z20.d, z21.d
+    trn2 z5.d, z18.d, z19.d
+    trn2 z4.d, z16.d, z17.d
+    trn1 z3.d, z22.d, z23.d
+    trn1 z2.d, z20.d, z21.d
+    trn1 z1.d, z18.d, z19.d
+    trn1 z0.d, z16.d, z17.d
+
+    trn2 z23.d, z14.d, z15.d
+    trn2 z22.d, z12.d, z13.d
+    trn2 z21.d, z10.d, z11.d
+    trn2 z20.d, z8.d, z9.d
+    trn1 z19.d, z14.d, z15.d
+    trn1 z18.d, z12.d, z13.d
+    trn1 z17.d, z10.d, z11.d
+    trn1 z16.d, z8.d, z9.d
 
     // 8x8 submatrix transpose
-    adr x12, _trn1_8x8               // prepare 8x8 trn instruction using tbl
-    ld1w z30.s, p0/z, [x12]          // z30 is trn1
-    adr x12, _trn2_8x8
-    ld1w z31.s, p0/z, [x12]          // z31 is trn2
+    // input: z16 - z7
+    // indices: z8, z9
+    // output: z22 - z7, z10 - z16
 
-    tbl z16.s, {z0.s, z1.s}, z30.s  // arguments to tbl must be consecutively numbered
-    tbl z18.s, {z2.s, z3.s}, z30.s
-    tbl z20.s, {z4.s, z5.s}, z30.s
-    tbl z22.s, {z6.s, z7.s}, z30.s
-    mov z17.d, z30.d
-    tbl z24.s, {z0.s, z1.s}, z31.s
-    tbl z26.s, {z2.s, z3.s}, z31.s
-    tbl z28.s, {z4.s, z5.s}, z31.s
-    tbl z30.s, {z6.s, z7.s}, z31.s
-    mov z0.d, z17.d
-    mov z1.d, z31.d
-    tbl z17.s, {z8.s, z9.s}, z0.s
-    tbl z19.s, {z10.s, z11.s}, z0.s
-    tbl z21.s, {z12.s, z13.s}, z0.s
-    tbl z23.s, {z14.s, z15.s}, z0.s
-    tbl z25.s, {z8.s, z9.s}, z1.s
-    tbl z27.s, {z10.s, z11.s}, z1.s
-    tbl z29.s, {z12.s, z13.s}, z1.s
-    tbl z31.s, {z14.s, z15.s}, z1.s
+    adr x12, _trn1_8x8
+    ld1w z8.s, p0/z, [x12]
+    adr x13, _trn2_8x8
+    ld1w z9.s, p0/z, [x13]
+
+    tbl z15.s, {z6.s, z7.s}, z9.s
+    tbl z13.s, {z6.s, z7.s}, z8.s
+    tbl z14.s, {z4.s, z5.s}, z9.s
+    tbl z12.s, {z4.s, z5.s}, z8.s
+
+    tbl z11.s, {z2.s, z3.s}, z9.s
+    tbl z10.s, {z0.s, z1.s}, z9.s
+    tbl z7.s, {z2.s, z3.s}, z8.s
+    tbl z6.s, {z0.s, z1.s}, z8.s
+
+    tbl z5.s, {z22.s, z23.s}, z9.s
+    tbl z4.s, {z20.s, z21.s}, z9.s
+    tbl z3.s, {z22.s, z23.s}, z8.s
+    tbl z2.s, {z20.s, z21.s}, z8.s
+
+    tbl z1.s, {z18.s, z19.s}, z9.s
+    tbl z0.s, {z16.s, z17.s}, z9.s
+    tbl z23.s, {z18.s, z19.s}, z8.s
+    tbl z22.s, {z16.s, z17.s}, z8.s
 
     // 16x16 submatrix transpose
-    adr x12, _trn1_16x16
-    ld1w z14.s, p0/z, [x12]
-    adr x12, _trn2_16x16
-    ld1w z15.s, p0/z, [x12]
+    // input: z22 - z7, z10 - z16
+    // indices: z8, z9
+    // output: z4 - z7, z10 - z22
 
-    tbl z0.s, {z16.s, z17.s}, z14.s
-    tbl z1.s, {z18.s, z19.s}, z14.s
-    tbl z2.s, {z20.s, z21.s}, z14.s
-    tbl z3.s, {z22.s, z23.s}, z14.s
-    tbl z4.s, {z24.s, z25.s}, z14.s
-    tbl z5.s, {z26.s, z27.s}, z14.s
-    tbl z6.s, {z28.s, z29.s}, z14.s
-    tbl z7.s, {z30.s, z31.s}, z14.s
-    tbl z8.s, {z16.s, z17.s}, z15.s
-    tbl z9.s, {z18.s, z19.s}, z15.s
-    tbl z10.s, {z20.s, z21.s}, z15.s
-    tbl z11.s, {z22.s, z23.s}, z15.s
-    tbl z12.s, {z24.s, z25.s}, z15.s
-    tbl z13.s, {z26.s, z27.s}, z15.s
-    tbl z14.s, {z28.s, z29.s}, z15.s
-    mov z16.d, z15.d
-    tbl z15.s, {z30.s, z31.s}, z16.s
+    adr x12, _trn1_16x16
+    ld1w z8.s, p0/z, [x12]
+    adr x13, _trn2_16x16
+    ld1w z9.s, p0/z, [x13]
+
+    tbl z21.s, {z14.s, z15.s}, z9.s
+    tbl z20.s, {z14.s, z15.s}, z8.s
+    tbl z19.s, {z12.s, z13.s}, z9.s
+    tbl z18.s, {z12.s, z13.s}, z8.s
+    tbl z17.s, {z10.s, z11.s}, z9.s
+    tbl z16.s, {z10.s, z11.s}, z8.s
+    tbl z15.s, {z6.s, z7.s}, z9.s
+    tbl z14.s, {z6.s, z7.s}, z8.s
+    tbl z13.s, {z4.s, z5.s}, z9.s
+    tbl z12.s, {z4.s, z5.s}, z8.s
+    tbl z11.s, {z2.s, z3.s}, z9.s
+    tbl z10.s, {z2.s, z3.s}, z8.s
+    tbl z7.s, {z0.s, z1.s}, z9.s
+    tbl z6.s, {z0.s, z1.s}, z8.s
+    tbl z5.s, {z22.s, z23.s}, z9.s
+    tbl z4.s, {z22.s, z23.s}, z8.s
+
+    // store A in registers and on stack
+    mov z24.d, z4.d
+    mov z25.d, z14.d
+    mov z26.d, z10.d
+    mov z27.d, z18.d
+    mov z28.d, z6.d
+    mov z29.d, z16.d
+    mov z30.d, z12.d
+    mov z31.d, z20.d
 
     // store A on stack
-    st1w z0.s, p0, [x15, #-8, MUL VL]
-    st1w z1.s, p0, [x15, #-7, MUL VL]
-    st1w z2.s, p0, [x15, #-6, MUL VL]
-    st1w z3.s, p0, [x15, #-5, MUL VL]
-    st1w z4.s, p0, [x15, #-4, MUL VL]
-    st1w z5.s, p0, [x15, #-3, MUL VL]
-    st1w z6.s, p0, [x15, #-2, MUL VL]
-    st1w z7.s, p0, [x15, #-1, MUL VL]
-    st1w z8.s, p0, [x15, #0, MUL VL]
-    st1w z9.s, p0, [x15, #1, MUL VL]
-    st1w z10.s, p0, [x15, #2, MUL VL]
-    st1w z11.s, p0, [x15, #3, MUL VL]
-    st1w z12.s, p0, [x15, #4, MUL VL]
-    st1w z13.s, p0, [x15, #5, MUL VL]
-    st1w z14.s, p0, [x15, #6, MUL VL]
-    st1w z15.s, p0, [x15, #7, MUL VL]
+    st1w z5.s, p0, [x15, #0, MUL VL]
+    st1w z15.s, p0, [x15, #1, MUL VL]
+    st1w z11.s, p0, [x15, #2, MUL VL]
+    st1w z19.s, p0, [x15, #3, MUL VL]
+    st1w z7.s, p0, [x15, #4, MUL VL]
+    st1w z17.s, p0, [x15, #5, MUL VL]
+    st1w z13.s, p0, [x15, #6, MUL VL]
+    st1w z21.s, p0, [x15, #7, MUL VL]
 
     // load 16x16 tile of B
     // load input matrix
     ld1w z0.s, p0/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z1.s, p0/z, [x1]
-    add x1, x1, x4, LSL #2
-    ld1w z2.s, p0/z, [x1]
-    add x1, x1, x4, LSL #2
-    ld1w z3.s, p0/z, [x1]
-    add x1, x1, x4, LSL #2
-    ld1w z4.s, p0/z, [x1]
-    add x1, x1, x4, LSL #2
-    ld1w z5.s, p0/z, [x1]
-    add x1, x1, x4, LSL #2
-    ld1w z6.s, p0/z, [x1]
-    add x1, x1, x4, LSL #2
-    ld1w z7.s, p0/z, [x1]
-    add x1, x1, x4, LSL #2
     ld1w z8.s, p0/z, [x1]
+    add x1, x1, x4, LSL #2
+    ld1w z1.s, p0/z, [x1]
     add x1, x1, x4, LSL #2
     ld1w z9.s, p0/z, [x1]
     add x1, x1, x4, LSL #2
+    ld1w z2.s, p0/z, [x1]
+    add x1, x1, x4, LSL #2
     ld1w z10.s, p0/z, [x1]
+    add x1, x1, x4, LSL #2
+    ld1w z3.s, p0/z, [x1]
     add x1, x1, x4, LSL #2
     ld1w z11.s, p0/z, [x1]
     add x1, x1, x4, LSL #2
+    ld1w z4.s, p0/z, [x1]
+    add x1, x1, x4, LSL #2
     ld1w z12.s, p0/z, [x1]
+    add x1, x1, x4, LSL #2
+    ld1w z5.s, p0/z, [x1]
     add x1, x1, x4, LSL #2
     ld1w z13.s, p0/z, [x1]
     add x1, x1, x4, LSL #2
+    ld1w z6.s, p0/z, [x1]
+    add x1, x1, x4, LSL #2
     ld1w z14.s, p0/z, [x1]
+    add x1, x1, x4, LSL #2
+    ld1w z7.s, p0/z, [x1]
     add x1, x1, x4, LSL #2
     ld1w z15.s, p0/z, [x1]
     add x1, x1, x4, LSL #2
@@ -214,125 +231,153 @@ _loop02:
     // transpose
 
     // 2x2 submatrix transpose
-    trn1 z16.s, z0.s, z1.s
-    trn2 z17.s, z0.s, z1.s
-    trn1 z18.s, z2.s, z3.s
-    trn2 z19.s, z2.s, z3.s
-    trn1 z20.s, z4.s, z5.s
-    trn2 z21.s, z4.s, z5.s
-    trn1 z22.s, z6.s, z7.s
-    trn2 z23.s, z6.s, z7.s
-    trn1 z24.s, z8.s, z9.s
-    trn2 z25.s, z8.s, z9.s
-    trn1 z26.s, z10.s, z11.s
-    trn2 z27.s, z10.s, z11.s
-    trn1 z28.s, z12.s, z13.s
-    trn2 z29.s, z12.s, z13.s
-    trn1 z30.s, z14.s, z15.s
-    trn2 z31.s, z14.s, z15.s
+    // input: z0 - z15
+    // stack: z16 - z23
+    // output: z8 - z23
+
+    trn2 z23.s, z7.s, z15.s
+    trn1 z15.s, z7.s, z15.s
+    trn2 z22.s, z6.s, z14.s
+    trn1 z14.s, z6.s, z14.s
+    trn2 z21.s, z5.s, z13.s
+    trn1 z13.s, z5.s, z13.s
+    trn2 z20.s, z4.s, z12.s
+    trn1 z12.s, z4.s, z12.s
+    trn2 z19.s, z3.s, z11.s
+    trn1 z11.s, z3.s, z11.s
+    trn2 z18.s, z2.s, z10.s
+    trn1 z10.s, z2.s, z10.s
+    trn2 z17.s, z1.s, z9.s
+    trn1 z9.s, z1.s, z9.s
+    trn2 z16.s, z0.s, z8.s
+    trn1 z8.s, z0.s, z8.s
 
     // 4x4 submatrix transpose
-    trn1 z0.d, z16.d, z18.d
-    trn1 z2.d, z17.d, z19.d
-    trn2 z4.d, z16.d, z18.d
-    trn2 z6.d, z17.d, z19.d
-    trn1 z1.d, z20.d, z22.d
-    trn1 z3.d, z21.d, z23.d
-    trn2 z5.d, z20.d, z22.d
-    trn2 z7.d, z21.d, z23.d
-    trn1 z8.d, z24.d, z26.d
-    trn1 z10.d, z25.d, z27.d
-    trn2 z12.d, z24.d, z26.d
-    trn2 z14.d, z25.d, z27.d
-    trn1 z9.d, z28.d, z30.d
-    trn1 z11.d, z29.d, z31.d
-    trn2 z13.d, z28.d, z30.d
-    trn2 z15.d, z29.d, z31.d
+    // input: z8 - z23 
+    // stack: z0 - z7
+    // output: z16 - z7
+
+    trn2 z7.d, z22.d, z23.d
+    trn2 z6.d, z20.d, z21.d
+    trn2 z5.d, z18.d, z19.d
+    trn2 z4.d, z16.d, z17.d
+    trn1 z3.d, z22.d, z23.d
+    trn1 z2.d, z20.d, z21.d
+    trn1 z1.d, z18.d, z19.d
+    trn1 z0.d, z16.d, z17.d
+
+    trn2 z23.d, z14.d, z15.d
+    trn2 z22.d, z12.d, z13.d
+    trn2 z21.d, z10.d, z11.d
+    trn2 z20.d, z8.d, z9.d
+    trn1 z19.d, z14.d, z15.d
+    trn1 z18.d, z12.d, z13.d
+    trn1 z17.d, z10.d, z11.d
+    trn1 z16.d, z8.d, z9.d
 
     // 8x8 submatrix transpose
-    adr x12, _trn1_8x8               // prepare 8x8 trn instruction using tbl
-    ld1w z30.s, p0/z, [x12]          // z30 is trn1
-    adr x12, _trn2_8x8
-    ld1w z31.s, p0/z, [x12]          // z31 is trn2
+    // input: z16 - z7
+    // indices: z8, z9
+    // output: z22 - z7, z10 - z16
 
-    tbl z16.s, {z0.s, z1.s}, z30.s  // arguments to tbl must be consecutively numbered
-    tbl z18.s, {z2.s, z3.s}, z30.s
-    tbl z20.s, {z4.s, z5.s}, z30.s
-    tbl z22.s, {z6.s, z7.s}, z30.s
-    mov z17.d, z30.d
-    tbl z24.s, {z0.s, z1.s}, z31.s
-    tbl z26.s, {z2.s, z3.s}, z31.s
-    tbl z28.s, {z4.s, z5.s}, z31.s
-    tbl z30.s, {z6.s, z7.s}, z31.s
-    mov z0.d, z17.d
-    mov z1.d, z31.d
-    tbl z17.s, {z8.s, z9.s}, z0.s
-    tbl z19.s, {z10.s, z11.s}, z0.s
-    tbl z21.s, {z12.s, z13.s}, z0.s
-    tbl z23.s, {z14.s, z15.s}, z0.s
-    tbl z25.s, {z8.s, z9.s}, z1.s
-    tbl z27.s, {z10.s, z11.s}, z1.s
-    tbl z29.s, {z12.s, z13.s}, z1.s
-    tbl z31.s, {z14.s, z15.s}, z1.s
+    adr x12, _trn1_8x8
+    ld1w z8.s, p0/z, [x12]
+    adr x13, _trn2_8x8
+    ld1w z9.s, p0/z, [x13]
+
+    tbl z15.s, {z6.s, z7.s}, z9.s
+    tbl z13.s, {z6.s, z7.s}, z8.s
+    tbl z14.s, {z4.s, z5.s}, z9.s
+    tbl z12.s, {z4.s, z5.s}, z8.s
+
+    tbl z11.s, {z2.s, z3.s}, z9.s
+    tbl z10.s, {z0.s, z1.s}, z9.s
+    tbl z7.s, {z2.s, z3.s}, z8.s
+    tbl z6.s, {z0.s, z1.s}, z8.s
+
+    tbl z5.s, {z22.s, z23.s}, z9.s
+    tbl z4.s, {z20.s, z21.s}, z9.s
+    tbl z3.s, {z22.s, z23.s}, z8.s
+    tbl z2.s, {z20.s, z21.s}, z8.s
+
+    tbl z1.s, {z18.s, z19.s}, z9.s
+    tbl z0.s, {z16.s, z17.s}, z9.s
+    tbl z23.s, {z18.s, z19.s}, z8.s
+    tbl z22.s, {z16.s, z17.s}, z8.s
 
     // 16x16 submatrix transpose
-    adr x12, _trn1_16x16
-    ld1w z14.s, p0/z, [x12]
-    adr x12, _trn2_16x16
-    ld1w z15.s, p0/z, [x12]
+    // input: z22 - z7, z10 - z16
+    // indices: z8, z9
+    // output: z4 - z7, z10 - z22
 
-    tbl z0.s, {z16.s, z17.s}, z14.s
-    tbl z1.s, {z18.s, z19.s}, z14.s
-    tbl z2.s, {z20.s, z21.s}, z14.s
-    tbl z3.s, {z22.s, z23.s}, z14.s
-    tbl z4.s, {z24.s, z25.s}, z14.s
-    tbl z5.s, {z26.s, z27.s}, z14.s
-    tbl z6.s, {z28.s, z29.s}, z14.s
-    tbl z7.s, {z30.s, z31.s}, z14.s
-    tbl z8.s, {z16.s, z17.s}, z15.s
-    tbl z9.s, {z18.s, z19.s}, z15.s
-    tbl z10.s, {z20.s, z21.s}, z15.s
-    tbl z11.s, {z22.s, z23.s}, z15.s
-    tbl z12.s, {z24.s, z25.s}, z15.s
-    tbl z13.s, {z26.s, z27.s}, z15.s
-    tbl z14.s, {z28.s, z29.s}, z15.s
-    mov z16.d, z15.d
-    tbl z15.s, {z30.s, z31.s}, z16.s
+    adr x12, _trn1_16x16
+    ld1w z8.s, p0/z, [x12]
+    adr x13, _trn2_16x16
+    ld1w z9.s, p0/z, [x13]
+
+    tbl z21.s, {z14.s, z15.s}, z9.s
+    tbl z20.s, {z14.s, z15.s}, z8.s
+    tbl z19.s, {z12.s, z13.s}, z9.s
+    tbl z18.s, {z12.s, z13.s}, z8.s
+    tbl z17.s, {z10.s, z11.s}, z9.s
+    tbl z16.s, {z10.s, z11.s}, z8.s
+    tbl z15.s, {z6.s, z7.s}, z9.s
+    tbl z14.s, {z6.s, z7.s}, z8.s
+    tbl z13.s, {z4.s, z5.s}, z9.s
+    tbl z12.s, {z4.s, z5.s}, z8.s
+    tbl z11.s, {z2.s, z3.s}, z9.s
+    tbl z10.s, {z2.s, z3.s}, z8.s
+    tbl z7.s, {z0.s, z1.s}, z9.s
+    tbl z6.s, {z0.s, z1.s}, z8.s
+    tbl z5.s, {z22.s, z23.s}, z9.s
+    tbl z4.s, {z22.s, z23.s}, z8.s
 
     // restore A from stack
-    ld1w z16.s, p0/z, [x15, #-8, MUL VL]
-    ld1w z17.s, p0/z, [x15, #-7, MUL VL]
-    ld1w z18.s, p0/z, [x15, #-6, MUL VL]
-    ld1w z19.s, p0/z, [x15, #-5, MUL VL]
-    ld1w z20.s, p0/z, [x15, #-4, MUL VL]
-    ld1w z21.s, p0/z, [x15, #-3, MUL VL]
-    ld1w z22.s, p0/z, [x15, #-2, MUL VL]
-    ld1w z23.s, p0/z, [x15, #-1, MUL VL]
-    ld1w z24.s, p0/z, [x15, #0, MUL VL]
-    ld1w z25.s, p0/z, [x15, #1, MUL VL]
-    ld1w z26.s, p0/z, [x15, #2, MUL VL]
-    ld1w z27.s, p0/z, [x15, #3, MUL VL]
-    ld1w z28.s, p0/z, [x15, #4, MUL VL]
-    ld1w z29.s, p0/z, [x15, #5, MUL VL]
-    ld1w z30.s, p0/z, [x15, #6, MUL VL]
-    ld1w z31.s, p0/z, [x15, #7, MUL VL]
+    // registers z0 - z3, z8, z9, z22, z23 are free
+    ld1w z0.s, p0/z, [x15, #0, MUL VL]
+    ld1w z1.s, p0/z, [x15, #1, MUL VL]
+    ld1w z2.s, p0/z, [x15, #2, MUL VL]
+    ld1w z3.s, p0/z, [x15, #3, MUL VL]
+    ld1w z8.s, p0/z, [x15, #4, MUL VL]
+    ld1w z9.s, p0/z, [x15, #5, MUL VL]
+    ld1w z22.s, p0/z, [x15, #6, MUL VL]
+    ld1w z23.s, p0/z, [x15, #7, MUL VL]
 
-    fmopa za0.s, p0/m, p0/m, z0.s, z16.s
-    fmopa za0.s, p0/m, p0/m, z1.s, z17.s
-    fmopa za0.s, p0/m, p0/m, z2.s, z18.s
-    fmopa za0.s, p0/m, p0/m, z3.s, z19.s
-    fmopa za0.s, p0/m, p0/m, z4.s, z20.s
-    fmopa za0.s, p0/m, p0/m, z5.s, z21.s
-    fmopa za0.s, p0/m, p0/m, z6.s, z22.s
-    fmopa za0.s, p0/m, p0/m, z7.s, z23.s
-    fmopa za0.s, p0/m, p0/m, z8.s, z24.s
-    fmopa za0.s, p0/m, p0/m, z9.s, z25.s
+    // Row-Register map:
+    // Row  A       B
+    // 0    z24     z4
+    // 1    z25     z14
+    // 2    z26     z10
+    // 3    z27     z18
+    // 4    z28     z6
+    // 5    z29     z16
+    // 6    z30     z12
+    // 7    z31     z20
+    // 8    z0      z5
+    // 9    z1      z15
+    // 10   z2      z11
+    // 11   z3      z19
+    // 12   z8      z7
+    // 13   z9      z17
+    // 14   z22     z13
+    // 15   z23     z21
+
+    fmopa za0.s, p0/m, p0/m, z4.s, z24.s
+    fmopa za0.s, p0/m, p0/m, z14.s, z25.s
     fmopa za0.s, p0/m, p0/m, z10.s, z26.s
-    fmopa za0.s, p0/m, p0/m, z11.s, z27.s
-    fmopa za0.s, p0/m, p0/m, z12.s, z28.s
-    fmopa za0.s, p0/m, p0/m, z13.s, z29.s
-    fmopa za0.s, p0/m, p0/m, z14.s, z30.s
-    fmopa za0.s, p0/m, p0/m, z15.s, z31.s
+    fmopa za0.s, p0/m, p0/m, z18.s, z27.s
+    fmopa za0.s, p0/m, p0/m, z6.s, z28.s
+    fmopa za0.s, p0/m, p0/m, z16.s, z29.s
+    fmopa za0.s, p0/m, p0/m, z12.s, z30.s
+    fmopa za0.s, p0/m, p0/m, z20.s, z31.s
+    fmopa za0.s, p0/m, p0/m, z5.s, z0.s
+    fmopa za0.s, p0/m, p0/m, z15.s, z1.s
+    fmopa za0.s, p0/m, p0/m, z11.s, z2.s
+    fmopa za0.s, p0/m, p0/m, z19.s, z3.s
+    fmopa za0.s, p0/m, p0/m, z7.s, z8.s
+    fmopa za0.s, p0/m, p0/m, z17.s, z9.s
+    fmopa za0.s, p0/m, p0/m, z13.s, z22.s
+    fmopa za0.s, p0/m, p0/m, z21.s, z23.s
 
     add x9, x9, #64
     add x10, x10, #64
