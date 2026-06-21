@@ -14,6 +14,7 @@ _gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_regs:
     smstart
 
     ptrue p0.s
+    ptrue p1.s, VL8
 
     // load C
     mov x6, x2
@@ -35,37 +36,37 @@ _loop02:
 
     // load 16x8 tile of A
     // load input matrix
-    ld1w z0.s, p0/z, [x0]
+    ld1w z0.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z8.s, p0/z, [x0]
+    ld1w z8.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z1.s, p0/z, [x0]
+    ld1w z1.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z9.s, p0/z, [x0]
+    ld1w z9.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z2.s, p0/z, [x0]
+    ld1w z2.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z10.s, p0/z, [x0]
+    ld1w z10.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z3.s, p0/z, [x0]
+    ld1w z3.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z11.s, p0/z, [x0]
+    ld1w z11.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z4.s, p0/z, [x0]
+    ld1w z4.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z12.s, p0/z, [x0]
+    ld1w z12.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z5.s, p0/z, [x0]
+    ld1w z5.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z13.s, p0/z, [x0]
+    ld1w z13.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z6.s, p0/z, [x0]
+    ld1w z6.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z14.s, p0/z, [x0]
+    ld1w z14.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z7.s, p0/z, [x0]
+    ld1w z7.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
-    ld1w z15.s, p0/z, [x0]
+    ld1w z15.s, p1/z, [x0]
     add x0, x0, x3, LSL #2
 
 
@@ -183,37 +184,37 @@ _loop02:
 
     // load 16x16 tile of B
     // load input matrix
-    ld1w z0.s, p0/z, [x1]
+    ld1w z0.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z8.s, p0/z, [x1]
+    ld1w z8.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z1.s, p0/z, [x1]
+    ld1w z1.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z9.s, p0/z, [x1]
+    ld1w z9.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z2.s, p0/z, [x1]
+    ld1w z2.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z10.s, p0/z, [x1]
+    ld1w z10.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z3.s, p0/z, [x1]
+    ld1w z3.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z11.s, p0/z, [x1]
+    ld1w z11.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z4.s, p0/z, [x1]
+    ld1w z4.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z12.s, p0/z, [x1]
+    ld1w z12.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z5.s, p0/z, [x1]
+    ld1w z5.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z13.s, p0/z, [x1]
+    ld1w z13.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z6.s, p0/z, [x1]
+    ld1w z6.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z14.s, p0/z, [x1]
+    ld1w z14.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z7.s, p0/z, [x1]
+    ld1w z7.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
-    ld1w z15.s, p0/z, [x1]
+    ld1w z15.s, p1/z, [x1]
     add x1, x1, x4, LSL #2
 
     // transpose
