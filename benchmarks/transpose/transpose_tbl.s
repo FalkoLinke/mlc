@@ -2,6 +2,49 @@
 
 /*
     void transpose_16x16_fp32_tbl(float const* in0, float* out, uint64_t ldi, uint64_t ldo);
+
+    Loads in0 into SVE vector registers, transposes them and stores them to out.
+
+    This algorithm does not preserve the contents of any of the SVE vector registers.
+    The algorithm modifies the x4, x5 registers and the input and output pointers.
+
+    The transposition algorithm expects the input matrix in the following registers
+    from lowest to highest column index:
+    z0
+    z1
+    z2
+    z3
+    z4
+    z5
+    z6
+    z7
+    z8
+    z9
+    z10
+    z11
+    z12
+    z13
+    z14
+    z15
+
+    The result of the transposition algorithm is stored in the following registers 
+    from lowest to highest column index:
+    z0
+    z1
+    z2
+    z3
+    z4
+    z5
+    z6
+    z7
+    z8
+    z9
+    z10
+    z11
+    z12
+    z13
+    z14
+    z15
 */
     .global _transpose_16x16_fp32_tbl
 _transpose_16x16_fp32_tbl:

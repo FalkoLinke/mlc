@@ -3,6 +3,8 @@
 
 /*
     void transpose_16x16_fp32_simd(float const* in0, float* out, uint64_t ldi, uint64_t ldo);
+
+    Loads in0 into NEON registers, transposes them using NEON instructions and stores the result in out.
 */
     .global _transpose_16x16_fp32_simd
 _transpose_16x16_fp32_simd:

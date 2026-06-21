@@ -2,6 +2,9 @@
 
 /*
     void gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_stack(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+
+    Splits A and B into 16x16 tiles which are transposed inside of the SVE vector registers.
+    A is stored on the stack while B is being transposed.
 */
     .global _gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_stack
 _gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_stack:

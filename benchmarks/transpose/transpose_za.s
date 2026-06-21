@@ -3,7 +3,9 @@
 
 
 /*
-    void transpose_16x16_fp32_za(float const* in0, float* out, uint64_t ldi, uint64_t ldo); 
+    void transpose_16x16_fp32_za(float const* in0, float* out, uint64_t ldi, uint64_t ldo);
+
+    Loads in0 into ZA0 horizontal slices and stores the ZA0 vertical slices into out.
 */
     .global _transpose_16x16_fp32_za
 _transpose_16x16_fp32_za:

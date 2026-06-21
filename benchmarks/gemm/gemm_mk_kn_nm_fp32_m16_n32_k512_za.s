@@ -2,6 +2,8 @@
 
 /*
     void gemm_mk_kn_nm_fp32_m16_n32_k512_za(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+
+    Splits A into 16x16 tiles which are transposed using the available ZA tile.
 */
     .global _gemm_mk_kn_nm_fp32_m16_n32_k512_za
 _gemm_mk_kn_nm_fp32_m16_n32_k512_za:
