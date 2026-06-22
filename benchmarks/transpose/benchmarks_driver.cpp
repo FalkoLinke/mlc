@@ -48,6 +48,7 @@ int main() {
     benchmark_kernel(&copy_sve, reps);
     benchmark_kernel(&transpose_16x16_fp32_za, reps);
     benchmark_kernel(&transpose_16x16_fp32_tbl, reps);
+    benchmark_kernel(&transpose_16x16_fp32_tbl_v2, reps);
     benchmark_kernel(&transpose_16x16_fp32_simd, reps);
 
     return 0;
