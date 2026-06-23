@@ -172,6 +172,31 @@ extern "C" {
         .desc = "TBLV2 regs transpose",
         .func = gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_regs,
     };
+
+
+    void gemm_16_16_multiple_k(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_16_16_multiple_k = {
+        .m = 16,
+        .n = 16,
+        .k = 512,
+        .trans_a = false,
+        .trans_b = true,
+        .trans_c = false,
+        .desc = "test",
+        .func = gemm_16_16_multiple_k,
+    };
+
+    void gemm_16_16_ref_single_k(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_16_16_ref_single_k = {
+        .m = 16,
+        .n = 16,
+        .k = 512,
+        .trans_a = false,
+        .trans_b = true,
+        .trans_c = false,
+        .desc = "test",
+        .func = gemm_16_16_ref_single_k,
+    };
 }
 
 

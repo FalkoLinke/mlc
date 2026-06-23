@@ -22,6 +22,8 @@ set(KERNELS
     gemm_mk_kn_nm_fp32_m16_n32_k512_tbl_v2.s
     gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_stack.s
     gemm_mk_nk_nm_fp32_m16_n16_k512_tbl_regs.s
+    gemm_16_16_multiple_k.s
+    gemm_16_16_ref_single_k.s
 )
 set_source_files_properties(${KERNELS} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 
@@ -31,6 +33,9 @@ target_compile_options(main PRIVATE ${CXX_FLAGS})
 
 add_executable(benchmarks_driver benchmarks_driver.cpp ${KERNELS})
 target_compile_options(benchmarks_driver PRIVATE ${CXX_FLAGS})
+
+add_executable(benchmarks_driver_16_16 benchmarks_driver_16_16.cpp ${KERNELS})
+target_compile_options(benchmarks_driver_16_16 PRIVATE ${CXX_FLAGS})
 
 
 
