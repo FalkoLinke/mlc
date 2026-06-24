@@ -27,10 +27,21 @@
     .global FUNCLABEL(gemm_16_16_multiple_k)
 FUNCLABEL(gemm_16_16_multiple_k):
 
+    stp x29, x30, [sp, #-16]!
+    stp d8, d9, [sp, #-16]!
+    stp d10, d11, [sp, #-16]!
+    stp d12, d13, [sp, #-16]!
+    stp d14, d15, [sp, #-16]!
+    mov x29, sp
+
 
     smstart
     ptrue p0.s, vl16
     ptrue pn8.s
+
+    zero {za1.s}
+    zero {za2.s}
+    zero {za3.s}
 
 
     // K Variables loop counter in x9
@@ -61,31 +72,32 @@ FUNCLABEL(gemm_16_16_multiple_k):
 
 K_loop:
 
+
     // load A z0 and B z2 16 floats at a time and perform the outer product
     ld1w {z0.S}, p0/z, [x7]
-    ld1w {z2.S}, p0/z, [x8]
-    fmopa za0.s, p0/m, p0/m, z2.s, z0.s
-
+    ld1w {z1.S}, p0/z, [x8]
+    fmopa za0.s, p0/m, p0/m, z1.s, z0.s
     add x7, x7, x11
     add x8, x8, x12
 
+
     ld1w {z0.S}, p0/z, [x7]
-    ld1w {z2.S}, p0/z, [x8]
-    fmopa za1.s, p0/m, p0/m, z2.s, z0.s
-       
+    ld1w {z1.S}, p0/z, [x8]
+    fmopa za1.s, p0/m, p0/m, z1.s, z0.s
+    add x7, x7, x11
+    add x8, x8, x12
+
+
+    ld1w {z0.S}, p0/z, [x7]
+    ld1w {z1.S}, p0/z, [x8]
+    fmopa za2.s, p0/m, p0/m, z1.s, z0.s
+
     add x7, x7, x11
     add x8, x8, x12
         
     ld1w {z0.S}, p0/z, [x7]
-    ld1w {z2.S}, p0/z, [x8]
-    fmopa za2.s, p0/m, p0/m, z2.s, z0.s
-
-    add x7, x7, x11
-    add x8, x8, x12
-        
-    ld1w {z0.S}, p0/z, [x7]
-    ld1w {z2.S}, p0/z, [x8]
-    fmopa za3.s, p0/m, p0/m, z2.s, z0.s
+    ld1w {z1.S}, p0/z, [x8]
+    fmopa za3.s, p0/m, p0/m, z1.s, z0.s
 
     add x7, x7, x11
     add x8, x8, x12
@@ -93,12 +105,81 @@ K_loop:
     subs x9, x9, #4
     b.ne K_loop
 
+    //     // load A z0 and B z2 16 floats at a time and perform the outer product
+    // ld1w {z0.S, z1.S}, pn8/Z, [x7]
+    // ld1w {z2.S, z3.S}, pn8/Z, [x8]
+    // fmopa za0.s, p0/m, p0/m, z2.s, z0.s
+
+    // add x7, x7, x11, lsl #1
+    // add x8, x8, x12, lsl #1
+
+    // fmopa za1.s, p0/m, p0/m, z3.s, z1.s
+
+    // ld1w {z0.S, z1.S}, pn8/Z, [x7]
+    // ld1w {z2.S, z3.S}, pn8/Z, [x8]
+    // fmopa za0.s, p0/m, p0/m, z2.s, z0.s
+
+    // add x7, x7, x11, lsl #1
+    // add x8, x8, x12, lsl #1
+
+    // fmopa za1.s, p0/m, p0/m, z3.s, z1.s
+
+    // add x7, x7, x11, lsl #1
+    // add x8, x8, x12, lsl #1
+
+    // subs x9, x9, #4
+    // b.ne K_loop
 
     // store Results
     mov w13, #0
+    mov w8, #0
     mov x6, x2
 
+    .rept 4
+    mova  {z0.s, z1.s, z2.s, z3.s}, za1h.s[W13, 0:3]
+    add za.s[w8,0,VGx4], {z0.s, z1.s, z2.s, z3.s}
+    mova  {z4.s, z5.s, z6.s, z7.s}, za2h.s[W13, 0:3]
+    add za.s[w8,0,VGx4], {z4.s, z5.s, z6.s, z7.s}
+    mova  {z8.s, z9.s, z10.s, z11.s}, za3h.s[W13, 0:3]
+    add za.s[w8,0,VGx4], {z8.s, z9.s, z10.s, z11.s}
+    add w8, w8, #4
+    add w13, w13, #4
+    //add   za0h, {z0.s, z1.s, z2.s, z3.s}, {z4.s, z5.s, z6.s, z7.s}
+    // mova  {Z10.S - Z13.S}, ZA2H.S[W13, 0:3]
+    // add   {Z2.S - Z5.S}, {Z2.S - Z5.S}, {Z10.S - Z13.S}
+    // mova  {Z14.S - Z17.S}, ZA3H.S[W13, 0:3]
+    // add   {Z2.S - Z5.S}, {Z2.S - Z5.S}, {Z14.S - Z17.S}
+    // add w13, w13, #4
+    // st1w { z2.S - z5.S }, pn8, [x6]
+    // add x6, x6, x10, lsl #2
+    .endr
 
+
+
+
+
+
+
+    // mova  {Z6.S - Z9.S}, ZA0H.S[W13, 0:3]
+    // add w13, w13, #4
+    // mova  {Z10.S - Z13.S}, ZA0H.S[W13, 0:3]
+    // add w13, w13, #4
+    // mova  {Z14.S - Z17.S}, ZA0H.S[W13, 0:3]
+    // mov w13, #0
+
+
+    // add w13, w13, #4
+    // mova  {Z22.S - Z25.S}, ZA1H.S[W13, 0:3]
+    // add w13, w13, #4
+    // mova  {Z26.S - Z29.S}, ZA1H.S[W13, 0:3]
+    // add w13, w13, #4
+    // mova  {Z30.S - Z33.S}, ZA1H.S[W13, 0:3]
+    // mov w13, #0
+
+
+
+
+    mov w13, #0
     .rept 16
     st1w { za0h.S[w13, 0] }, p0, [x6]
     add w13, w13, #1
@@ -106,5 +187,9 @@ K_loop:
     .endr 
 
     smstop
-    
+    ldp d14, d15, [sp], #16
+    ldp d12, d13, [sp], #16
+    ldp d10, d11, [sp], #16
+    ldp d8, d9, [sp], #16
+    ldp x29, x30, [sp], #16
     ret
