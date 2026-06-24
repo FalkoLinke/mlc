@@ -76,12 +76,12 @@ bool verify_gemm(gemm_kernel_desc_t desc) {
 
     float diff = max_abs_diff(out.data(), out_exp.data(), out.size());
     
-    std::cout << diff << std::endl;
-    std::cout << std::endl;
-    print_mat(out.data(), desc.m, desc.n);
-    std::cout << std::endl;
-    print_mat(out_exp.data(), desc.m, desc.n);
-    std::cout << std::endl;
+    // std::cout << diff << std::endl;
+    // std::cout << std::endl;
+    // print_mat(out.data(), desc.m, desc.n);
+    // std::cout << std::endl;
+    // print_mat(out_exp.data(), desc.m, desc.n);
+    // std::cout << std::endl;
     
     return diff < 1e-3;
 }
@@ -125,14 +125,17 @@ void benchmark_gemm_kernel(gemm_kernel_desc_t const desc, uint64_t const reps) {
 
 int main() {
 
-    //verify_gemm(desc_gemm_16_16_multiple_k);
-    bool verified = verify_gemm(desc_gemm_16_16_ref_single_k);
+    bool verified = verify_gemm(desc_gemm_16_16_multiple_k);
+    std::cout << verified << std::endl;
+
+    verified = verify_gemm(desc_gemm_16_16_ref_single_k);
     std::cout << verified << std::endl;
 
 
     std::cout << "m\tn\tk\ttrans_a\ttrans_b\ttrans_c\tDescription\tGFlops\tDuration [s]" << std::endl;
 
-    //benchmark_gemm_kernel(desc_gemm_16_16_multiple_k, 1000000);
+    benchmark_gemm_kernel(desc_gemm_16_16_ref_single_k, 10000000);
+    benchmark_gemm_kernel(desc_gemm_16_16_multiple_k, 10000000);
 
 
     return 0;
