@@ -182,7 +182,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
-        .desc = "test",
+        .desc = "16_16 single_k",
         .func = gemm_16_16_multiple_k,
     };
 
@@ -194,7 +194,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
-        .desc = "test",
+        .desc = "16_16 multi_k",
         .func = gemm_16_16_ref_single_k,
     };
     
@@ -206,8 +206,19 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
-        .desc = "test",
+        .desc = "16_16 multi_k v2",
         .func = gemm_16_16_multiple_k_v2,
+    };    
+    void gemm_16_16_trans_multiple_k(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_16_16_trans_multiple_k = {
+        .m = 16,
+        .n = 16,
+        .k = 512,
+        .trans_a = false,
+        .trans_b = true,
+        .trans_c = false,
+        .desc = "16_16 multi_k tr1",
+        .func = gemm_16_16_trans_multiple_k,
     };
 }
 

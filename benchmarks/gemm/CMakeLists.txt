@@ -25,6 +25,7 @@ set(KERNELS
     gemm_16_16_multiple_k.s
     gemm_16_16_multiple_k_v2.s
     gemm_16_16_ref_single_k.s
+    gemm_16_16_trans_multiple_k
 )
 set_source_files_properties(${KERNELS} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 
