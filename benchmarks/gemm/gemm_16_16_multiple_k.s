@@ -39,9 +39,9 @@ FUNCLABEL(gemm_16_16_multiple_k):
     ptrue p0.s, vl16
     ptrue pn8.s
 
-    zero {za1.s}
-    zero {za2.s}
-    zero {za3.s}
+    // zero {za1.s}
+    // zero {za2.s}
+    // zero {za3.s}
 
 
     // K Variables loop counter in x9

@@ -24,8 +24,8 @@
                       int64_t         ld_b,
                       int64_t         ld_c );
 */
-    .global FUNCLABEL(gemm_16_16_multiple_k)
-FUNCLABEL(gemm_16_16_multiple_k):
+    .global FUNCLABEL(gemm_16_16_multiple_k_v2)
+FUNCLABEL(gemm_16_16_multiple_k_v2):
 
     stp x29, x30, [sp, #-16]!
     stp d8, d9, [sp, #-16]!
@@ -38,10 +38,6 @@ FUNCLABEL(gemm_16_16_multiple_k):
     smstart
     ptrue p0.s, vl16
     ptrue pn8.s
-
-    zero {za1.s}
-    zero {za2.s}
-    zero {za3.s}
 
 
     // K Variables loop counter in x9
@@ -131,32 +127,95 @@ K_loop:
     // b.ne K_loop
 
     // store Results
-    mov w13, #0
+    mov w12, #0
+    mov w13, #4
+    mov w14, #8
+    mov w15, #12
     mov w8, #0
     mov x6, x2
+    mov x9, #64
+    mov x16, #128
+    mov x17, #192
+
+    // .rept 4
+    // mova  {z0.s, z1.s, z2.s, z3.s}, za1h.s[W13, 0:3]
+    // add za.s[w8,0,VGx4], {z0.s, z1.s, z2.s, z3.s}
+    // mova  {z4.s, z5.s, z6.s, z7.s}, za2h.s[W13, 0:3]
+    // add za.s[w8,0,VGx4], {z4.s, z5.s, z6.s, z7.s}
+    // mova  {z8.s, z9.s, z10.s, z11.s}, za3h.s[W13, 0:3]
+    // add za.s[w8,0,VGx4], {z8.s, z9.s, z10.s, z11.s}
+    // add w8, w8, #4
+    // add w13, w13, #4
+    // //add   za0h, {z0.s, z1.s, z2.s, z3.s}, {z4.s, z5.s, z6.s, z7.s}
+    // // mova  {Z10.S - Z13.S}, ZA2H.S[W13, 0:3]
+    // // add   {Z2.S - Z5.S}, {Z2.S - Z5.S}, {Z10.S - Z13.S}
+    // // mova  {Z14.S - Z17.S}, ZA3H.S[W13, 0:3]
+    // // add   {Z2.S - Z5.S}, {Z2.S - Z5.S}, {Z14.S - Z17.S}
+    // // add w13, w13, #4
+    // // st1w { z2.S - z5.S }, pn8, [x6]
+    // // add x6, x6, x10, lsl #2
+    // .endr
+
 
     .rept 4
-    mova  {z0.s, z1.s, z2.s, z3.s}, za1h.s[W13, 0:3]
-    add za.s[w8,0,VGx4], {z0.s, z1.s, z2.s, z3.s}
-    mova  {z4.s, z5.s, z6.s, z7.s}, za2h.s[W13, 0:3]
-    add za.s[w8,0,VGx4], {z4.s, z5.s, z6.s, z7.s}
-    mova  {z8.s, z9.s, z10.s, z11.s}, za3h.s[W13, 0:3]
-    add za.s[w8,0,VGx4], {z8.s, z9.s, z10.s, z11.s}
-    add w8, w8, #4
-    add w13, w13, #4
-    //add   za0h, {z0.s, z1.s, z2.s, z3.s}, {z4.s, z5.s, z6.s, z7.s}
-    // mova  {Z10.S - Z13.S}, ZA2H.S[W13, 0:3]
-    // add   {Z2.S - Z5.S}, {Z2.S - Z5.S}, {Z10.S - Z13.S}
-    // mova  {Z14.S - Z17.S}, ZA3H.S[W13, 0:3]
-    // add   {Z2.S - Z5.S}, {Z2.S - Z5.S}, {Z14.S - Z17.S}
-    // add w13, w13, #4
-    // st1w { z2.S - z5.S }, pn8, [x6]
-    // add x6, x6, x10, lsl #2
+    mova { z0.s - z3.s }, za.s[w8, 1 , VGx4]
+    fadd za.s[w8,0,VGx4], {z0.s - z3.s}
+
+    mova { z4.s - z7.s }, za.s[w8, 2 , VGx4]
+    fadd za.s[w8,0,VGx4], {z4.s - z7.s}
+
+    mova { z8.s - z11.s }, za.s[w8, 3 , VGx4]
+    fadd za.s[w8,0,VGx4], {z8.s - z11.s}
+    add w8, w8, #4;
+
+    st1w { za0h.S[w12, 0] }, p0, [x6]
+    add w12, w12, #1
+    st1w { za0h.S[w13, 0] }, p0, [x6, x9, LSL #2]
+    add w13, w13, #1
+    st1w { za0h.S[w14, 0] }, p0, [x6, x16, LSL #2]
+    add w14, w14, #1
+    st1w { za0h.S[w15, 0] }, p0, [x6, x17, LSL #2]
+    add w15, w15, #1
+    add x6, x6, x10
+
     .endr
 
 
-    MOVA { z0.s - z3.s }, za.s[w8, 0, VGx4]
 
+
+
+
+    // .rept 4
+    // mova { z0.s - z3.s }, za1h.s[w13, 0:3]
+    // add w13, w13, #4
+    // mova { z4.s - z7.s }, za1h.s[w13, 0:3]
+    // add w13, w13, #4
+    // mova { z8.s - z11.s }, za1h.s[w13, 0:3]
+    // add w13, w13, #4
+    // mova { z12.s - z15.s }, za1h.s[w13, 0:3]
+    // fadd za.s[w8,0,VGx4], {z0.s, z4.s, z8.s, z12.s}
+    // fadd za.s[w8,0,VGx4], {z5.s, z8.s, z12.s, z16.s}
+    // fadd za.s[w8,0,VGx4], {z6.s, z8.s, z12.s, z16.s}
+    // fadd za.s[w8,0,VGx4], {z7.s, z8.s, z12.s, z16.s}
+
+
+
+
+    // fadd za.s[w8,0,VGx4], {z8.s - z11.s}
+    // fadd za.s[w8,0,VGx4], {z12.s - z15.s}
+    
+    // st1w { za0h.S[w13, 0] }, p0, [x6]
+    // add x6, x6, x10
+    // st1w { za0h.S[w13, 1] }, p0, [x6]
+    // add x6, x6, x10
+    // st1w { za0h.S[w13, 2] }, p0, [x6]
+    // add x6, x6, x10
+    // st1w { za0h.S[w13, 3] }, p0, [x6]
+    // add x6, x6, x10
+    
+    // add w8, w8, #4
+    // add w13, w13, #4
+    // .endr
 
 
 
@@ -180,12 +239,12 @@ K_loop:
 
 
 
-    mov w13, #0
-    .rept 16
-    st1w { za0h.S[w13, 0] }, p0, [x6]
-    add w13, w13, #1
-    add x6, x6, x10
-    .endr 
+    // mov w13, #0
+    // .rept 16
+    // st1w { za0h.S[w13, 0] }, p0, [x6]
+    // add w13, w13, #1
+    // add x6, x6, x10
+    // .endr 
 
     smstop
     ldp d14, d15, [sp], #16

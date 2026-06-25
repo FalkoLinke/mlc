@@ -197,6 +197,18 @@ extern "C" {
         .desc = "test",
         .func = gemm_16_16_ref_single_k,
     };
+    
+    void gemm_16_16_multiple_k_v2(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_16_16_multiple_k_v2 = {
+        .m = 16,
+        .n = 16,
+        .k = 512,
+        .trans_a = false,
+        .trans_b = true,
+        .trans_c = false,
+        .desc = "test",
+        .func = gemm_16_16_multiple_k_v2,
+    };
 }
 
 

@@ -93,7 +93,7 @@ void benchmark_gemm_kernel(gemm_kernel_desc_t const desc, uint64_t const reps) {
     std::vector<float> out(desc.n * desc.m, 0.0f);
 
     uint64_t lda = desc.trans_a ? desc.k : desc.m;
-    uint64_t ldb = desc.trans_b ? desc.k : desc.n;
+    uint64_t ldb = desc.trans_b ? desc.n : desc.k;
     uint64_t ldc = desc.trans_c ? desc.n : desc.m;
 
     desc.func(in0.data(), in1.data(), out.data(), lda, ldb, ldc);
@@ -132,12 +132,16 @@ int main() {
     verified = verify_gemm(desc_gemm_16_16_multiple_k);
     std::cout << verified << std::endl;
 
+    verified = verify_gemm(desc_gemm_16_16_multiple_k_v2);
+    std::cout << verified << std::endl;
+
 
 
     std::cout << "m\tn\tk\ttrans_a\ttrans_b\ttrans_c\tDescription\tGFlops\tDuration [s]" << std::endl;
 
     benchmark_gemm_kernel(desc_gemm_16_16_ref_single_k, 10000000);
     benchmark_gemm_kernel(desc_gemm_16_16_multiple_k, 10000000);
+    benchmark_gemm_kernel(desc_gemm_16_16_multiple_k_v2, 10000000);
 
 
     return 0;
