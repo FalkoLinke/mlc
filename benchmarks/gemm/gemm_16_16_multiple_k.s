@@ -168,13 +168,15 @@ K_loop:
     fadd z2.s, z2.s, z10.s
     fadd z3.s, z3.s, z11.s
     fadd z0.s, z0.s, z12.s
-    st1w  {z0.s}, p0, [x6]
     fadd z1.s, z1.s, z13.s
-    st1w  {z1.s}, p0, [x6, #1, mul VL]
     fadd z2.s, z2.s, z14.s
-    st1w  {z2.s}, p0, [x6, #2, mul VL]
     fadd z3.s, z3.s, z15.s
-    st1w  {z3.s}, p0, [x6, #3, mul VL]
+    // st1w  {z0.s}, p0, [x6]
+    // st1w  {z1.s}, p0, [x6, #1, mul VL]
+    // st1w  {z2.s}, p0, [x6, #2, mul VL]
+    // st1w  {z3.s}, p0, [x6, #3, mul VL]
+    st1w  {z0.s - z3.s}, pn8, [x6]
+
 
     add w13, w13, #4
     add x6, x6, x10, lsl #2
