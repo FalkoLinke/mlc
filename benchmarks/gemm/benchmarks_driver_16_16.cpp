@@ -135,7 +135,7 @@ int main() {
     verified = verify_gemm(desc_gemm_16_16_multiple_k_v2);
     std::cout << verified << std::endl;
 
-    verified = verify_gemm(desc_gemm_16_16_multiple_k_v2);
+    verified = verify_gemm(desc_gemm_16_16_trans_multiple_k);
     std::cout << verified << std::endl;
 
 
