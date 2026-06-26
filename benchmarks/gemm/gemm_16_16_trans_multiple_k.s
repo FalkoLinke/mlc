@@ -24,8 +24,8 @@
                       int64_t         ld_b,
                       int64_t         ld_c );
 */
-    .global FUNCLABEL(gemm_16_16_multiple_k_v2)
-FUNCLABEL(gemm_16_16_multiple_k_v2):
+    .global FUNCLABEL(gemm_16_16_trans_multiple_k)
+FUNCLABEL(gemm_16_16_trans_multiple_k):
 
     stp x29, x30, [sp, #-16]!
     stp d8, d9, [sp, #-16]!
@@ -101,39 +101,93 @@ K_loop:
     ld1w {z15.S}, p0/z, [x7]
     add x7, x7, x11
 
-    ZIP { <Zd1>.<T>-<Zd4>.<T> }, { <Zn1>.<T>-<Zn4>.<T> }
+    zip { z0.s - z3.s }, { z0.s - z3.s }
+    zip { z4.s - z7.s }, { z4.s - z7.s }
+    zip { z8.s - z11.s }, { z8.s - z11.s }
+    zip { z12.s - z15.s }, { z12.s - z15.s }
 
-
+    mov x13, #16
     // load A z0 and B z2 16 floats at a time and perform the outer product
-    ld1w {z0.S}, p0/z, [x7]
-    ld1w {z1.S}, p0/z, [x8]
-    fmopa za0.s, p0/m, p0/m, z1.s, z0.s
-    add x7, x7, x11
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za0.s, p0/m, p0/m, z16.s, z0.s
     add x8, x8, x12
 
 
-    ld1w {z0.S}, p0/z, [x7]
-    ld1w {z1.S}, p0/z, [x8]
-    fmopa za1.s, p0/m, p0/m, z1.s, z0.s
-    add x7, x7, x11
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za1.s, p0/m, p0/m, z16.s, z1.s
     add x8, x8, x12
 
 
-    ld1w {z0.S}, p0/z, [x7]
-    ld1w {z1.S}, p0/z, [x8]
-    fmopa za2.s, p0/m, p0/m, z1.s, z0.s
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za2.s, p0/m, p0/m, z16.s, z2.s
 
-    add x7, x7, x11
     add x8, x8, x12
         
-    ld1w {z0.S}, p0/z, [x7]
-    ld1w {z1.S}, p0/z, [x8]
-    fmopa za3.s, p0/m, p0/m, z1.s, z0.s
-
-    add x7, x7, x11
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za3.s, p0/m, p0/m, z16.s, z3.s
     add x8, x8, x12
 
-    subs x9, x9, #4
+
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za0.s, p0/m, p0/m, z16.s, z4.s
+    add x8, x8, x12
+
+
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za1.s, p0/m, p0/m, z16.s, z5.s
+    add x8, x8, x12
+
+
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za2.s, p0/m, p0/m, z16.s, z6.s
+
+    add x8, x8, x12
+        
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za3.s, p0/m, p0/m, z16.s, z7.s
+    add x8, x8, x12
+    
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za0.s, p0/m, p0/m, z16.s, z8.s
+    add x8, x8, x12
+
+
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za1.s, p0/m, p0/m, z16.s, z9.s
+    add x8, x8, x12
+
+
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za2.s, p0/m, p0/m, z16.s, z10.s
+
+    add x8, x8, x12
+        
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za3.s, p0/m, p0/m, z16.s, z11.s
+    add x8, x8, x12
+
+
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za0.s, p0/m, p0/m, z16.s, z12.s
+    add x8, x8, x12
+
+
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za1.s, p0/m, p0/m, z16.s, z13.s
+    add x8, x8, x12
+
+
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za2.s, p0/m, p0/m, z16.s, z14.s
+
+    add x8, x8, x12
+        
+    ld1w {z16.S}, p0/z, [x8]
+    fmopa za3.s, p0/m, p0/m, z16.s, z15.s
+    add x8, x8, x12
+
+
+    subs x9, x9, #16
     b.ne K_loop
 
 

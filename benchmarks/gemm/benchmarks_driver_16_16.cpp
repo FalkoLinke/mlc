@@ -135,6 +135,9 @@ int main() {
     verified = verify_gemm(desc_gemm_16_16_multiple_k_v2);
     std::cout << verified << std::endl;
 
+    verified = verify_gemm(desc_gemm_16_16_multiple_k_v2);
+    std::cout << verified << std::endl;
+
 
 
     std::cout << "m\tn\tk\ttrans_a\ttrans_b\ttrans_c\tDescription\tGFlops\tDuration [s]" << std::endl;
@@ -142,6 +145,7 @@ int main() {
     benchmark_gemm_kernel(desc_gemm_16_16_ref_single_k, 10000000);
     benchmark_gemm_kernel(desc_gemm_16_16_multiple_k, 10000000);
     benchmark_gemm_kernel(desc_gemm_16_16_multiple_k_v2, 10000000);
+    benchmark_gemm_kernel(desc_gemm_16_16_trans_multiple_k, 10000000);
 
 
     return 0;

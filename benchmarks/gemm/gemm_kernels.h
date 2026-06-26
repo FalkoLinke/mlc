@@ -182,7 +182,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
-        .desc = "16_16 single_k",
+        .desc = "16_16 multi_k",
         .func = gemm_16_16_multiple_k,
     };
 
@@ -194,7 +194,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
-        .desc = "16_16 multi_k",
+        .desc = "16_16 single_k",
         .func = gemm_16_16_ref_single_k,
     };
     
@@ -214,10 +214,10 @@ extern "C" {
         .m = 16,
         .n = 16,
         .k = 512,
-        .trans_a = false,
+        .trans_a = true,
         .trans_b = true,
         .trans_c = false,
-        .desc = "16_16 multi_k tr1",
+        .desc = "16_16 tr1 multi_k",
         .func = gemm_16_16_trans_multiple_k,
     };
 }
