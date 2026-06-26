@@ -28,7 +28,7 @@ int main() {
         a[i] = (float)i;
     }
 
-    transpose_16x16_fp32_tbl_v2(a.data(), b.data(), 16, 16);
+    transpose_16x16_fp32_sme2(a.data(), b.data(), 16, 16);
 
     print_mat(a.data(), 16, 16);
     std::cout << std::endl;
