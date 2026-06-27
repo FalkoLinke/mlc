@@ -23,5 +23,6 @@ add_subdirectory(assembly)
 add_subdirectory(neon)
 add_subdirectory(sme)
 add_subdirectory(code_gen)
+add_subdirectory(teir)
 
 

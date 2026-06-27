@@ -13,7 +13,7 @@ set(CXX_FLAGS -Wall -Wextra -march=armv9.2-a+nosve+sme+sme2 -O3)
 
 add_library(code_gen Kernel.cpp InstGen.cpp Gemm.cpp Unary.cpp InsRef.cpp LabeledInstruction.cpp)
 target_compile_options(code_gen PRIVATE ${CXX_FLAGS})
-
+target_include_directories(code_gen PUBLIC .)
 
 
 
