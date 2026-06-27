@@ -1,7 +1,8 @@
 #include <iostream>
 #include <catch2/catch_test_macros.hpp>
 
-#include "teir_common.hpp"
+#include "mlc_common.hpp"
+#include "teir_reference.hpp"
 #include "teir.h"
 #include "teir_interpreter.h"
 

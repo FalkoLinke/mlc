@@ -18,7 +18,7 @@ find_package(OpenMP)
 
 
 
-
+add_subdirectory(common)
 add_subdirectory(assembly)
 add_subdirectory(neon)
 add_subdirectory(sme)

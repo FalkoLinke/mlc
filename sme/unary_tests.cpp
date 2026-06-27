@@ -2,6 +2,8 @@
 #include <math.h>
 #include <catch2/catch_test_macros.hpp>
 
+#include "mlc_common.hpp"
+
 #include "identity_kernel.h"
 #include "zero_kernel.h"
 #include "relu_kernel.h"
@@ -12,48 +14,6 @@
 
 
 
-
-/**
- * @brief Fills the buffer with the given value. 
- * @param buffer    Pointer to the buffer to fill.
- * @param size      The number of floats in the buffer.
- * @param value     The value to set each entry of the buffer to.
- **/
-void fill_const(float* buffer, size_t const size, float const value) {
-    for (size_t i = 0; i < size; i++) {
-        buffer[i] = value;
-    }
-}
-
-/**
- * @brief Sets each entry of the buffer to it's index. 
- * @param buffer    Pointer to the buffer to fill.
- * @param size      The number of floats in the buffer.
- **/
-void fill_indices(float *buffer, size_t const size) {
-    for (size_t i = 0; i < size; i++) {
-        buffer[i] = (float)i;
-    }
-}
-
-/**
- * @brief Returns `true` if the two matrices are equal. 
- * @param a         The first matrix.
- * @param b         The second matrix.
- * @param m         The number of rows of a and b.
- * @param n         The number of columns of a and b.
- * @return          `true` if all elements are equal, `false` otherwise.
- **/
-bool mats_equal(float const* a, float const* b, int m, int n) {
-    for (int r = 0; r < m; r++) {
-        for (int c = 0; c < n; c++) {
-            if (a[r * n + c] != b[r * n + c]) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
 
 
 
@@ -82,28 +42,7 @@ bool mats_equal(float const* a, float const* b, int m, int n) {
  * @param trans_b Column-major B if 0, row-major B if 1. 
  **/
 void ref_identity_16_16(float const* a, float *b, int64_t ld_a, int64_t ld_b, int32_t trans_b) {
-    int off_a_outer = ld_a;
-    int off_a_inner = 1;
-
-    int off_b_outer = trans_b == 0 ? ld_b : 1;
-    int off_b_inner = trans_b == 0 ? 1 : ld_b;
-
-    float const* ptr_a_outer = a;
-    float* ptr_b_outer = b;
-    for (int c = 0; c < 16; c++) {
-
-        float const* ptr_a_inner = ptr_a_outer;
-        float* ptr_b_inner = ptr_b_outer;
-        for (int r = 0; r < 16; r++) {
-            *ptr_b_inner = *ptr_a_inner;
-
-            ptr_a_inner += off_a_inner;
-            ptr_b_inner += off_b_inner;
-        }
-
-        ptr_a_outer += off_a_outer;
-        ptr_b_outer += off_b_outer;
-    }
+    identity(a, b, 16, 16, ld_a, ld_b, trans_b);
 }
 
 /**
@@ -112,12 +51,7 @@ void ref_identity_16_16(float const* a, float *b, int64_t ld_a, int64_t ld_b, in
  * @param ld_a Leading dimension of A.
  **/
 void ref_zero_16_16(float* a, int64_t ld_a) {
-    for (int c = 0; c < 16; c++) {
-        for (int r = 0; r < 16; r++) {
-            a[r] = 0.0;
-        }
-        a += ld_a;
-    }
+    zero(a, 16, 16, ld_a);
 }
 
 /*
@@ -129,14 +63,7 @@ void ref_zero_16_16(float* a, int64_t ld_a) {
 * @param trans_b Column-major B if 0, row-major B if 1. 
 **/
 void ref_relu_16_16(float const* a, float* b, int64_t ld_a, int64_t ld_b, int32_t trans_b) {
-    ref_identity_16_16(a, b, ld_a, ld_b, trans_b);
-
-    for (int c = 0; c < 16; c++) {
-        for (int r = 0; r < 16; r++) {
-            b[r] = fmaxf(b[r], 0.0);
-        }
-        b += ld_b;
-    }
+    relu(a, b, 16, 16, ld_a, ld_b, trans_b);
 }
 
 
@@ -275,8 +202,8 @@ TEST_CASE("test08", "[test]") {
     float exp[rows * rows];
 
     fill_indices(a, rows * rows);
-    fill_const(b, rows * rows, -5.0);
-    fill_const(exp, rows * rows, -5.0);
+    fill_const(b, rows * rows, -5.0f);
+    fill_const(exp, rows * rows, -5.0f);
 
     int sub_off = rows / 4 + rows / 4 * rows;
     identity_16_16(a + sub_off, b + sub_off, rows, rows, 0);
@@ -293,8 +220,8 @@ TEST_CASE("test09", "[test]") {
     float exp[rows * rows];
 
     fill_indices(a, rows * rows);
-    fill_const(b, rows * rows, -5.0);
-    fill_const(exp, rows * rows, -5.0);
+    fill_const(b, rows * rows, -5.0f);
+    fill_const(exp, rows * rows, -5.0f);
 
     int sub_off = rows / 4 + rows / 4 * rows;
     identity_16_16(a + sub_off, b + sub_off, rows, rows, 1);
@@ -313,8 +240,8 @@ TEST_CASE("test10", "[test]") {
     float exp[rows * rows];
 
     fill_indices(a, rows * rows);
-    fill_const(b, rows * rows, -5.0);
-    fill_const(exp, rows * rows, -5.0);
+    fill_const(b, rows * rows, -5.0f);
+    fill_const(exp, rows * rows, -5.0f);
     for (int i = 0; i < 16; i++) {
         (a + sub_off)[i*16] = -1.0;
     }
@@ -335,8 +262,8 @@ TEST_CASE("test11", "[test]") {
     float exp[rows * rows];
 
     fill_indices(a, rows * rows);
-    fill_const(b, rows * rows, -5.0);
-    fill_const(exp, rows * rows, -5.0);
+    fill_const(b, rows * rows, -5.0f);
+    fill_const(exp, rows * rows, -5.0f);
     for (int i = 0; i < 16; i++) {
         (a + sub_off)[i*16] = -1.0;
     }

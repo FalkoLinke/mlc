@@ -14,7 +14,7 @@ add_executable(teir_interpreter_tests.out
   GemmCache.cpp
 )
 target_compile_options(teir_interpreter_tests.out PRIVATE ${CXX_FLAGS})
-target_link_libraries(teir_interpreter_tests.out PRIVATE Catch2::Catch2WithMain code_gen)
+target_link_libraries(teir_interpreter_tests.out PRIVATE Catch2::Catch2WithMain code_gen mlc_common)
 
 
 
@@ -26,7 +26,7 @@ add_executable(teir_compiler_tests.out
   GemmCache.cpp
 )
 target_compile_options(teir_compiler_tests.out PRIVATE ${CXX_FLAGS})
-target_link_libraries(teir_compiler_tests.out PRIVATE Catch2::Catch2WithMain code_gen)
+target_link_libraries(teir_compiler_tests.out PRIVATE Catch2::Catch2WithMain code_gen mlc_common)
 
 
 
@@ -39,7 +39,7 @@ add_executable(benchmark_contraction.out
   GemmCache.cpp
 )
 target_compile_options(benchmark_contraction.out PRIVATE ${CXX_FLAGS})
-target_link_libraries(benchmark_contraction.out PRIVATE code_gen)
+target_link_libraries(benchmark_contraction.out PRIVATE code_gen mlc_common)
 
 add_executable(benchmark_matmul.out
   benchmark_matmul.cpp
@@ -50,7 +50,7 @@ add_executable(benchmark_matmul.out
   GemmCache.cpp
 )
 target_compile_options(benchmark_matmul.out PRIVATE ${CXX_FLAGS})
-target_link_libraries(benchmark_matmul.out PRIVATE code_gen)
+target_link_libraries(benchmark_matmul.out PRIVATE code_gen mlc_common)
 
 add_executable(benchmark_transposition.out
   benchmark_transposition.cpp
@@ -61,7 +61,7 @@ add_executable(benchmark_transposition.out
   GemmCache.cpp
 )
 target_compile_options(benchmark_transposition.out PRIVATE ${CXX_FLAGS})
-target_link_libraries(benchmark_transposition.out PRIVATE code_gen)
+target_link_libraries(benchmark_transposition.out PRIVATE code_gen mlc_common)
 
 
 

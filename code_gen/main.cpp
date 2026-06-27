@@ -3,7 +3,7 @@
 #include "Kernel.h"
 #include "KernelFactory.h"
 #include "Unary.h"
-#include "code_gen_common.hpp"
+#include "mlc_common.hpp"
 
 using mini_jit::Kernel;
 using mini_jit::KernelFactory;

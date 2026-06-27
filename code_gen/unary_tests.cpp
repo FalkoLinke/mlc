@@ -6,7 +6,7 @@
 #include <catch2/generators/catch_generators.hpp>
 
 #include "unary_kernels.h"
-#include "code_gen_common.hpp"
+#include "mlc_common.hpp"
 #include "Unary.h"
 
 using mini_jit::Unary;

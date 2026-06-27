@@ -1,5 +1,6 @@
 #include "teir_interpreter.h"
-#include "teir_common.hpp"
+#include "mlc_common.hpp"
+#include "teir_reference.hpp"
 
 
 using mini_jit::Unary;
