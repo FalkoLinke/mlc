@@ -42,8 +42,8 @@ public:
  * - `n`: The number of columns of `a`.
  */
 void print_mat(uint64_t const* a, uint32_t const m, uint32_t const n) {
-	for (int r = 0; r < m; r++) {
-		for (int c = 0; c < n; c++) {
+	for (uint32_t r = 0; r < m; r++) {
+		for (uint32_t c = 0; c < n; c++) {
 			std::cout << a[r * n + c] << " ";
 		}
 		std::cout << std::endl;
@@ -63,8 +63,8 @@ void print_mat(uint64_t const* a, uint32_t const m, uint32_t const n) {
  * - `true` if all elements at equal indices are equal, `false` otherwise.
  */
 bool mats_equal(uint64_t const* a, uint64_t const* b, uint32_t const m, uint32_t const n) {
-	for (int r = 0; r < m; r++) {
-		for (int c = 0; c < n; c++) {
+	for (uint32_t r = 0; r < m; r++) {
+		for (uint32_t c = 0; c < n; c++) {
 			if (a[r * n + c] != b[r * n + c]) {
 				return false;
 			}
