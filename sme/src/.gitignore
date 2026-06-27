@@ -10,5 +10,5 @@ gemm_driver_32_32_1
 gemm_driver_32_32_512
 gemm_driver_512_32_512
 gemm_driver_512_512_512
-
+gemm_driver_M_N_K_16th
 
