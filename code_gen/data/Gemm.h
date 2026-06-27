@@ -2,7 +2,7 @@
 #define MINI_JIT_GEMM_H
 
 #include <cstdint>
-#include "../src/Kernel.h"
+#include "../Kernel.h"
 
 namespace mini_jit {
   class Gemm;

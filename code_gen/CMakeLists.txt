@@ -1,18 +1,12 @@
 cmake_minimum_required(VERSION 4.0)
+project(CODE_GEN C ASM CXX)
 
 
-Include(FetchContent)
-
-FetchContent_Declare(
-  Catch2
-  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.8.1 # or a later release
-)
-
-FetchContent_MakeAvailable(Catch2)
 
 
 set(CXX_FLAGS -Wall -Wextra -march=armv9.2-a+nosve+sme+sme2 -O3)
+
+
 
 
 add_executable(kernel_examples.out kernel_examples.cpp Kernel.cpp InstGen.cpp LabeledBranch.cpp BranchRef.cpp)

@@ -8,7 +8,7 @@
 #include <chrono>
 #include <iomanip>
 #include <algorithm> // für std::max
-#include "../data/Gemm.h"
+#include "data/Gemm.h"
 
 // --- Universelle C++ Referenz-Implementierung für beliebige Layouts ---
 // trans_x: 0 = Column-Major (Spaltenweise), 1 = Row-Major (Zeilenweise)
