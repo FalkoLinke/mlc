@@ -17,5 +17,6 @@ FetchContent_MakeAvailable(Catch2)
 
 
 add_subdirectory(assembly)
+add_subdirectory(neon)
 
 
