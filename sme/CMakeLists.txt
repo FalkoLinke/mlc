@@ -45,6 +45,7 @@ target_compile_options(unary_benchmarks_driver PRIVATE ${CXX_FLAGS})
 
 add_executable(unary_tests unary_tests.cpp identity_kernel.s relu_kernel.s zero_kernel.s)
 target_compile_options(unary_tests PRIVATE ${CXX_FLAGS})
+target_link_libraries(unary_tests PRIVATE Catch2::Catch2WithMain)
 
 
 

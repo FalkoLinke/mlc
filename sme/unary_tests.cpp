@@ -1,37 +1,10 @@
 #include <iostream>
 #include <math.h>
+#include <catch2/catch_test_macros.hpp>
 
 #include "identity_kernel.h"
 #include "zero_kernel.h"
 #include "relu_kernel.h"
-
-
-
-
-
-
-typedef bool(test_func_t)();
-
-struct unit_test_t {
-public:
-	test_func_t* const test_func;
-	std::string const test_name;
-
-	unit_test_t(test_func_t* const test_func, std::string const test_name) : test_func(test_func), test_name(test_name) {
-
-	}
-
-	bool call() const {
-		return this->test_func();
-	}
-};
-
-#define MAKE_TEST(FUNC) (unit_test_t( (FUNC), #FUNC ))
-
-
-
-
-
 
 
 
@@ -188,8 +161,7 @@ void ref_relu_16_16(float const* a, float* b, int64_t ld_a, int64_t ld_b, int32_
 
 
 
-
-bool test01() {
+TEST_CASE("test01", "[test]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -200,10 +172,10 @@ bool test01() {
     identity_16_16(a, b, 16, 16, 0);
 
     bool result = mats_equal(b, exp, 16, 16);
-    return result;
+    REQUIRE(result);
 }
 
-bool test02() {
+TEST_CASE("test02", "[test]") {
     float a[16 * 16];
     float b[16 * 16];
 
@@ -214,10 +186,10 @@ bool test02() {
     ref_zero_16_16(b, 16);
 
     bool result = mats_equal(a, b, 16, 16);
-    return result;
+    REQUIRE(result);
 }
 
-bool test03() {
+TEST_CASE("test03", "[test]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -228,10 +200,10 @@ bool test03() {
     ref_identity_16_16(a, exp, 16, 16, 0);
 
     bool result = mats_equal(b, exp, 16, 16);
-    return result;
+    REQUIRE(result);
 }
 
-bool test04() {
+TEST_CASE("test04", "[test]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -242,10 +214,10 @@ bool test04() {
     ref_identity_16_16(a, exp, 16, 16, 1);
 
     bool result = mats_equal(b, exp, 16, 16);
-    return result;
+    REQUIRE(result);
 }
 
-bool test05() {
+TEST_CASE("test05", "[test]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -259,10 +231,10 @@ bool test05() {
     ref_relu_16_16(a, exp, 16, 16, 0);
 
     bool result = mats_equal(b, exp, 16, 16);
-    return result;
+    REQUIRE(result);
 } 
 
-bool test06() {
+TEST_CASE("test06", "[test]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -276,10 +248,10 @@ bool test06() {
     ref_relu_16_16(a, exp, 16, 16, 1);
 
     bool result = mats_equal(b, exp, 16, 16);
-    return result;
+    REQUIRE(result);
 } 
 
-bool test07() {
+TEST_CASE("test07", "[test]") {
     int const rows = 512;
     float a[rows * rows];
     float b[rows * rows];
@@ -293,10 +265,10 @@ bool test07() {
     ref_zero_16_16(b_sub, rows);
 
     bool result = mats_equal(a, b, rows, rows);
-    return result;
+    REQUIRE(result);
 }
 
-bool test08() {
+TEST_CASE("test08", "[test]") {
     int const rows = 512;
     float a[rows * rows];
     float b[rows * rows];
@@ -311,10 +283,10 @@ bool test08() {
     ref_identity_16_16(a + sub_off, exp + sub_off, rows, rows, 0);
 
     bool result = mats_equal(b, exp, rows, rows);
-    return result;
+    REQUIRE(result);
 }
 
-bool test09() {
+TEST_CASE("test09", "[test]") {
     int const rows = 512;
     float a[rows * rows];
     float b[rows * rows];
@@ -329,10 +301,10 @@ bool test09() {
     ref_identity_16_16(a + sub_off, exp + sub_off, rows, rows, 1);
 
     bool result = mats_equal(b, exp, rows, rows);
-    return result;
+    REQUIRE(result);
 }
 
-bool test10() {
+TEST_CASE("test10", "[test]") {
     int const rows = 512;
     int sub_off = rows / 4 + rows / 4 * rows;
 
@@ -351,10 +323,10 @@ bool test10() {
     ref_relu_16_16(a + sub_off, exp + sub_off, rows, rows, 0);
 
     bool result = mats_equal(b, exp, rows, rows);
-    return result;
+    REQUIRE(result);
 } 
 
-bool test11() {
+TEST_CASE("test11", "[test]") {
     int const rows = 512;
     int sub_off = rows / 4 + rows / 4 * rows;
     
@@ -373,7 +345,7 @@ bool test11() {
     ref_relu_16_16(a + sub_off, exp + sub_off, rows, rows, 1);
 
     bool result = mats_equal(b, exp, rows, rows);
-    return result;
+    REQUIRE(result);
 } 
 
 
@@ -385,51 +357,6 @@ bool test11() {
 
 
 
-
-
-
-
-
-
-
-int main() {
-	// The array of the tests to run. 
-	unit_test_t tests[] = {
-		MAKE_TEST(test01),
-        MAKE_TEST(test02),
-        MAKE_TEST(test03),
-        MAKE_TEST(test04),
-        MAKE_TEST(test05),
-        MAKE_TEST(test06),
-        MAKE_TEST(test07),
-        MAKE_TEST(test08),
-        MAKE_TEST(test09),
-        MAKE_TEST(test10),
-        MAKE_TEST(test11),
-	};
-	int tests_count = sizeof(tests) / sizeof(unit_test_t);
-
-	// Run all tests.
-	int failure_count = 0;
-	int success_count = 0;
-	bool all_successful = true;
-	for (int i = 0; i < tests_count; i++) {
-		bool success = tests[i].call();
-		if (!success) {
-			std::cout << "\"" << tests[i].test_name << "\": FAIL" << std::endl;
-			failure_count += 1;
-		} else {
-			std::cout << "\"" << tests[i].test_name << "\": SUCCESS" << std::endl;
-			success_count += 1;
-		}
-		all_successful &= success;
-	}
-
-	// Print results.
-	std::cout << "Successes: " << success_count << " / " << tests_count << std::endl;
-	std::cout << "Failures: " << failure_count << " / " << tests_count << std::endl;
-	return all_successful ? 0 : 1;
-}
 
 
 
