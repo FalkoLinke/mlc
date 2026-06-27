@@ -50,7 +50,7 @@ int main() {
     benchmark_kernel(&transpose_16x16_fp32_tbl, reps);
     benchmark_kernel(&transpose_16x16_fp32_tbl_v2, reps);
     benchmark_kernel(&transpose_16x16_fp32_simd, reps);
-    //benchmark_kernel(&transpose_16x16_fp32_sme2, reps);
+    benchmark_kernel(&transpose_16x16_fp32_sme2, reps);
 
     return 0;
 }

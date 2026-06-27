@@ -47,20 +47,103 @@ _transpose_16x16_fp32_sme2:
     ld1w {z15.S}, p0/z, [x0]
     add x0, x0, x2, lsl #2
 
-    zip { z0.s - z3.s }, { z0.s - z3.s }
-    zip { z4.s - z7.s }, { z4.s - z7.s }
-    zip { z8.s - z11.s }, { z8.s - z11.s }
-    zip { z12.s - z15.s }, { z12.s - z15.s }
+    zip { z0.d - z3.d }, { z0.d - z3.d }
+    zip { z4.d - z7.d }, { z4.d - z7.d }
+    zip { z8.d - z11.d }, { z8.d - z11.d }
+    zip { z12.d - z15.d }, { z12.d - z15.d }
+
+    uzp { z16.s, z17.s}, z0.s, z4.s 
+    uzp { z18.s, z19.s}, z8.s, z12.s
+
+    uzp1 z26.d, z16.d, z18.d
+    uzp2 z27.d, z16.d, z18.d
+    // 2. Transponiere sie an die korrekten 128-Bit-Positionen
+    trn1 z28.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
+    trn2 z30.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
 
 
-    st1w { z0.s - z3.s }, pn8, [x1]
+    uzp1 z26.d, z17.d, z19.d
+    uzp2 z27.d, z17.d, z19.d
+    // 2. Transponiere sie an die korrekten 128-Bit-Positionen
+    trn1 z29.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
+    trn2 z31.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
+
+    st1w { z28.s - z31.s }, pn8, [x1]
     add x1, x1, x3, lsl #4
-    st1w { z4.s - z7.s }, pn8, [x1]
+
+    uzp { z16.s, z17.s}, z1.s, z5.s 
+    uzp { z18.s, z19.s}, z9.s, z13.s
+
+    uzp1 z26.d, z16.d, z18.d
+    uzp2 z27.d, z16.d, z18.d
+    // 2. Transponiere sie an die korrekten 128-Bit-Positionen
+    trn1 z28.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
+    trn2 z30.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
+
+
+    uzp1 z26.d, z17.d, z19.d
+    uzp2 z27.d, z17.d, z19.d
+    // 2. Transponiere sie an die korrekten 128-Bit-Positionen
+    trn1 z29.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
+    trn2 z31.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
+
+    st1w { z28.s - z31.s }, pn8, [x1]
     add x1, x1, x3, lsl #4
-    st1w { z8.s - z11.s }, pn8, [x1]
+    uzp { z16.s, z17.s}, z2.s, z6.s 
+    uzp { z18.s, z19.s}, z10.s, z14.s
+
+    uzp1 z26.d, z16.d, z18.d
+    uzp2 z27.d, z16.d, z18.d
+    // 2. Transponiere sie an die korrekten 128-Bit-Positionen
+    trn1 z28.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
+    trn2 z30.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
+
+
+    uzp1 z26.d, z17.d, z19.d
+    uzp2 z27.d, z17.d, z19.d
+    // 2. Transponiere sie an die korrekten 128-Bit-Positionen
+    trn1 z29.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
+    trn2 z31.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
+
+    st1w { z28.s - z31.s }, pn8, [x1]
     add x1, x1, x3, lsl #4
-    st1w { z12.s - z15.s }, pn8, [x1]
+    uzp { z16.s, z17.s}, z3.s, z7.s 
+    uzp { z18.s, z19.s}, z11.s, z15.s
+
+    uzp1 z26.d, z16.d, z18.d
+    uzp2 z27.d, z16.d, z18.d
+    // 2. Transponiere sie an die korrekten 128-Bit-Positionen
+    trn1 z28.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
+    trn2 z30.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
+
+
+    uzp1 z26.d, z17.d, z19.d
+    uzp2 z27.d, z17.d, z19.d
+    // 2. Transponiere sie an die korrekten 128-Bit-Positionen
+    trn1 z29.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
+    trn2 z31.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
+
+    st1w { z28.s - z31.s }, pn8, [x1]
     add x1, x1, x3, lsl #4
+
+
+    // uzp { z16.s, z17.s}, z1.s, z5.s 
+    // uzp { z18.s, z19.s}, z9.s, z13.s
+    // uzp1 z30.d, z16.d, z18.d
+    // uzp2 z31.d, z16.d, z18.d
+    // // 2. Transponiere sie an die korrekten 128-Bit-Positionen
+    // trn1 z30.d, z30.d, z31.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
+    // trn2 z31.d, z30.d, z31.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
+    // st1w { z30.s - z31.s }, pn8, [x1]
+    // add x1, x1, x3, lsl #2
+
+
+    // st1w { z4.s - z7.s }, pn8, [x1]
+    // add x1, x1, x3, lsl #4
+    // // st1w { z8.s - z11.s }, pn8, [x1]
+    // add x1, x1, x3, lsl #4
+    // st1w { z30.s - z31.s }, pn8, [x1]
+    // // add x1, x1, x3, lsl #4
 
     smstop
 
@@ -70,7 +153,6 @@ _transpose_16x16_fp32_sme2:
     ldp d8, d9, [sp], #16
     ldp x29, x30, [sp], #16
     ret
-
 
 
 
