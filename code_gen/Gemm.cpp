@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <iostream>
 #include <stdbool.h>
-#include "data/Gemm.h"
+#include "Gemm.h"
 #include "Kernel.h"
 #include "InstGen.h"
 

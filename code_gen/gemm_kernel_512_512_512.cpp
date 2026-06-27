@@ -163,7 +163,7 @@ void generate_gemm_kernel_512_512_512(mini_jit::Kernel& kernel) {
     kernel.add_instr(gen.base_add(reg_x(8), reg_x(8), reg_x(17), shift_kind_t::lsl, 0, 0)); // add x8, x8, x17
 
     kernel.add_instr(gen.base_sub(reg_x(14), reg_x(14), 1, 1)); // subs x14, x14, #1
-    kernel.add_branch(gen.base_b_cond("K_loop", InstGen::br_cond_t(1))); // AArch64 Bedingung: NE = 1; // b.ne N_loop
+    kernel.add_labeled_instr(gen.base_b_cond("K_loop", InstGen::br_cond_t(1))); // AArch64 Bedingung: NE = 1; // b.ne N_loop
 
     // store the results back to C
     kernel.add_instr(gen.base_mov(reg_x(6), reg_x(2))); // mov x6, x2
@@ -205,13 +205,13 @@ void generate_gemm_kernel_512_512_512(mini_jit::Kernel& kernel) {
     // processed elements in M dimension, x9 floats per tile, we process 2 tiles (32*2=64 floats) at a time
     kernel.add_instr(gen.base_add(reg_x(15), reg_x(15), reg_x(9), shift_kind_t::lsl, 1, 0)); // add x15, x15, x9, lsl #1
     kernel.add_instr(gen.base_sub(reg_x(31), reg_x(15), reg_x(3), shift_kind_t::lsl, 0, 1)); // cmp x15, x3 (subs xzr, x15, x3)
-    kernel.add_branch(gen.base_b_cond("M_loop", InstGen::br_cond_t(1))); // b.ne M_loop
+    kernel.add_labeled_instr(gen.base_b_cond("M_loop", InstGen::br_cond_t(1))); // b.ne M_loop
 
     // N tiles check
     // processed elements in N dimension, x9 floats per tile, we process 2 tiles (32*2=64 floats) at a time
     kernel.add_instr(gen.base_add(reg_x(16), reg_x(16), reg_x(9), shift_kind_t::lsl, 1, 0)); // add x16, x16, x9, lsl #1
     kernel.add_instr(gen.base_sub(reg_x(31), reg_x(16), reg_x(4), shift_kind_t::lsl, 0, 1)); // cmp x16, x4
-    kernel.add_branch(gen.base_b_cond("N_loop", InstGen::br_cond_t(1))); // b.ne N_loop
+    kernel.add_labeled_instr(gen.base_b_cond("N_loop", InstGen::br_cond_t(1))); // b.ne N_loop
 
 
     //kernel.add_instr(gen.base_smstop());
