@@ -24,5 +24,6 @@ add_subdirectory(neon)
 add_subdirectory(sme)
 add_subdirectory(code_gen)
 add_subdirectory(teir)
-
+add_subdirectory(benchmarks/gemm)
+add_subdirectory(benchmarks/transpose)
 
