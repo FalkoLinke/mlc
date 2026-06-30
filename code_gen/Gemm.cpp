@@ -1,6 +1,8 @@
 #include <cstdint>
 #include <iostream>
 #include <stdbool.h>
+#include <cmath>
+
 #include "Gemm.h"
 #include "Kernel.h"
 #include "InstGen.h"
@@ -66,6 +68,203 @@ uint32_t fmopa(int zada, int pn, int pm, int zn, int zm) {
 auto reg_x = [](uint32_t id) { return static_cast<gpr_t>(id | 0x20); };
 auto reg_w = [](uint32_t id) { return static_cast<gpr_t>(id); };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void generate_matrix_predicated_load_za_m16_n16(mini_jit::Kernel& kernel, InstGen::gpr_t ptr_reg, InstGen::gpr_t ld_reg, InstGen::pr_t pred_reg, uint64_t rows_count, uint64_t za_tile) {
+  InstGen ig;
+
+  for (uint64_t i = 0; i < std::min(16ull, rows_count); i++) {
+    kernel.add_instr(ig.base_movz(InstGen::gpr_t::w12, 0));
+    kernel.add_instr(ig.sme_ld1w(za_tile, InstGen::sme_hv_kind_t::horz, InstGen::gpr_t::w12, 0, pred_reg, ptr_reg, InstGen::gpr_t::xzr));
+    kernel.add_instr(ig.base_add(ptr_reg, ptr_reg, ld_reg, InstGen::shift_kind_t::lsl, 2));
+    kernel.add_instr(ig.base_add(InstGen::gpr_t::w12, InstGen::gpr_t::w12, 1));
+  }
+}
+
+void generate_matrix_predicated_store_za_m16_n16(mini_jit::Kernel& kernel, InstGen::gpr_t ptr_reg, InstGen::gpr_t ld_reg, InstGen::pr_t pred_reg, uint64_t rows_count, uint64_t za_tile) {
+  InstGen ig;
+
+  for (uint64_t i = 0; i < std::min(16ull, rows_count); i++) {
+    kernel.add_instr(ig.base_movz(InstGen::gpr_t::w12, 0));
+    kernel.add_instr(ig.sme_st1w(za_tile, InstGen::sme_hv_kind_t::horz, InstGen::gpr_t::w12, 0, pred_reg, ptr_reg, InstGen::gpr_t::xzr));
+    kernel.add_instr(ig.base_add(ptr_reg, ptr_reg, ld_reg, InstGen::shift_kind_t::lsl, 2));
+    kernel.add_instr(ig.base_add(InstGen::gpr_t::w12, InstGen::gpr_t::w12, 1));
+  }
+}
+
+
+
+
+
+void generate_gemm_microkernel_m32_n32_ta0_tb1_tc0(mini_jit::Kernel& kernel, uint32_t k, mini_jit::Gemm::dtype_t dtype) {
+  InstGen ig;
+
+  InstGen::pr_t p0 = InstGen::pr_t::p0;
+
+  InstGen::gpr_t gpr_a = InstGen::gpr_t::x0;
+  InstGen::gpr_t gpr_b = InstGen::gpr_t::x1;
+  InstGen::gpr_t gpr_c = InstGen::gpr_t::x2;
+  InstGen::gpr_t gpr_lda = InstGen::gpr_t::x3;
+  InstGen::gpr_t gpr_ldb = InstGen::gpr_t::x4;
+  InstGen::gpr_t gpr_ldc = InstGen::gpr_t::x5;
+
+
+  kernel.add_instr(ig.ssve_ptrue(p0, InstGen::sve_size_t::s));
+
+  // load C into ZA tiles
+  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x6, gpr_c));
+  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 0);
+  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
+  kernel.add_instr(ig.base_add(gpr_c, gpr_c, 4 * 16));
+  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 0);
+  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
+
+  // perform gemm
+  std::string const loop_start_label = "_loop01";
+  std::string const loop_end_label = "_end01";
+  InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
+
+  InstGen::sve_zr_t zr_a0 = InstGen::sve_zr_t::z0;
+  InstGen::sve_zr_t zr_a1 = InstGen::sve_zr_t::z1;
+  InstGen::sve_zr_t zr_b0 = InstGen::sve_zr_t::z2;
+  InstGen::sve_zr_t zr_b1 = InstGen::sve_zr_t::z3;
+
+  kernel.add_instr(ig.base_movz(loop_reg, k));
+  kernel.add_label(loop_start_label);
+  kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
+
+  kernel.add_instr(ig.sve_ld1w(zr_a0, p0, gpr_a, 0));
+  kernel.add_instr(ig.sve_ld1w(zr_a1, p0, gpr_a, 1));
+  kernel.add_instr(ig.sve_ld1w(zr_b0, p0, gpr_b, 0));
+  kernel.add_instr(ig.sve_ld1w(zr_b1, p0, gpr_b, 1));
+
+  kernel.add_instr(fmopa(0, p0, p0, zr_a0, zr_b0));
+  kernel.add_instr(fmopa(1, p0, p0, zr_a0, zr_b1));
+  kernel.add_instr(fmopa(2, p0, p0, zr_a1, zr_b0));
+  kernel.add_instr(fmopa(3, p0, p0, zr_a1, zr_b1));
+
+  kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
+  kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
+  kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
+  kernel.add_labeled_instr(ig.base_b(loop_start_label));
+  kernel.add_label(loop_end_label);
+
+  // store C from ZA tiles
+  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x6, gpr_c));
+  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 0);
+  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
+  kernel.add_instr(ig.base_add(gpr_c, gpr_c, 4 * 16));
+  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 0);
+  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
+}
+
+
+
+void generate_gemm_microkernel_predicated_m16_n16_ta0_tb1_tc0(mini_jit::Kernel& kernel, uint32_t k, mini_jit::InstGen::pr_t pra, mini_jit::InstGen::pr_t prb, uint32_t rows_count, uint32_t cols_count, mini_jit::Gemm::dtype_t dtype) {
+  rows_count = std::min(16u, rows_count);
+  cols_count = std::min(16u, cols_count);
+
+  InstGen ig;
+
+  InstGen::gpr_t gpr_a = InstGen::gpr_t::x0;
+  InstGen::gpr_t gpr_b = InstGen::gpr_t::x1;
+  InstGen::gpr_t gpr_c = InstGen::gpr_t::x2;
+  InstGen::gpr_t gpr_lda = InstGen::gpr_t::x3;
+  InstGen::gpr_t gpr_ldb = InstGen::gpr_t::x4;
+  InstGen::gpr_t gpr_ldc = InstGen::gpr_t::x5;
+
+  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, pra, rows_count, 0);
+
+  std::string const loop_start_label = "_loop01";
+  std::string const loop_end_label = "_end01";
+  InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
+
+  InstGen::sve_zr_t za = InstGen::sve_zr_t::z0;
+  InstGen::sve_zr_t zb = InstGen::sve_zr_t::z1;
+
+  kernel.add_instr(ig.base_movz(loop_reg, k));
+  kernel.add_label(loop_start_label);
+  kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
+
+  kernel.add_instr(ig.sve_ld1w(za, pra, gpr_a, InstGen::gpr_t::xzr));
+  kernel.add_instr(ig.sve_ld1w(zb, prb, gpr_b, InstGen::gpr_t::xzr));
+  kernel.add_instr(fmopa(0, prb, pra, zb, za));
+
+  kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
+  kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
+  kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
+  kernel.add_labeled_instr(ig.base_b(loop_start_label));
+  kernel.add_label(loop_end_label);
+
+
+  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, pra, rows_count, 0);
+}
+
+
+
+
+
+
+
+
+
+// new version
+
+mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, dtype_t  dtype) {
+  int _i = 0;
+
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Old version
 namespace mini_jit {
 
     /**
@@ -79,7 +278,7 @@ namespace mini_jit {
      * @param dtype   Data type of the matrices.
      * @return error_t::success on success, another error_t value otherwise.
      **/
-    Gemm::error_t Gemm::generate( uint32_t m,
+    Gemm::error_t Gemm::generate_v2( uint32_t m,
                       uint32_t n,
                       uint32_t k,
                       uint32_t trans_a,
