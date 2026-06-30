@@ -6,8 +6,8 @@
 #include "LabeledInstruction.h"
 #include "InsRef.h"
 
-#ifndef MINI_JIT_KERNEL_H
-#define MINI_JIT_KERNEL_H
+#ifndef CODEGEN_MINI_JIT_KERNEL_H
+#define CODEGEN_MINI_JIT_KERNEL_H
 
 namespace mini_jit {
   class Kernel;

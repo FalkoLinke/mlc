@@ -1,5 +1,5 @@
-#ifndef MLC_COMMON_HPP
-#define MLC_COMMON_HPP
+#ifndef COMMON_MLC_COMMON_HPP
+#define COMMON_MLC_COMMON_HPP
 
 
 #include <cstdint>
@@ -218,4 +218,4 @@ void print_mat(T const* a, uint64_t m, uint64_t n, int64_t lda) {
 
 
 
-#endif /*MLC_COMMON_HPP*/
+#endif /*COMMON_MLC_COMMON_HPP*/

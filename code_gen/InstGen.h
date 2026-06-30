@@ -1,5 +1,5 @@
-#ifndef MINI_JIT_INSTGEN_H
-#define MINI_JIT_INSTGEN_H
+#ifndef CODEGEN_MINI_JIT_INSTGEN_H
+#define CODEGEN_MINI_JIT_INSTGEN_H
 
 #include <cstdint>
 #include <string>

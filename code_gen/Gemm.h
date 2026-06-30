@@ -1,5 +1,5 @@
-#ifndef MINI_JIT_GEMM_H
-#define MINI_JIT_GEMM_H
+#ifndef CODEGEN_MINI_JIT_GEMM_H
+#define CODEGEN_MINI_JIT_GEMM_H
 
 #include <cstdint>
 #include "Kernel.h"

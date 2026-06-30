@@ -1,5 +1,5 @@
-#ifndef BENCHMARK_KERNEL_H
-#define BENCHMARK_KERNEL_H
+#ifndef NEON_BENCHMARK_KERNEL_H
+#define NEON_BENCHMARK_KERNEL_H
 
 extern "C" {
 
@@ -18,4 +18,4 @@ extern "C" {
     int fmla_2s_kernel_v2(int const repetitions);
 }
 
-#endif /*BENCHMARK_KERNEL_H*/
+#endif /*NEON_BENCHMARK_KERNEL_H*/

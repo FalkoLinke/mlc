@@ -1,5 +1,5 @@
-#ifndef UNARY_KERNELS_H
-#define UNARY_KERNELS_H
+#ifndef CODEGEN_UNARY_KERNELS_H
+#define CODEGEN_UNARY_KERNELS_H
 
 
 #include "Kernel.h"
@@ -15,4 +15,4 @@ extern mini_jit::KernelFactory::ReluKernel relu_16_16;
 void generate_kernels();
 
 
-#endif /*UNARY_KERNELS_H*/
+#endif /*CODEGEN_UNARY_KERNELS_H*/

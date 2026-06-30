@@ -1,5 +1,5 @@
-#ifndef IDENTITY_KERNEL_H
-#define IDENTITY_KERNEL_H
+#ifndef SME_IDENTITY_KERNEL_H
+#define SME_IDENTITY_KERNEL_H
 
 #include <cstdint>
 
@@ -40,4 +40,4 @@ void identity_16_16( float const * a,
 
 }
 
-#endif /*IDENTITY_KERNEL_H*/
+#endif /*SME_IDENTITY_KERNEL_H*/

@@ -1,5 +1,5 @@
-#ifndef TEIR_COMPILER_H
-#define TEIR_COMPILER_H
+#ifndef TEIR_TEIR_COMPILER_H
+#define TEIR_TEIR_COMPILER_H
 
 #include <memory>
 

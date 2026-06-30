@@ -1,5 +1,5 @@
-#ifndef KERNEL_FACTORY_H
-#define KERNEL_FACTORY_H
+#ifndef CODEGEN_KERNEL_FACTORY_H
+#define CODEGEN_KERNEL_FACTORY_H
 
 #include <cstdint>
 #include "Kernel.h"
@@ -20,4 +20,4 @@ public:
     ReluKernel generate_relu_16_16(mini_jit::Kernel& kernel);
 };
 
-#endif /*KERNEL_FACTORY_H*/
+#endif /*CODEGEN_KERNEL_FACTORY_H*/

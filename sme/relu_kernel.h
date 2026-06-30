@@ -1,5 +1,5 @@
-#ifndef RELU_KERNEL_H
-#define RELU_KERNEL_H
+#ifndef SME_RELU_KERNEL_H
+#define SME_RELU_KERNEL_H
 
 #include <cstdint>
 
@@ -21,4 +21,4 @@ void relu_16_16( float const * a,
 
 }
 
-#endif /*RELU_KERNEL_H*/
+#endif /*SME_RELU_KERNEL_H*/

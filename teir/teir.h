@@ -1,5 +1,5 @@
-#ifndef TEIR_H
-#define TEIR_H
+#ifndef TEIR_TEIR_H
+#define TEIR_TEIR_H
 
 
 #include <string>

@@ -1,5 +1,5 @@
-#ifndef ZERO_KERNEL_H
-#define ZERO_KERNEL_H
+#ifndef SME_ZERO_KERNEL_H
+#define SME_ZERO_KERNEL_H
 
 #include <cstdint>
 
@@ -15,4 +15,4 @@ void zero_16_16( float* a,
 
 }
 
-#endif /*ZERO_KERNEL_H*/
+#endif /*SME_ZERO_KERNEL_H*/

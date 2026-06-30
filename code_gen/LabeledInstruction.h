@@ -1,5 +1,5 @@
-#ifndef LABELED_INSTRUCTION_H
-#define LABELED_INSTRUCTION_H
+#ifndef CODEGEN_LABELED_INSTRUCTION_H
+#define CODEGEN_LABELED_INSTRUCTION_H
 
 #include <cstdint>
 #include <string>
@@ -38,4 +38,4 @@ public:
 };
 
 
-#endif /*LABELED_INSTRUCTION_H*/
+#endif /*CODEGEN_LABELED_INSTRUCTION_H*/

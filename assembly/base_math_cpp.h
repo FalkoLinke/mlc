@@ -1,5 +1,5 @@
-#ifndef BASE_MATH_CPP_H
-#define BASE_MATH_CPP_H
+#ifndef ASSEMBLY_BASE_MATH_CPP_H
+#define ASSEMBLY_BASE_MATH_CPP_H
 
 
 
@@ -15,4 +15,4 @@ void outer_product_cpp(uint32_t const *i_a,
 
 
 
-#endif /*BASE_MATH_CPP_H*/
+#endif /*ASSEMBLY_BASE_MATH_CPP_H*/

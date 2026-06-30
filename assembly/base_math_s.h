@@ -1,5 +1,5 @@
-#ifndef BASE_MATH_S_H
-#define BASE_MATH_S_H
+#ifndef ASSEMBLY_BASE_MATH_S_H
+#define ASSEMBLY_BASE_MATH_S_H
 
 extern "C" {
 
@@ -22,4 +22,4 @@ void outer_product(uint32_t const *i_a,
 
 }
 
-#endif /*BASE_MATH_S_H*/
+#endif /*ASSEMBLY_BASE_MATH_S_H*/

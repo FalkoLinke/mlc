@@ -1,5 +1,5 @@
-#ifndef TEIR_INTERPRETER_H
-#define TEIR_INTERPRETER_H
+#ifndef TEIR_TEIR_INTERPRETER_H
+#define TEIR_TEIR_INTERPRETER_H
 
 #include <memory>
 

@@ -1,5 +1,5 @@
-#ifndef INS_REF_H
-#define INS_REF_H
+#ifndef CODEGEN_INS_REF_H
+#define CODEGEN_INS_REF_H
 
 #include <string>
 #include <cstdint>
@@ -31,4 +31,4 @@ struct mini_jit::InsRef {
 };
 
 
-#endif /*INS_REF_H*/
+#endif /*CODEGEN_INS_REF_H*/
