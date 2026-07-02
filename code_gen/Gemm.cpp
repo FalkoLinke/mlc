@@ -79,17 +79,54 @@ auto reg_w = [](uint32_t id) { return static_cast<gpr_t>(id); };
 
 
 
-
+/**
+ * The signature of a function which generates a GEMM microkernel of a certain fixed size (m x n).
+ * 
+ * @param kernel: The kernel into which to generate the microkernel.
+ * @param label_prefix: A label prefix for unique labels.
+ * @param k: The k dimension.
+ * @param dtype: The data type of the matrices.
+ */
 typedef void(gemm_microkernel_generator)(mini_jit::Kernel&, std::string const&, uint32_t k, mini_jit::Gemm::dtype_t);
 
+/**
+ * The signature of a function which generates a predicated GEMM microkernel of a certain fixed size (m x n).
+ * 
+ * @param kernel: The kernel into which to generate the microkernel.
+ * @param label_prefix: A label prefix for unique labels.
+ * @param k: The k dimension.
+ * @param ms_count: The number of true indices in the m dimension. Must be less or equal to the fixed m size.
+ * @param ns_count: The number of true indices in the n dimension. Must be less or equal to the fixed n size.
+ * @param dtype: The data type of the matrices.
+ */
+typedef void(gemm_microkernel_predicated_generator)(mini_jit::Kernel&, std::string const&, uint32_t k, uint32_t ms_count, uint32_t ns_count, mini_jit::Gemm::dtype_t);
 
+/**
+ * A descriptor for a single GEMM microkernel generation function.
+ * 
+ * The generated microkernel makes use of the aarch64 registers as follows:
+ * - x0: Pointer to A.
+ * - x1: Pointer to B.
+ * - x2: Pointer to C.
+ * - x3: Leading dimension of A.
+ * - x4: Leading dimension of B.
+ * - x5: Leading dimension of C.
+ * 
+ * x0 - x7 and x9 - x14 may be overwritten by the microkernel.
+ * x15, x19 - x30 are retained.
+ * All of the scalable vector registers z0 - z31 may be overwritten.
+ * All of the scalable predicate registers may be overwritten.
+ * The ZA matrix may be overwritten.
+ */
 struct gemm_microkernel_desc_t {
+  /** The size of m intrinsic to the generated microkernel. */
   uint32_t m;
+  /** The size of n intrinsic to the generated microkernel. */
   uint32_t n;
-  uint32_t trans_a;
-  uint32_t trans_b;
-  uint32_t trans_c;
+  /** A pointer to an unpredicated generation function. Either this or `predicated_generator` is `NULL`. */
   gemm_microkernel_generator* generator;
+  /** A pointer to an predicated generation function. Either this or `generator` is `NULL`. */
+  gemm_microkernel_predicated_generator* predicated_generator;
 };
 
 
@@ -254,9 +291,9 @@ void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const&
   uint32_t dtype_size = 4;
 
   // initialize loop stride registers
-  InstGen::gpr_t gpr_a_sm = InstGen::gpr_t::x10;
-  InstGen::gpr_t gpr_b_sn = InstGen::gpr_t::x11;
-  InstGen::gpr_t gpr_c_sm = InstGen::gpr_t::x14;
+  InstGen::gpr_t gpr_a_sm = InstGen::gpr_t::x22;
+  InstGen::gpr_t gpr_b_sn = InstGen::gpr_t::x27;
+  InstGen::gpr_t gpr_c_sm = InstGen::gpr_t::x28;
   InstGen::gpr_t gpr_c_sn = InstGen::gpr_t::x15;
 
   kernel.add_instr(ig.base_movz(gpr_a_sm, desc.m));
@@ -281,13 +318,12 @@ void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const&
   std::string const n_loop_end_label = label_prefix + "_nloop_end";
   uint32_t n_loop_iters_count = (nend - nbegin) / desc.n;
   uint32_t m_loop_iters_count = (mend - mbegin) / desc.m;
-  InstGen::gpr_t m_loop_reg = InstGen::gpr_t::x7;
-  InstGen::gpr_t n_loop_reg = InstGen::gpr_t::x9;
+  InstGen::gpr_t m_loop_reg = InstGen::gpr_t::x26;
+  InstGen::gpr_t n_loop_reg = InstGen::gpr_t::x25;
 
   InstGen::gpr_t gpr_abckp1 = InstGen::gpr_t::x19;
   InstGen::gpr_t gpr_abckp2 = InstGen::gpr_t::x20;
   InstGen::gpr_t gpr_bbckp1 = InstGen::gpr_t::x21;
-  InstGen::gpr_t gpr_bbckp2 = InstGen::gpr_t::x22;
   InstGen::gpr_t gpr_cbckp1 = InstGen::gpr_t::x23;
   InstGen::gpr_t gpr_cbckp2 = InstGen::gpr_t::x24;
 
@@ -340,6 +376,8 @@ mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32
   kernel.add_instr(ig.base_stp(InstGen::gpr_t::x19, InstGen::gpr_t::x20, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.base_stp(InstGen::gpr_t::x21, InstGen::gpr_t::x22, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.base_stp(InstGen::gpr_t::x23, InstGen::gpr_t::x24, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.base_stp(InstGen::gpr_t::x25, InstGen::gpr_t::x26, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.base_stp(InstGen::gpr_t::x27, InstGen::gpr_t::x28, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v8, InstGen::simd_fp_t::v9, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v10, InstGen::simd_fp_t::v11, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
@@ -354,6 +392,8 @@ mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32
   kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v10, InstGen::simd_fp_t::v11, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v8, InstGen::simd_fp_t::v9, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x27, InstGen::gpr_t::x28, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x25, InstGen::gpr_t::x26, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x23, InstGen::gpr_t::x24, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x21, InstGen::gpr_t::x22, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x19, InstGen::gpr_t::x20, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
