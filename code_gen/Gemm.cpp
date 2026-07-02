@@ -80,6 +80,24 @@ auto reg_w = [](uint32_t id) { return static_cast<gpr_t>(id); };
 
 
 
+typedef void(gemm_microkernel_generator)(mini_jit::Kernel&, std::string const&, uint32_t k, mini_jit::Gemm::dtype_t);
+
+
+struct gemm_microkernel_desc_t {
+  uint32_t m;
+  uint32_t n;
+  uint32_t trans_a;
+  uint32_t trans_b;
+  uint32_t trans_c;
+  gemm_microkernel_generator* generator;
+};
+
+
+
+
+
+
+
 
 
 
@@ -110,7 +128,7 @@ void generate_matrix_predicated_store_za_m16_n16(mini_jit::Kernel& kernel, InstG
 
 
 
-void generate_gemm_microkernel_m32_n32_ta0_tb1_tc0(mini_jit::Kernel& kernel, uint32_t k, mini_jit::Gemm::dtype_t dtype) {
+void generate_gemm_microkernel_m32_n32_ta0_tb1_tc0(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t k, mini_jit::Gemm::dtype_t dtype) {
   InstGen ig;
 
   InstGen::pr_t p0 = InstGen::pr_t::p0;
@@ -136,8 +154,8 @@ void generate_gemm_microkernel_m32_n32_ta0_tb1_tc0(mini_jit::Kernel& kernel, uin
   kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
 
   // perform gemm
-  std::string const loop_start_label = "_loop01";
-  std::string const loop_end_label = "_end01";
+  std::string const loop_start_label = label_prefix + "_loop01";
+  std::string const loop_end_label = label_prefix + "_end01";
   InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
 
   InstGen::sve_zr_t zr_a0 = InstGen::sve_zr_t::z0;
@@ -178,7 +196,7 @@ void generate_gemm_microkernel_m32_n32_ta0_tb1_tc0(mini_jit::Kernel& kernel, uin
 
 
 
-void generate_gemm_microkernel_predicated_m16_n16_ta0_tb1_tc0(mini_jit::Kernel& kernel, uint32_t k, mini_jit::InstGen::pr_t pra, mini_jit::InstGen::pr_t prb, uint32_t rows_count, uint32_t cols_count, mini_jit::Gemm::dtype_t dtype) {
+void generate_gemm_microkernel_predicated_m16_n16_ta0_tb1_tc0(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t k, mini_jit::InstGen::pr_t pra, mini_jit::InstGen::pr_t prb, uint32_t rows_count, uint32_t cols_count, mini_jit::Gemm::dtype_t dtype) {
   rows_count = std::min(16u, rows_count);
   cols_count = std::min(16u, cols_count);
 
@@ -193,8 +211,8 @@ void generate_gemm_microkernel_predicated_m16_n16_ta0_tb1_tc0(mini_jit::Kernel& 
 
   generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, pra, rows_count, 0);
 
-  std::string const loop_start_label = "_loop01";
-  std::string const loop_end_label = "_end01";
+  std::string const loop_start_label = label_prefix + "_loop01";
+  std::string const loop_end_label = label_prefix + "_end01";
   InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
 
   InstGen::sve_zr_t za = InstGen::sve_zr_t::z0;
@@ -223,15 +241,126 @@ void generate_gemm_microkernel_predicated_m16_n16_ta0_tb1_tc0(mini_jit::Kernel& 
 
 
 
+void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const& label_prefix, gemm_microkernel_desc_t desc, uint32_t mbegin, uint32_t mend, uint32_t nbegin, uint32_t nend, uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+  InstGen ig;
+
+  InstGen::gpr_t gpr_a = InstGen::gpr_t::x0;
+  InstGen::gpr_t gpr_b = InstGen::gpr_t::x1;
+  InstGen::gpr_t gpr_c = InstGen::gpr_t::x2;
+  InstGen::gpr_t gpr_lda = InstGen::gpr_t::x3;
+  InstGen::gpr_t gpr_ldb = InstGen::gpr_t::x4;
+  InstGen::gpr_t gpr_ldc = InstGen::gpr_t::x5;
+
+  uint32_t dtype_size = 4;
+
+  // initialize loop stride registers
+  InstGen::gpr_t gpr_a_sm = InstGen::gpr_t::x10;
+  InstGen::gpr_t gpr_b_sn = InstGen::gpr_t::x11;
+  InstGen::gpr_t gpr_c_sm = InstGen::gpr_t::x14;
+  InstGen::gpr_t gpr_c_sn = InstGen::gpr_t::x15;
+
+  kernel.add_instr(ig.base_movz(gpr_a_sm, desc.m));
+  kernel.add_instr(ig.base_movz(gpr_b_sn, desc.n));
+  kernel.add_instr(ig.base_movz(gpr_c_sm, desc.m));
+  kernel.add_instr(ig.base_movz(InstGen::gpr_t::x6, desc.n));
+  kernel.add_instr(ig.base_mul(gpr_c_sn, gpr_ldc, InstGen::gpr_t::x6));
+
+  // initialize data pointers to point to the first segment
+  kernel.add_instr(ig.base_add(gpr_c, gpr_c, mbegin * dtype_size));
+  kernel.add_instr(ig.base_movz(InstGen::gpr_t::x6, nbegin));
+  kernel.add_instr(ig.base_mul(InstGen::gpr_t::x6, InstGen::gpr_t::x6, gpr_ldc));
+  kernel.add_instr(ig.base_add(gpr_c, gpr_c, InstGen::gpr_t::x6, InstGen::shift_kind_t::lsl, 2));
+
+  kernel.add_instr(ig.base_add(gpr_a, gpr_a, mbegin * dtype_size));
+  kernel.add_instr(ig.base_add(gpr_b, gpr_b, nbegin * dtype_size));
+
+  // generate loops
+  std::string const m_loop_start_label = label_prefix + "_mloop_start";
+  std::string const m_loop_end_label = label_prefix + "_mloop_end";
+  std::string const n_loop_start_label = label_prefix + "_nloop_start";
+  std::string const n_loop_end_label = label_prefix + "_nloop_end";
+  uint32_t n_loop_iters_count = (nend - nbegin) / desc.n;
+  uint32_t m_loop_iters_count = (mend - mbegin) / desc.m;
+  InstGen::gpr_t m_loop_reg = InstGen::gpr_t::x7;
+  InstGen::gpr_t n_loop_reg = InstGen::gpr_t::x9;
+
+  InstGen::gpr_t gpr_abckp1 = InstGen::gpr_t::x19;
+  InstGen::gpr_t gpr_abckp2 = InstGen::gpr_t::x20;
+  InstGen::gpr_t gpr_bbckp1 = InstGen::gpr_t::x21;
+  InstGen::gpr_t gpr_bbckp2 = InstGen::gpr_t::x22;
+  InstGen::gpr_t gpr_cbckp1 = InstGen::gpr_t::x23;
+  InstGen::gpr_t gpr_cbckp2 = InstGen::gpr_t::x24;
+
+  kernel.add_instr(ig.base_mov(gpr_abckp1, gpr_a));
+  kernel.add_instr(ig.base_mov(gpr_bbckp1, gpr_b));
+  kernel.add_instr(ig.base_mov(gpr_cbckp1, gpr_c));
+  kernel.add_instr(ig.base_movz(n_loop_reg, n_loop_iters_count));
+  kernel.add_label(n_loop_start_label);
+  kernel.add_labeled_instr(ig.base_cbz(n_loop_reg, n_loop_end_label));
+
+  kernel.add_instr(ig.base_mov(gpr_abckp2, gpr_abckp1));
+  kernel.add_instr(ig.base_mov(gpr_cbckp2, gpr_cbckp1));
+  kernel.add_instr(ig.base_movz(m_loop_reg, m_loop_iters_count));
+  kernel.add_label(m_loop_start_label);
+  kernel.add_labeled_instr(ig.base_cbz(m_loop_reg, m_loop_end_label));
+
+  kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp2));
+  kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp1));
+  kernel.add_instr(ig.base_mov(gpr_c, gpr_cbckp2));
+  desc.generator(kernel, label_prefix + "_micro", k, dtype);
+
+  kernel.add_instr(ig.base_add(gpr_cbckp2, gpr_cbckp2, gpr_c_sm, InstGen::shift_kind_t::lsl, 2));
+  kernel.add_instr(ig.base_add(gpr_abckp2, gpr_abckp2, gpr_a_sm, InstGen::shift_kind_t::lsl, 2));
+  kernel.add_instr(ig.base_sub(m_loop_reg, m_loop_reg, 1));
+  kernel.add_labeled_instr(ig.base_b(m_loop_start_label));
+  kernel.add_label(m_loop_end_label);
+
+  kernel.add_instr(ig.base_add(gpr_cbckp1, gpr_cbckp1, gpr_c_sn, InstGen::shift_kind_t::lsl, 2));
+  kernel.add_instr(ig.base_add(gpr_bbckp1, gpr_bbckp1, gpr_b_sn, InstGen::shift_kind_t::lsl, 2));
+  kernel.add_instr(ig.base_sub(n_loop_reg, n_loop_reg, 1));
+  kernel.add_labeled_instr(ig.base_b(n_loop_start_label));
+  kernel.add_label(n_loop_end_label);
+}
+
+
+
+
+
+
 
 
 
 // new version
 
 mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, dtype_t  dtype) {
-  int _i = 0;
+  InstGen ig;
+
+  // function prologue
+  kernel.add_instr(ig.base_stp(InstGen::gpr_t::x29, InstGen::gpr_t::x30, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.base_stp(InstGen::gpr_t::x19, InstGen::gpr_t::x20, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.base_stp(InstGen::gpr_t::x21, InstGen::gpr_t::x22, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.base_stp(InstGen::gpr_t::x23, InstGen::gpr_t::x24, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v8, InstGen::simd_fp_t::v9, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v10, InstGen::simd_fp_t::v11, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v14, InstGen::simd_fp_t::v15, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x29, InstGen::gpr_t::sp));
+  kernel.add_instr(ig.base_smstart());
 
   
+  // function epilogue
+  kernel.add_instr(ig.base_smstop());
+  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v14, InstGen::simd_fp_t::v15, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v10, InstGen::simd_fp_t::v11, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v8, InstGen::simd_fp_t::v9, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x23, InstGen::gpr_t::x24, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x21, InstGen::gpr_t::x22, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x19, InstGen::gpr_t::x20, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x29, InstGen::gpr_t::x30, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+  kernel.add_instr(ig.base_ret());
+
+  kernel.set_kernel();
 }
 
 

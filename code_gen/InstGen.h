@@ -147,6 +147,12 @@ class mini_jit::InstGen {
       v31 = 31
     } simd_fp_t;
 
+    typedef enum : uint32_t {
+      simd_s = 0,
+      simd_d = 1,
+      simd_q = 10,
+    } simd_sz_t;
+
     //! SVE scalable vector registers
     typedef enum : uint32_t {
       z0 = 0,
@@ -553,6 +559,16 @@ class mini_jit::InstGen {
     static uint32_t base_smstop( ssve_spec_t spec = ssve_spec_t::smza );
 
     /**
+     * @brief Generate a NEON `STP` instruction in post-index, pre-index or signed-offset addressing modes.
+     * ```s
+     * post-index:    stp vr1, vr2, [rn], #imm
+     * pre-index:     stp vr1, vr2, [rn, #imm]!
+     * signed-offset: stp vr1, vr2, [rn, #imm]
+     * ```
+     */
+    static uint32_t neon_stp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, int32_t imm, addr_mode_t addr_mode);
+
+    /**
      * @brief Generates an FMLA (vector) instruction.
      *
      * @param reg_dest destination register.
@@ -567,8 +583,15 @@ class mini_jit::InstGen {
                                          simd_fp_t   reg_src2,
                                          arr_spec_t  arr_spec );
 
-
-
+    /**
+     * @brief Generate a NEON `LDP` instruction in post-index, pre-index or signed-offset addressing modes.
+     * ```s
+     * post-index:    ldp vr1, vr2, [rn], #imm
+     * pre-index:     ldp vr1, vr2, [rn, #imm]!
+     * signed-offset: ldp vr1, vr2, [rn, #imm]
+     * ```
+     */
+    static uint32_t neon_ldp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, int32_t imm, addr_mode_t addr_mode);
 
     /**
      * @brief Generate an SVE `FMAX (immediate)` instruction.
