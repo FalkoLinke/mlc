@@ -85,21 +85,27 @@ auto reg_w = [](uint32_t id) { return static_cast<gpr_t>(id); };
  * @param kernel: The kernel into which to generate the microkernel.
  * @param label_prefix: A label prefix for unique labels.
  * @param k: The k dimension.
+ * @param trans_a: 1 if A is row-major, 0 if A is col-major.
+ * @param trans_b: 1 if B is row-major, 0 if B is col-major.
+ * @param trans_c: 1 if C is row-major, 0 if C is col-major.
  * @param dtype: The data type of the matrices.
  */
-typedef void(gemm_microkernel_generator)(mini_jit::Kernel&, std::string const&, uint32_t k, mini_jit::Gemm::dtype_t);
+typedef void(gemm_microkernel_generator)(mini_jit::Kernel&, std::string const&, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t);
 
 /**
  * The signature of a function which generates a predicated GEMM microkernel of a certain fixed size (m x n).
  * 
  * @param kernel: The kernel into which to generate the microkernel.
  * @param label_prefix: A label prefix for unique labels.
- * @param k: The k dimension.
  * @param ms_count: The number of true indices in the m dimension. Must be less or equal to the fixed m size.
  * @param ns_count: The number of true indices in the n dimension. Must be less or equal to the fixed n size.
+ * @param k: The k dimension.
+ * @param trans_a: 1 if A is row-major, 0 if A is col-major.
+ * @param trans_b: 1 if B is row-major, 0 if B is col-major.
+ * @param trans_c: 1 if C is row-major, 0 if C is col-major.
  * @param dtype: The data type of the matrices.
  */
-typedef void(gemm_microkernel_predicated_generator)(mini_jit::Kernel&, std::string const&, uint32_t k, uint32_t ms_count, uint32_t ns_count, mini_jit::Gemm::dtype_t);
+typedef void(gemm_microkernel_predicated_generator)(mini_jit::Kernel&, std::string const&, uint32_t ms_count, uint32_t ns_count, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t);
 
 /**
  * A descriptor for a single GEMM microkernel generation function.
@@ -280,6 +286,7 @@ void generate_gemm_microkernel_predicated_m16_n16_ta0_tb1_tc0(mini_jit::Kernel& 
 
 void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const& label_prefix, gemm_microkernel_desc_t desc, uint32_t mbegin, uint32_t mend, uint32_t nbegin, uint32_t nend, uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
   InstGen ig;
+  InstGen::gpr_t gpr_tmp1 = InstGen::gpr_t::x6;
 
   InstGen::gpr_t gpr_a = InstGen::gpr_t::x0;
   InstGen::gpr_t gpr_b = InstGen::gpr_t::x1;
@@ -296,20 +303,58 @@ void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const&
   InstGen::gpr_t gpr_c_sm = InstGen::gpr_t::x28;
   InstGen::gpr_t gpr_c_sn = InstGen::gpr_t::x15;
 
-  kernel.add_instr(ig.base_movz(gpr_a_sm, desc.m));
-  kernel.add_instr(ig.base_movz(gpr_b_sn, desc.n));
-  kernel.add_instr(ig.base_movz(gpr_c_sm, desc.m));
-  kernel.add_instr(ig.base_movz(InstGen::gpr_t::x6, desc.n));
-  kernel.add_instr(ig.base_mul(gpr_c_sn, gpr_ldc, InstGen::gpr_t::x6));
+  if (trans_a) {
+    kernel.add_instr(ig.base_movz(gpr_a_sm, desc.m));
+    kernel.add_instr(ig.base_mul(gpr_a_sm, gpr_lda, gpr_a_sm));
+  } else {
+    kernel.add_instr(ig.base_movz(gpr_a_sm, desc.m));
+  }
+
+  if (trans_b) {
+    kernel.add_instr(ig.base_movz(gpr_b_sn, desc.n));
+  } else {
+    kernel.add_instr(ig.base_movz(gpr_b_sn, desc.n));
+    kernel.add_instr(ig.base_mul(gpr_b_sn, gpr_ldb, gpr_b_sn));
+  }
+
+  if (trans_c) {
+    kernel.add_instr(ig.base_movz(gpr_c_sn, desc.n));
+    kernel.add_instr(ig.base_movz(gpr_c_sm, desc.m));
+    kernel.add_instr(ig.base_mul(gpr_c_sm, gpr_ldc, gpr_c_sm));
+  } else {
+    kernel.add_instr(ig.base_movz(gpr_c_sm, desc.m));
+    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x6, desc.n));
+    kernel.add_instr(ig.base_mul(gpr_c_sn, gpr_ldc, InstGen::gpr_t::x6));
+  }
 
   // initialize data pointers to point to the first segment
-  kernel.add_instr(ig.base_add(gpr_c, gpr_c, mbegin * dtype_size));
-  kernel.add_instr(ig.base_movz(InstGen::gpr_t::x6, nbegin));
-  kernel.add_instr(ig.base_mul(InstGen::gpr_t::x6, InstGen::gpr_t::x6, gpr_ldc));
-  kernel.add_instr(ig.base_add(gpr_c, gpr_c, InstGen::gpr_t::x6, InstGen::shift_kind_t::lsl, 2));
+  if (trans_a) {
+    kernel.add_instr(ig.base_movz(gpr_tmp1, mbegin));
+    kernel.add_instr(ig.base_mul(gpr_tmp1, gpr_tmp1, gpr_lda));
+    kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_tmp1, InstGen::shift_kind_t::lsl, 2));
+  } else {
+    kernel.add_instr(ig.base_add(gpr_a, gpr_a, mbegin * dtype_size));
+  }
 
-  kernel.add_instr(ig.base_add(gpr_a, gpr_a, mbegin * dtype_size));
-  kernel.add_instr(ig.base_add(gpr_b, gpr_b, nbegin * dtype_size));
+  if (trans_b) {
+    kernel.add_instr(ig.base_add(gpr_b, gpr_b, nbegin * dtype_size));
+  } else {
+    kernel.add_instr(ig.base_movz(gpr_tmp1, nbegin));
+    kernel.add_instr(ig.base_mul(gpr_tmp1, gpr_tmp1, gpr_ldb));
+    kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_tmp1, InstGen::shift_kind_t::lsl, 2));
+  }
+
+  if (trans_c) {
+    kernel.add_instr(ig.base_add(gpr_c, gpr_c, nbegin * dtype_size));
+    kernel.add_instr(ig.base_movz(gpr_tmp1, mbegin));
+    kernel.add_instr(ig.base_mul(gpr_tmp1, gpr_tmp1, gpr_ldc));
+    kernel.add_instr(ig.base_add(gpr_c, gpr_c, gpr_tmp1, InstGen::shift_kind_t::lsl, 2));
+  } else {
+    kernel.add_instr(ig.base_add(gpr_c, gpr_c, mbegin * dtype_size));
+    kernel.add_instr(ig.base_movz(gpr_tmp1, nbegin));
+    kernel.add_instr(ig.base_mul(gpr_tmp1, gpr_tmp1, gpr_ldc));
+    kernel.add_instr(ig.base_add(gpr_c, gpr_c, gpr_tmp1, InstGen::shift_kind_t::lsl, 2));
+  }
 
   // generate loops
   std::string const m_loop_start_label = label_prefix + "_mloop_start";
@@ -343,7 +388,7 @@ void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const&
   kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp2));
   kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp1));
   kernel.add_instr(ig.base_mov(gpr_c, gpr_cbckp2));
-  desc.generator(kernel, label_prefix + "_micro", k, dtype);
+  desc.generator(kernel, label_prefix + "_micro", k, trans_a, trans_b, trans_c, dtype);
 
   kernel.add_instr(ig.base_add(gpr_cbckp2, gpr_cbckp2, gpr_c_sm, InstGen::shift_kind_t::lsl, 2));
   kernel.add_instr(ig.base_add(gpr_abckp2, gpr_abckp2, gpr_a_sm, InstGen::shift_kind_t::lsl, 2));
