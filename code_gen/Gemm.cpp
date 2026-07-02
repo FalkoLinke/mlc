@@ -105,7 +105,7 @@ typedef void(gemm_microkernel_generator)(mini_jit::Kernel&, std::string const&, 
  * @param trans_c: 1 if C is row-major, 0 if C is col-major.
  * @param dtype: The data type of the matrices.
  */
-typedef void(gemm_microkernel_predicated_generator)(mini_jit::Kernel&, std::string const&, uint32_t ms_count, uint32_t ns_count, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t);
+typedef void(gemm_microkernel_predicated_generator)(mini_jit::Kernel&, std::string const&, pr_t prm, pr_t prn, uint32_t ms_count, uint32_t ns_count, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t);
 
 /**
  * A descriptor for a single GEMM microkernel generation function.
@@ -171,7 +171,20 @@ void generate_matrix_predicated_store_za_m16_n16(mini_jit::Kernel& kernel, InstG
 
 
 
-void generate_gemm_microkernel_m32_n32_ta0_tb1_tc0(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t k, mini_jit::Gemm::dtype_t dtype) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
   InstGen ig;
 
   InstGen::pr_t p0 = InstGen::pr_t::p0;
@@ -238,6 +251,25 @@ void generate_gemm_microkernel_m32_n32_ta0_tb1_tc0(mini_jit::Kernel& kernel, std
 }
 
 
+static gemm_microkernel_desc_t gemm_microkernel_desc_m32_n32 = {
+  .m = 32,
+  .n = 32,
+  .generator = generate_gemm_microkernel_m32_n32,
+  .predicated_generator = NULL
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void generate_gemm_microkernel_predicated_m16_n16_ta0_tb1_tc0(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t k, mini_jit::InstGen::pr_t pra, mini_jit::InstGen::pr_t prb, uint32_t rows_count, uint32_t cols_count, mini_jit::Gemm::dtype_t dtype) {
   rows_count = std::min(16u, rows_count);
@@ -280,11 +312,34 @@ void generate_gemm_microkernel_predicated_m16_n16_ta0_tb1_tc0(mini_jit::Kernel& 
 }
 
 
+static gemm_microkernel_desc_t gemm_microkernel_desc_m16_n16_p = {
+  .m = 16,
+  .n = 16,
+  .generator = NULL,
+  .predicated_generator = NULL,
+};
 
 
 
 
-void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const& label_prefix, gemm_microkernel_desc_t desc, uint32_t mbegin, uint32_t mend, uint32_t nbegin, uint32_t nend, uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const& label_prefix, gemm_microkernel_desc_t desc, uint32_t mbegin, uint32_t mend, uint32_t nbegin, uint32_t nend, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
   InstGen ig;
   InstGen::gpr_t gpr_tmp1 = InstGen::gpr_t::x6;
 
@@ -409,6 +464,30 @@ void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const&
 
 
 
+void generate_gemm_loop_nest_v1(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+  generate_gemm_microkernel_loop(
+    kernel,
+    label_prefix + "_32_32",
+    gemm_microkernel_desc_m32_n32,
+    0,
+    m,
+    0,
+    n,
+    k,
+    trans_a,
+    trans_b,
+    trans_c,
+    dtype
+  );
+}
+
+
+
+
+
+
+
+
 
 
 // new version
@@ -430,7 +509,9 @@ mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32
   kernel.add_instr(ig.base_mov(InstGen::gpr_t::x29, InstGen::gpr_t::sp));
   kernel.add_instr(ig.base_smstart());
 
-  
+  // main GEMM operation
+  generate_gemm_loop_nest_v1(kernel, "gemm_main_loop", m, n, k, trans_a, trans_b, trans_c, dtype);
+
   // function epilogue
   kernel.add_instr(ig.base_smstop());
   kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v14, InstGen::simd_fp_t::v15, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
