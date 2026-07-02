@@ -566,7 +566,7 @@ class mini_jit::InstGen {
      * signed-offset: stp vr1, vr2, [rn, #imm]
      * ```
      */
-    static uint32_t neon_stp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, int32_t imm, addr_mode_t addr_mode);
+    static uint32_t neon_stp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
     /**
      * @brief Generates an FMLA (vector) instruction.
@@ -591,7 +591,7 @@ class mini_jit::InstGen {
      * signed-offset: ldp vr1, vr2, [rn, #imm]
      * ```
      */
-    static uint32_t neon_ldp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, int32_t imm, addr_mode_t addr_mode);
+    static uint32_t neon_ldp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, uint32_t imm, addr_mode_t addr_mode);
 
     /**
      * @brief Generate an SVE `FMAX (immediate)` instruction.

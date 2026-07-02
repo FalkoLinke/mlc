@@ -148,8 +148,8 @@ struct gemm_microkernel_desc_t {
 void generate_matrix_predicated_load_za_m16_n16(mini_jit::Kernel& kernel, InstGen::gpr_t ptr_reg, InstGen::gpr_t ld_reg, InstGen::pr_t pred_reg, uint64_t rows_count, uint64_t za_tile) {
   InstGen ig;
 
+  kernel.add_instr(ig.base_movz(InstGen::gpr_t::w12, 0));
   for (uint64_t i = 0; i < std::min(16ull, rows_count); i++) {
-    kernel.add_instr(ig.base_movz(InstGen::gpr_t::w12, 0));
     kernel.add_instr(ig.sme_ld1w(za_tile, InstGen::sme_hv_kind_t::horz, InstGen::gpr_t::w12, 0, pred_reg, ptr_reg, InstGen::gpr_t::xzr));
     kernel.add_instr(ig.base_add(ptr_reg, ptr_reg, ld_reg, InstGen::shift_kind_t::lsl, 2));
     kernel.add_instr(ig.base_add(InstGen::gpr_t::w12, InstGen::gpr_t::w12, 1));
@@ -159,8 +159,8 @@ void generate_matrix_predicated_load_za_m16_n16(mini_jit::Kernel& kernel, InstGe
 void generate_matrix_predicated_store_za_m16_n16(mini_jit::Kernel& kernel, InstGen::gpr_t ptr_reg, InstGen::gpr_t ld_reg, InstGen::pr_t pred_reg, uint64_t rows_count, uint64_t za_tile) {
   InstGen ig;
 
+  kernel.add_instr(ig.base_movz(InstGen::gpr_t::w12, 0));
   for (uint64_t i = 0; i < std::min(16ull, rows_count); i++) {
-    kernel.add_instr(ig.base_movz(InstGen::gpr_t::w12, 0));
     kernel.add_instr(ig.sme_st1w(za_tile, InstGen::sme_hv_kind_t::horz, InstGen::gpr_t::w12, 0, pred_reg, ptr_reg, InstGen::gpr_t::xzr));
     kernel.add_instr(ig.base_add(ptr_reg, ptr_reg, ld_reg, InstGen::shift_kind_t::lsl, 2));
     kernel.add_instr(ig.base_add(InstGen::gpr_t::w12, InstGen::gpr_t::w12, 1));
@@ -205,8 +205,8 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
   generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
   kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
   kernel.add_instr(ig.base_add(gpr_c, gpr_c, 4 * 16));
-  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 0);
-  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
+  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 2);
+  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 3);
   kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
 
   // perform gemm
@@ -228,10 +228,10 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
   kernel.add_instr(ig.sve_ld1w(zr_b0, p0, gpr_b, 0));
   kernel.add_instr(ig.sve_ld1w(zr_b1, p0, gpr_b, 1));
 
-  kernel.add_instr(fmopa(0, p0, p0, zr_a0, zr_b0));
-  kernel.add_instr(fmopa(1, p0, p0, zr_a0, zr_b1));
-  kernel.add_instr(fmopa(2, p0, p0, zr_a1, zr_b0));
-  kernel.add_instr(fmopa(3, p0, p0, zr_a1, zr_b1));
+  kernel.add_instr(fmopa(0, p0, p0, zr_b0, zr_a0));
+  kernel.add_instr(fmopa(1, p0, p0, zr_b1, zr_a0));
+  kernel.add_instr(fmopa(2, p0, p0, zr_b0, zr_a1));
+  kernel.add_instr(fmopa(3, p0, p0, zr_b1, zr_a1));
 
   kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
   kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
@@ -245,8 +245,8 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
   generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
   kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
   kernel.add_instr(ig.base_add(gpr_c, gpr_c, 4 * 16));
-  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 0);
-  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
+  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 2);
+  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 3);
   kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
 }
 
@@ -514,10 +514,10 @@ mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32
 
   // function epilogue
   kernel.add_instr(ig.base_smstop());
-  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v14, InstGen::simd_fp_t::v15, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
-  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
-  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v10, InstGen::simd_fp_t::v11, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
-  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v8, InstGen::simd_fp_t::v9, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v14, InstGen::simd_fp_t::v15, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v10, InstGen::simd_fp_t::v11, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+  kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v8, InstGen::simd_fp_t::v9, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x27, InstGen::gpr_t::x28, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x25, InstGen::gpr_t::x26, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x23, InstGen::gpr_t::x24, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
@@ -527,6 +527,8 @@ mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32
   kernel.add_instr(ig.base_ret());
 
   kernel.set_kernel();
+
+  return error_t::success;
 }
 
 
@@ -563,7 +565,7 @@ mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32
 namespace mini_jit {
 
     /**
-     * @brief Generate a kernel for matrix multiplication.
+     * @ief Generate a kernel for matrix multiplication.
      * @param m       Number of rows in A and C.
      * @param n       Number of columns in B and C.
      * @param k       Number of columns in A and rows in B.
@@ -840,5 +842,10 @@ namespace mini_jit {
      **/
     Gemm::kernel_t Gemm::get_kernel() const {
         return (kernel_t) this->kernel.get_kernel();
+    }
+
+
+    void Gemm::write(const char* fp) const {
+      this->kernel.write(fp);
     }
 };

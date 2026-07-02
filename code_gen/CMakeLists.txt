@@ -65,3 +65,9 @@ add_executable(gemm_driver_M_N_K.out gemm_driver_M_N_K.cpp)
 target_compile_options(gemm_driver_M_N_K.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(gemm_driver_M_N_K.out PRIVATE code_gen mlc_common)
 
+add_executable(gemm_tests.out gemm_tests.cpp)
+target_compile_options(gemm_tests.out PRIVATE ${CXX_FLAGS})
+target_link_libraries(gemm_tests.out PRIVATE code_gen mlc_common Catch2::Catch2WithMain)
+
+
+

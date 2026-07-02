@@ -91,6 +91,8 @@ class mini_jit::Gemm {
      * @return pointer to the generated kernel.
      **/
     kernel_t get_kernel() const;
+
+    void write(const char* fp) const;
 };
 
 #endif

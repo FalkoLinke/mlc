@@ -353,16 +353,16 @@ uint32_t mini_jit::InstGen::base_smstop( ssve_spec_t spec ) {
   return ins;
 }
 
-uint32_t mini_jit::InstGen::neon_stp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, int32_t imm, addr_mode_t addr_mode) {
+uint32_t mini_jit::InstGen::neon_stp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, uint32_t imm, addr_mode_t addr_mode) {
   uint32_t ins = 0x2c000000;
 
   ins |= (vr1 & 0x1f);
   ins |= (rn & 0x1f) << 5;
   ins |= (vr2 & 0x1f) << 10;
 
-  int32_t imm7 = (imm / (4 << sz));
+  uint32_t imm7 = (imm / (4 << sz));
   
-  ins |= (imm7 & 0x3f) << 15;
+  ins |= (imm7 & 0x7f) << 15;
   ins |= (addr_mode & 0x3) << 23;
   ins |= (sz & 0x3) << 30;
 
@@ -394,16 +394,16 @@ uint32_t mini_jit::InstGen::neon_dp_fmla_vector( simd_fp_t  reg_dest,
   return l_ins;
 }
 
-uint32_t mini_jit::InstGen::neon_ldp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, int32_t imm, addr_mode_t addr_mode) {
+uint32_t mini_jit::InstGen::neon_ldp( simd_fp_t vr1, simd_fp_t vr2, simd_sz_t sz, gpr_t rn, uint32_t imm, addr_mode_t addr_mode) {
   uint32_t ins = 0x2c400000;
 
   ins |= (vr1 & 0x1f);
   ins |= (rn & 0x1f) << 5;
   ins |= (vr2 & 0x1f) << 10;
 
-  int32_t imm7 = (imm / (4 << sz));
+  uint32_t imm7 = (imm / (4 << sz));
   
-  ins |= (imm7 & 0x3f) << 15;
+  ins |= (imm7 & 0x7f) << 15;
   ins |= (addr_mode & 0x3) << 23;
   ins |= (sz & 0x3) << 30;
 
