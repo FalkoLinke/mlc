@@ -615,6 +615,8 @@ class mini_jit::InstGen {
      * ```s
      * ld1w zt.s, pg/z, [rn, rm, LSL #2]
      * ```
+     * 
+     * - rm cannot be sp or xzr.
      */
     static uint32_t sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, gpr_t rm);
 

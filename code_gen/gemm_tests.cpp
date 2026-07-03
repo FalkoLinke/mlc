@@ -39,7 +39,7 @@ void reference_gemm(float const* a, float const* b, float* c, uint32_t lda, uint
 
 
 
-void verify_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t lda, uint32_t ldb, uint32_t ldc, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c) {
+void verify_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t lda, uint32_t ldb, uint32_t ldc, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, const char* fp = NULL) {
     using T = float;
 
     uint32_t a_d1 = trans_a ? k : m;
@@ -67,7 +67,9 @@ void verify_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t lda, uint32_t ldb,
         FAIL("error during gemm kernel generation");
     }
     mini_jit::Gemm::kernel_t kernel = gemm.get_kernel();
-    gemm.write("test.bin");
+    if (fp != NULL) {
+        gemm.write(fp);
+    }
 
     reference_gemm(a.data(), b.data(), exp.data(), lda, ldb, ldc, m, n, k, trans_a, trans_b, trans_c);
     kernel(a.data(), b.data(), c.data(), lda, ldb, ldc);
@@ -92,6 +94,11 @@ TEST_CASE("test 32x32 microkernel", "[test]") {
     verify_gemm(32, 32, 512, 32, 32, 32, 0, 1, 0);
 }
 
+TEST_CASE("test 16x16 microkernel", "[test]") {
+    verify_gemm(16, 16, 1, 16, 16, 16, 0, 1, 0, "test.bin");
+    verify_gemm(16, 16, 512, 16, 16, 16, 0, 1, 0, "test.bin");
+}
+
 TEST_CASE("test multiples of 32", "[test]") {
     uint32_t trans_a = 0;
     uint32_t trans_b = 1;
@@ -114,6 +121,27 @@ TEST_CASE("test multiples of 32", "[test]") {
     }
 }
 
+TEST_CASE("test nonmultiples of 32", "[test]") {
+    uint32_t trans_a = 0;
+    uint32_t trans_b = 1;
+    uint32_t trans_c = 0;
+
+    for (uint32_t i = 0; i < 8; i++) {
+        for (uint32_t j = 0; j < 8; j++) {
+            for (uint32_t u = 0; u < 4; u++) {
+                uint32_t m = 8 * (i + 1);
+                uint32_t n = 8 * (j + 1);
+                uint32_t k = 8 * (u + 1);
+
+                uint32_t lda = trans_a ? k : m;
+                uint32_t ldb = trans_b ? n : k;
+                uint32_t ldc = trans_c ? n : m;
+
+                verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c);
+            }
+        }
+    }
+}
 
 
 

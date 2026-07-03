@@ -492,7 +492,7 @@ uint32_t mini_jit::InstGen::sve_whilelt( pr_t pd, sve_size_t sz, gpr_t rn, gpr_t
 
   ins |= (pd & 0xf);
   ins |= (rn & 0x1f) << 5;
-  ins |= (rn & 0x20) << (12-4);
+  ins |= (rn & 0x20) << (12-5);
   ins |= (rm & 0x1f) << 16;
   ins |= (sz & 0x3) << 22;
 

@@ -305,8 +305,8 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   kernel.add_label(loop_start_label);
   kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
 
-  kernel.add_instr(ig.sve_ld1w(za, prm, gpr_a, InstGen::gpr_t::xzr));
-  kernel.add_instr(ig.sve_ld1w(zb, prn, gpr_b, InstGen::gpr_t::xzr));
+  kernel.add_instr(ig.sve_ld1w(za, prm, gpr_a, 0));
+  kernel.add_instr(ig.sve_ld1w(zb, prn, gpr_b, 0));
   kernel.add_instr(fmopa(0, prn, prm, zb, za));
 
   kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
@@ -511,10 +511,10 @@ void generate_gemm_loop_nest_v1(mini_jit::Kernel& kernel, std::string const& lab
     32
   );
 
-  if (remaining_ms > 16) {
+  if (remaining_ms >= 16) {
     kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 32, InstGen::addr_mode_t::signed_offset));
     generate_gemm_microkernel_loop(
       kernel,
       label_prefix + "_16_16_m_1",
@@ -536,16 +536,16 @@ void generate_gemm_loop_nest_v1(mini_jit::Kernel& kernel, std::string const& lab
     remaining_ms -= 16;
   }
 
-  if (remaining_ns > 16) {
+  if (remaining_ns >= 16) {
     kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 32, InstGen::addr_mode_t::signed_offset));
     generate_gemm_microkernel_loop(
       kernel,
       label_prefix + "_16_16_n_1",
       gemm_microkernel_desc_m16_n16_p,
       0,
-      m,
+      consumed_ms,
       n - consumed_ns,
       n,
       k,
@@ -573,8 +573,8 @@ void generate_gemm_loop_nest_v1(mini_jit::Kernel& kernel, std::string const& lab
 
   if (remaining_ms != 0) {
     kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 32, InstGen::addr_mode_t::signed_offset));
     generate_gemm_microkernel_loop(
       kernel,
       label_prefix + "_16_16_m_2",
@@ -597,8 +597,8 @@ void generate_gemm_loop_nest_v1(mini_jit::Kernel& kernel, std::string const& lab
 
   if (remaining_ns != 0) {
     kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 32, InstGen::addr_mode_t::signed_offset));
     generate_gemm_microkernel_loop(
       kernel,
       label_prefix + "_16_16_n_2",
@@ -621,8 +621,8 @@ void generate_gemm_loop_nest_v1(mini_jit::Kernel& kernel, std::string const& lab
 
   if (remaining_ms != 0 && remaining_ns != 0) {
     kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 32, InstGen::addr_mode_t::signed_offset));
     generate_gemm_microkernel_loop(
       kernel,
       label_prefix + "_16_16_mn",
