@@ -651,6 +651,14 @@ class mini_jit::InstGen {
     static uint32_t sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, gpr_t rm);
 
     /**
+     * @brief Generate an SVE `WHILELT (predicate)` instruction.
+     * ```s
+     * whilelt pd.sz rn rm
+     * ```
+     */
+    static uint32_t sve_whilelt( pr_t pd, sve_size_t sz, gpr_t rn, gpr_t rm);
+
+    /**
      * @brief Generate an SME `MOV (vector to tile, single)` instruction.
      * ```s
      * mov <za_tile2><hv>.s[rs, offs2], pg/m, zn.s

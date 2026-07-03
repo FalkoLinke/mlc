@@ -487,6 +487,18 @@ uint32_t mini_jit::InstGen::sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t
   return ins;
 }
 
+uint32_t mini_jit::InstGen::sve_whilelt( pr_t pd, sve_size_t sz, gpr_t rn, gpr_t rm) {
+  uint32_t ins = 0x25200400;
+
+  ins |= (pd & 0xf);
+  ins |= (rn & 0x1f) << 5;
+  ins |= (rn & 0x20) << (12-4);
+  ins |= (rm & 0x1f) << 16;
+  ins |= (sz & 0x3) << 22;
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::sme_mov_s( uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg, sve_zr_t zn) {
   uint32_t ins = 0xc0800000;
 
