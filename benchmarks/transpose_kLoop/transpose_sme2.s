@@ -14,6 +14,12 @@ _transpose_16x16_fp32_sme2:
     ptrue p0.s
     ptrue pn8.s
 
+    mov x4, x0
+    mov x5, #50000
+
+k_loop:
+    mov x0, x4;
+
     ld1w {z0.S}, p0/z, [x0]
     add x0, x0, x2, lsl #2
     ld1w {z1.S}, p0/z, [x0]
@@ -68,8 +74,8 @@ _transpose_16x16_fp32_sme2:
     trn1 z29.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
     trn2 z31.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
 
-    st1w { z28.s - z31.s }, pn8, [x1]
-    add x1, x1, x3, lsl #4
+    //st1w { z28.s - z31.s }, pn8, [x1]
+    //add x1, x1, x3, lsl #4
 
     uzp { z16.s, z17.s}, z1.s, z5.s 
     uzp { z18.s, z19.s}, z9.s, z13.s
@@ -87,8 +93,8 @@ _transpose_16x16_fp32_sme2:
     trn1 z29.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
     trn2 z31.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
 
-    st1w { z28.s - z31.s }, pn8, [x1]
-    add x1, x1, x3, lsl #4
+    //st1w { z28.s - z31.s }, pn8, [x1, #4, mul vl]
+    //add x1, x1, x3, lsl #4
     uzp { z16.s, z17.s}, z2.s, z6.s 
     uzp { z18.s, z19.s}, z10.s, z14.s
 
@@ -105,8 +111,8 @@ _transpose_16x16_fp32_sme2:
     trn1 z29.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
     trn2 z31.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
 
-    st1w { z28.s - z31.s }, pn8, [x1]
-    add x1, x1, x3, lsl #4
+    //st1w { z28.s - z31.s }, pn8, [x1, #8, mul vl]
+    //add x1, x1, x3, lsl #4
     uzp { z16.s, z17.s}, z3.s, z7.s 
     uzp { z18.s, z19.s}, z11.s, z15.s
 
@@ -123,8 +129,8 @@ _transpose_16x16_fp32_sme2:
     trn1 z29.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
     trn2 z31.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
 
-    st1w { z28.s - z31.s }, pn8, [x1]
-    add x1, x1, x3, lsl #4
+    //st1w { z28.s - z31.s }, pn8, [x1, #12, mul vl]
+    //add x1, x1, x3, lsl #4
 
 
     // uzp { z16.s, z17.s}, z1.s, z5.s 
@@ -144,6 +150,45 @@ _transpose_16x16_fp32_sme2:
     // add x1, x1, x3, lsl #4
     // st1w { z30.s - z31.s }, pn8, [x1]
     // // add x1, x1, x3, lsl #4
+
+    subs x5, x5, #1
+    b.ne k_loop
+
+    st1w z4.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z14.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z10.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z18.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+
+    st1w z6.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z16.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z12.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z20.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+
+    st1w z5.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z15.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z11.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z19.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+
+    st1w z7.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z17.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z13.s, p0, [x1]
+    add x1, x1, x3, LSL #2
+    st1w z21.s, p0, [x1]
+    add x1, x1, x3, LSL #2
 
     smstop
 

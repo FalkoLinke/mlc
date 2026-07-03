@@ -14,10 +14,9 @@ target_compile_options(transpose_main PRIVATE ${CXX_FLAGS})
 set_property(SOURCE transpose_za.s transpose_tbl.s transpose_simd.s copy_sve.s transpose_tbl_v2.s  transpose_tbl_v2.s PROPERTY COMPILE_FLAGS "-x assembler-with-cpp")
 
 
-
-
-add_executable(transpose_benchmarks_driver benchmarks_driver.cpp transpose_za.s transpose_tbl.s transpose_simd.s copy_sve.s transpose_tbl_v2.s  transpose_tbl_v2.s)
+add_executable(transpose_benchmarks_driver benchmarks_driver.cpp transpose_za.s transpose_tbl.s transpose_simd.s copy_sve.s transpose_tbl_v2.s transpose_sme2.s)
 target_compile_options(transpose_benchmarks_driver PRIVATE ${CXX_FLAGS})
+
 
 
 

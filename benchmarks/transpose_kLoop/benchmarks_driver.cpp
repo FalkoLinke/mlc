@@ -14,7 +14,7 @@ typedef void(kernel_t)(float const*, float*, uint64_t, uint64_t);
 
 
 
-void benchmark_kernel(kernel_t* kernel, uint64_t reps) {
+void benchmark_kernel(kernel_t* kernel, uint64_t reps, uint64_t k_loop) {
     std::vector<float> a(16 * 16, 0.0f);
     std::vector<float> b(16 * 16, 0.0f);
 
@@ -27,7 +27,7 @@ void benchmark_kernel(kernel_t* kernel, uint64_t reps) {
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
 
-    uint64_t bytes_transferred = 2 * 16 * 16 * sizeof(float) * reps;
+    uint64_t bytes_transferred = 2 * 16 * 16 * sizeof(float) * reps * k_loop;
     double gibs_transferred = bytes_transferred / (1024.0f * 1024.0f * 1024.0f);
     double gibs = gibs_transferred / duration.count();
 
@@ -41,16 +41,16 @@ void benchmark_kernel(kernel_t* kernel, uint64_t reps) {
 
 
 int main() {
-    uint64_t reps = 100000000;
+    uint64_t reps = 20000000;
 
     std::cout << "GiBs\t\tBytes transferred [GiBs]\t\tDuration [s]" << std::endl;
 
-    benchmark_kernel(&copy_sve, reps);
-    benchmark_kernel(&transpose_16x16_fp32_za, reps);
-    benchmark_kernel(&transpose_16x16_fp32_tbl, reps);
-    benchmark_kernel(&transpose_16x16_fp32_tbl_v2, reps);
-    benchmark_kernel(&transpose_16x16_fp32_simd, reps);
-    benchmark_kernel(&transpose_16x16_fp32_sme2, reps);
+    benchmark_kernel(&copy_sve, reps, 1);
+    benchmark_kernel(&transpose_16x16_fp32_za, 400, 50000);
+    benchmark_kernel(&transpose_16x16_fp32_tbl, 400, 50000);
+    benchmark_kernel(&transpose_16x16_fp32_tbl_v2, 400, 50000);
+    benchmark_kernel(&transpose_16x16_fp32_simd, reps, 1);
+    benchmark_kernel(&transpose_16x16_fp32_sme2, 400, 50000);
 
     return 0;
 }

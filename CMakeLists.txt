@@ -26,4 +26,5 @@ add_subdirectory(code_gen)
 add_subdirectory(teir)
 add_subdirectory(benchmarks/gemm)
 add_subdirectory(benchmarks/transpose)
+add_subdirectory(benchmarks/transpose_kLoop)
 
