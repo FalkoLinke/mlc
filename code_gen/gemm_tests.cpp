@@ -74,11 +74,11 @@ void verify_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t lda, uint32_t ldb,
     reference_gemm(a.data(), b.data(), exp.data(), lda, ldb, ldc, m, n, k, trans_a, trans_b, trans_c);
     kernel(a.data(), b.data(), c.data(), lda, ldb, ldc);
 
-    /*
-    print_mat(c.data(), c_d1, c_d2, ldc);
-    std::cout << std::endl;
-    print_mat(exp.data(), c_d1, c_d2, ldc);
-    */
+    if (fp != NULL) {
+        print_mat(c.data(), c_d1, c_d2, ldc);
+        std::cout << std::endl;
+        print_mat(exp.data(), c_d1, c_d2, ldc);
+    }
 
     float diff = max_abs_diff(c.data(), exp.data(), c.size());
     REQUIRE(diff < 1e-4);
@@ -95,8 +95,8 @@ TEST_CASE("test 32x32 microkernel", "[test]") {
 }
 
 TEST_CASE("test 16x16 microkernel", "[test]") {
-    verify_gemm(16, 16, 1, 16, 16, 16, 0, 1, 0, "test.bin");
-    verify_gemm(16, 16, 512, 16, 16, 16, 0, 1, 0, "test.bin");
+    verify_gemm(16, 16, 1, 16, 16, 16, 0, 1, 0);
+    verify_gemm(16, 16, 512, 16, 16, 16, 0, 1, 0);
 }
 
 TEST_CASE("test multiples of 32", "[test]") {
@@ -137,7 +137,7 @@ TEST_CASE("test nonmultiples of 32", "[test]") {
                 uint32_t ldb = trans_b ? n : k;
                 uint32_t ldc = trans_c ? n : m;
 
-                verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c);
+                verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c, "test.bin");
             }
         }
     }
