@@ -137,7 +137,7 @@ TEST_CASE("test nonmultiples of 32", "[test]") {
                 uint32_t ldb = trans_b ? n : k;
                 uint32_t ldc = trans_c ? n : m;
 
-                verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c, "test.bin");
+                verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c);
             }
         }
     }

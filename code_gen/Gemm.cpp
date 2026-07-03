@@ -152,7 +152,20 @@ std::vector<mat_tiled_rect_t> tile_matrix_v1(mat_rect_t root) {
         continue;
       }
 
-      result.push_back({.rect = area, .mt = std::min(16u, area.mend - area.mbegin), .nt = std::min(16u, area.nend - area.nbegin)});
+      uint32_t mt = std::min(16u, area.mend - area.mbegin);
+      uint32_t nt = std::min(16u, area.nend - area.nbegin);
+      mat_rect_t covered_area_16_16_p = tiled_subrect(area, mt, nt);
+      if (!mat_rect_is_empty(covered_area_16_16_p)) {
+        result.push_back({.rect = covered_area_16_16_p, .mt = mt, .nt = nt});
+      }
+
+      std::vector<mat_rect_t> remaining_areas_16_16_p = split_mat_rect(area, covered_area_16_16_p);
+      for (mat_rect_t area : remaining_areas_16_16_p) {
+        if (mat_rect_is_empty(area)) {
+          continue;
+        }
+        result.push_back({.rect = area, .mt = area.mend - area.mbegin, .nt = area.nend - area.nbegin});
+      }
     }
   }
 
@@ -735,7 +748,6 @@ mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32
   // compute tiling
   mat_rect_t root = {.mbegin = 0, .mend = m, .nbegin = 0, .nend = n};
   std::vector<mat_tiled_rect_t> tiling = tile_matrix_v1(root);
-  print_tiling(tiling);
 
   // generate kernel for tiling
   try {
