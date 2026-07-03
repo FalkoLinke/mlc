@@ -30,14 +30,14 @@ set(KERNELS
 set_source_files_properties(${KERNELS} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 
 
-add_executable(main main.cpp ${KERNELS})
-target_compile_options(main PRIVATE ${CXX_FLAGS})
+add_executable(gemm_main main.cpp ${KERNELS})
+target_compile_options(gemm_main PRIVATE ${CXX_FLAGS})
 
-add_executable(benchmarks_driver benchmarks_driver.cpp ${KERNELS})
-target_compile_options(benchmarks_driver PRIVATE ${CXX_FLAGS})
+add_executable(gemm_benchmarks_driver benchmarks_driver.cpp ${KERNELS})
+target_compile_options(gemm_benchmarks_driver PRIVATE ${CXX_FLAGS})
 
-add_executable(benchmarks_driver_16_16 benchmarks_driver_16_16.cpp ${KERNELS})
-target_compile_options(benchmarks_driver_16_16 PRIVATE ${CXX_FLAGS})
+add_executable(gemm_benchmarks_driver_16_16 benchmarks_driver_16_16.cpp ${KERNELS})
+target_compile_options(gemm_benchmarks_driver_16_16 PRIVATE ${CXX_FLAGS})
 
 
 

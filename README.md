@@ -4,6 +4,25 @@ Published docs: https://falkolinke.github.io/mlc/
 
 
 
+Basic build commands:
+```
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+Build commands using homebrew clang and openmp:
+```
+mkdir build
+cd build
+/opt/homebrew/opt/cmake/bin/cmake -D CMAKE_CXX_COMPILER="/opt/homebrew/opt/llvm/bin/clang++" -D CMAKE_PREFIX_PATH="/opt/homebrew/opt/libomp;$CMAKE_PREFIX_PATH" ..
+/opt/homebrew/opt/cmake/bin/cmake --build .
+```
+
+
+
+
 ## Build source code
 
 ### code_gen (Week 5/6)

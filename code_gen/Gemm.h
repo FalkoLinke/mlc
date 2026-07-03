@@ -1,8 +1,8 @@
-#ifndef MINI_JIT_GEMM_H
-#define MINI_JIT_GEMM_H
+#ifndef CODEGEN_MINI_JIT_GEMM_H
+#define CODEGEN_MINI_JIT_GEMM_H
 
 #include <cstdint>
-#include "../Kernel.h"
+#include "Kernel.h"
 
 namespace mini_jit {
   class Gemm;
@@ -51,6 +51,25 @@ class mini_jit::Gemm {
                       uint32_t trans_c,
                       dtype_t  dtype );
 
+    /**
+     * @brief Generate a kernel for matrix multiplication.
+     * @param m       Number of rows in A and C.
+     * @param n       Number of columns in B and C.
+     * @param k       Number of columns in A and rows in B.
+     * @param trans_a 0 if A is stored in column-major order, 1 if A is stored in row-major order.
+     * @param trans_b 0 if B is stored in column-major order, 1 if B is stored in row-major order.
+     * @param trans_c 0 if C is stored in column-major order, 1 if C is stored in row-major order.
+     * @param dtype   Data type of the matrices.
+     * @return error_t::success on success, another error_t value otherwise.
+     **/
+    error_t generate_v2( uint32_t m,
+                      uint32_t n,
+                      uint32_t k,
+                      uint32_t trans_a,
+                      uint32_t trans_b,
+                      uint32_t trans_c,
+                      dtype_t  dtype );
+
     /*
      * A kernel is a function that takes the following parameters:
      * - a:           Pointer to matrix A.
@@ -72,6 +91,8 @@ class mini_jit::Gemm {
      * @return pointer to the generated kernel.
      **/
     kernel_t get_kernel() const;
+
+    void write(const char* fp) const;
 };
 
 #endif

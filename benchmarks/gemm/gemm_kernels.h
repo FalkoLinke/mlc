@@ -1,5 +1,5 @@
-#ifndef GEMM_KERNELS_H
-#define GEMM_KERNELS_H
+#ifndef BENCHMARKS_GEMM_KERNELS_H
+#define BENCHMARKS_GEMM_KERNELS_H
 
 #include <cstdint>
 
