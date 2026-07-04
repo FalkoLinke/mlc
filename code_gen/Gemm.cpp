@@ -710,6 +710,13 @@ uint32_t max_stack_mem_size_for_tiling(mini_jit::Kernel& kernel, std::string con
   return result;
 }
 
+void append_words(mini_jit::Kernel& kernel, std::vector<uint32_t> const& words, std::string const& label) {
+  kernel.add_label(label);
+  for (uint32_t word : words) {
+    kernel.add_data(word);
+  }
+}
+
 
 void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, std::vector<mat_tiled_rect_t> const& tiling, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
   InstGen ig;
@@ -758,6 +765,16 @@ void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, st
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x19, InstGen::gpr_t::x20, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x29, InstGen::gpr_t::x30, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ret());
+
+  // data for transpose algorithms
+  append_words(kernel, {0, 16, 2, 18, 4, 20, 6, 22, 8, 24, 10, 26, 12, 28, 14, 30}, "_trn1_2x2");
+  append_words(kernel, {1, 17, 3, 19, 5, 21, 7, 23, 9, 25, 11, 27, 13, 29, 15, 31}, "_trn2_2x2");
+  append_words(kernel, {0, 1, 16, 17, 4, 5, 20, 21, 8, 9, 24, 25, 12, 13, 28, 29}, "_trn1_4x4");
+  append_words(kernel, {2, 3, 18, 19, 6, 7, 22, 23, 10, 11, 26, 27, 14, 15, 30, 31}, "_trn2_4x4");
+  append_words(kernel, {0, 1, 2, 3, 16, 17, 18, 19, 8, 9, 10, 11, 24, 25, 26, 27}, "_trn1_8x8");
+  append_words(kernel, {4, 5, 6, 7, 20, 21, 22, 23, 12, 13, 14, 15, 28, 29, 30, 31}, "_trn2_8x8");
+  append_words(kernel, {0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23}, "_trn1_16x16");
+  append_words(kernel, {8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 29, 30, 31}, "_trn2_16x16");
 }
 
 
