@@ -253,39 +253,6 @@ auto reg_w = [](uint32_t id) { return static_cast<gpr_t>(id); };
 
 
 
-
-
-
-/**
- * The signature of a function which generates a GEMM microkernel of a certain fixed size (m x n).
- * 
- * @param kernel: The kernel into which to generate the microkernel.
- * @param label_prefix: A label prefix for unique labels.
- * @param k: The k dimension.
- * @param trans_a: 1 if A is row-major, 0 if A is col-major.
- * @param trans_b: 1 if B is row-major, 0 if B is col-major.
- * @param trans_c: 1 if C is row-major, 0 if C is col-major.
- * @param dtype: The data type of the matrices.
- */
-typedef void(gemm_microkernel_generator)(mini_jit::Kernel&, std::string const&, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t);
-
-/**
- * The signature of a function which generates a predicated GEMM microkernel of a certain fixed size (m x n).
- * 
- * @param kernel: The kernel into which to generate the microkernel.
- * @param label_prefix: A label prefix for unique labels.
- * @param prm: Predicate register for the last 16 indices of the m dimension.
- * @param prn: Predicate register for the last 16 indices of the n dimension.
- * @param ms_count: The number of true indices in the m dimension. Must be less or equal to the fixed m size.
- * @param ns_count: The number of true indices in the n dimension. Must be less or equal to the fixed n size.
- * @param k: The k dimension.
- * @param trans_a: 1 if A is row-major, 0 if A is col-major.
- * @param trans_b: 1 if B is row-major, 0 if B is col-major.
- * @param trans_c: 1 if C is row-major, 0 if C is col-major.
- * @param dtype: The data type of the matrices.
- */
-typedef void(gemm_microkernel_predicated_generator)(mini_jit::Kernel&, std::string const&, pr_t prm, pr_t prn, uint32_t ms_count, uint32_t ns_count, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t);
-
 /**
  * A descriptor for a single GEMM microkernel generation function.
  * 
@@ -308,10 +275,6 @@ struct gemm_microkernel_desc_t {
   uint32_t m;
   /** The size of n intrinsic to the generated microkernel. */
   uint32_t n;
-  /** A pointer to an unpredicated generation function. Either this or `predicated_generator` is `NULL`. */
-  gemm_microkernel_generator* generator;
-  /** A pointer to an predicated generation function. Either this or `generator` is `NULL`. */
-  gemm_microkernel_predicated_generator* predicated_generator;
 };
 
 
@@ -411,10 +374,17 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
   kernel.add_instr(ig.sve_ld1w(zr_b0, p0, gpr_b, 0));
   kernel.add_instr(ig.sve_ld1w(zr_b1, p0, gpr_b, 1));
 
-  kernel.add_instr(fmopa(0, p0, p0, zr_b0, zr_a0));
-  kernel.add_instr(fmopa(1, p0, p0, zr_b1, zr_a0));
-  kernel.add_instr(fmopa(2, p0, p0, zr_b0, zr_a1));
-  kernel.add_instr(fmopa(3, p0, p0, zr_b1, zr_a1));
+  if (trans_c) {
+    kernel.add_instr(fmopa(0, p0, p0, zr_a0, zr_b0));
+    kernel.add_instr(fmopa(2, p0, p0, zr_a0, zr_b1));
+    kernel.add_instr(fmopa(1, p0, p0, zr_a1, zr_b0));
+    kernel.add_instr(fmopa(3, p0, p0, zr_a1, zr_b1));
+  } else {
+    kernel.add_instr(fmopa(0, p0, p0, zr_b0, zr_a0));
+    kernel.add_instr(fmopa(1, p0, p0, zr_b1, zr_a0));
+    kernel.add_instr(fmopa(2, p0, p0, zr_b0, zr_a1));
+    kernel.add_instr(fmopa(3, p0, p0, zr_b1, zr_a1));
+  }
 
   kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
   kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
@@ -464,7 +434,12 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   generate_predicate_init(kernel, prn, InstGen::sve_size_t::s, InstGen::gpr_t::x6, InstGen::gpr_t::x7, 0, ns_count);
 
   kernel.add_instr(ig.base_mov(InstGen::gpr_t::x6, gpr_c));
-  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
+  if (trans_c) {
+    generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prn, ms_count, 0);
+  } else {
+    generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
+  }
+  
   kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
 
   std::string const loop_start_label = label_prefix + "_loop01";
@@ -480,7 +455,11 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
 
   kernel.add_instr(ig.sve_ld1w(za, prm, gpr_a, 0));
   kernel.add_instr(ig.sve_ld1w(zb, prn, gpr_b, 0));
-  kernel.add_instr(fmopa(0, prn, prm, zb, za));
+  if (trans_c) {
+    kernel.add_instr(fmopa(0, prm, prn, za, zb));
+  } else {
+    kernel.add_instr(fmopa(0, prn, prm, zb, za));
+  }
 
   kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
   kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
@@ -489,7 +468,11 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   kernel.add_label(loop_end_label);
 
 
-  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
+  if (trans_c) {
+    generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, prn, ms_count, 0);
+  } else {
+    generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
+  }
 }
 
 
