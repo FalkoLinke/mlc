@@ -101,6 +101,10 @@ TEST_CASE("test 16x16 microkernel", "[test]") {
     verify_gemm(16, 16, 512, 16, 16, 16, 0, 1, 0);
     verify_gemm(16, 16, 1, 16, 16, 16, 0, 1, 1);
     verify_gemm(16, 16, 512, 16, 16, 16, 0, 1, 1);
+    verify_gemm(16, 8, 1, 16, 16, 16, 0, 1, 0);
+    verify_gemm(16, 8, 512, 16, 16, 16, 0, 1, 0);
+    verify_gemm(16, 8, 1, 16, 16, 16, 0, 1, 1);
+    verify_gemm(16, 8, 512, 16, 16, 16, 0, 1, 1);
 }
 
 TEST_CASE("test multiples of 32", "[test]") {
@@ -129,7 +133,6 @@ TEST_CASE("test multiples of 32", "[test]") {
 TEST_CASE("test nonmultiples of 32", "[test]") {
     uint32_t trans_a = 0;
     uint32_t trans_b = 1;
-    uint32_t trans_c = 0;
 
     for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
         for (uint32_t i = 0; i < 8; i++) {
