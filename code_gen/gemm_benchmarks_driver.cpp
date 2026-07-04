@@ -43,7 +43,9 @@ void benchmark_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32
 
 
     // perform measurement
-    uint64_t reps = 10000000;
+    uint64_t operations_per_rep = m * n * k * 2;
+    double target_total_gflops = 4000;
+    uint64_t reps = static_cast<uint64_t>((target_total_gflops / operations_per_rep) * 1e9);
     auto start = std::chrono::high_resolution_clock::now();
     for (uint64_t i = 0; i < reps; i++) {
         kernel(a.data(), b.data(), c.data(), lda, ldb, ldc);
@@ -52,7 +54,6 @@ void benchmark_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32
     std::chrono::duration<double> time_taken = end - start;
 
     // calculate and output results
-    uint64_t operations_per_rep = m * n * k * 2;
     double total_gflops_computed = (reps * 1e-9) * operations_per_rep;
     double gflops = total_gflops_computed / time_taken.count();
 
@@ -78,6 +79,7 @@ int main() {
     std::cout << "m\t\tn\t\tk\t\ttrans_a\t\ttrans_b\t\ttrans_c\t\tGFlops\t\tDuration [s]" << std::endl;
 
     benchmark_gemm(32, 32, 512, 0, 1, 0, mini_jit::Gemm::dtype_t::fp32);
+    benchmark_gemm(512, 512, 512, 0, 1, 0, mini_jit::Gemm::dtype_t::fp32);
 
     return 0;
 }
