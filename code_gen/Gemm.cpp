@@ -253,6 +253,8 @@ auto reg_w = [](uint32_t id) { return static_cast<gpr_t>(id); };
 
 
 
+typedef void(gemm_microkernel_generator_t)(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype);
+
 /**
  * A descriptor for a single GEMM microkernel generation function.
  * 
@@ -271,10 +273,13 @@ auto reg_w = [](uint32_t id) { return static_cast<gpr_t>(id); };
  * The ZA matrix may be overwritten.
  */
 struct gemm_microkernel_desc_t {
-  /** The size of m intrinsic to the generated microkernel. */
-  uint32_t m;
-  /** The size of n intrinsic to the generated microkernel. */
-  uint32_t n;
+  uint32_t mt;
+  uint32_t nt;
+
+  uint32_t stack_mem_size;
+  InstGen::gpr_t gpr_stack_mem;
+
+  gemm_microkernel_generator_t* generator;
 };
 
 
@@ -330,7 +335,7 @@ void generate_predicate_init(mini_jit::Kernel& kernel, InstGen::pr_t pr, InstGen
 
 
 
-void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
   InstGen ig;
 
   InstGen::pr_t p0 = InstGen::pr_t::p0;
@@ -411,12 +416,9 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
 
 
 
-
-
-
-void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t ms_count, uint32_t ns_count, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
-  ms_count = std::min(16u, ms_count);
-  ns_count = std::min(16u, ns_count);
+void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+  uint32_t ms_count = std::min(16u, tiled_rect.mt);
+  uint32_t ns_count = std::min(16u, tiled_rect.nt);
 
   InstGen ig;
 
@@ -495,17 +497,41 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
 
 
 
-
-
 void generate_gemm_microkernel(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
   if (tiled_rect.mt == 32 && tiled_rect.nt == 32) {
-    generate_gemm_microkernel_m32_n32(kernel, label_prefix, k, trans_a, trans_b, trans_c, dtype);
+    generate_gemm_microkernel_m32_n32(kernel, label_prefix, tiled_rect, k, trans_a, trans_b, trans_c, dtype);
     return;
   }
 
   if (tiled_rect.mt <= 16 && tiled_rect.nt <= 16) {
-    generate_gemm_microkernel_predicated_m16_n16(kernel, label_prefix, tiled_rect.mt, tiled_rect.nt, k, trans_a, trans_b, trans_c, dtype);
+    generate_gemm_microkernel_predicated_m16_n16(kernel, label_prefix, tiled_rect, k, trans_a, trans_b, trans_c, dtype);
     return;
+  }
+
+  throw mini_jit::Gemm::error_t::error;
+}
+
+gemm_microkernel_desc_t select_gemm_microkernel(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+  uint32_t dtype_size = 4;
+
+  if (tiled_rect.mt == 32 && tiled_rect.nt == 32) {
+    gemm_microkernel_desc_t result;
+    result.mt = 32;
+    result.nt = 32;
+    result.stack_mem_size = 0;
+    result.gpr_stack_mem = InstGen::gpr_t::x6;
+    result.generator = generate_gemm_microkernel_m32_n32;
+    return result;
+  }
+
+  if (tiled_rect.mt <= 16 && tiled_rect.nt <= 16) {
+    gemm_microkernel_desc_t result;
+    result.mt = tiled_rect.mt;
+    result.nt = tiled_rect.nt;
+    result.stack_mem_size = trans_a && trans_b ? 16 * 16 * dtype_size : 0;
+    result.gpr_stack_mem = InstGen::gpr_t::x6;
+    result.generator = generate_gemm_microkernel_predicated_m16_n16;
+    return result;
   }
 
   throw mini_jit::Gemm::error_t::error;
