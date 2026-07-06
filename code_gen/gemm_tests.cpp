@@ -122,22 +122,23 @@ TEST_CASE("test 16x16 microkernel trans_a=1", "[test]") {
 }
 
 TEST_CASE("test multiples of 32", "[test]") {
-    uint32_t trans_a = 0;
     uint32_t trans_b = 1;
 
-    for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
-        for (uint32_t i = 0; i < 5; i++) {
-            for (uint32_t j = 0; j < 5; j++) {
-                for (uint32_t u = 0; u < 5; u++) {
-                    uint32_t m = 32 * (i + 1);
-                    uint32_t n = 32 * (j + 1);
-                    uint32_t k = 32 * (u + 1);
+    for (uint32_t trans_a = 0; trans_a <= 1; trans_a++) {
+        for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
+            for (uint32_t i = 0; i < 5; i++) {
+                for (uint32_t j = 0; j < 5; j++) {
+                    for (uint32_t u = 0; u < 5; u++) {
+                        uint32_t m = 32 * (i + 1);
+                        uint32_t n = 32 * (j + 1);
+                        uint32_t k = 32 * (u + 1);
 
-                    uint32_t lda = trans_a ? k : m;
-                    uint32_t ldb = trans_b ? n : k;
-                    uint32_t ldc = trans_c ? n : m;
+                        uint32_t lda = trans_a ? k : m;
+                        uint32_t ldb = trans_b ? n : k;
+                        uint32_t ldc = trans_c ? n : m;
 
-                    verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c);
+                        verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c);
+                    }
                 }
             }
         }
@@ -148,19 +149,21 @@ TEST_CASE("test nonmultiples of 32", "[test]") {
     uint32_t trans_a = 0;
     uint32_t trans_b = 1;
 
-    for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
-        for (uint32_t i = 0; i < 8; i++) {
-            for (uint32_t j = 0; j < 8; j++) {
-                for (uint32_t u = 0; u < 4; u++) {
-                    uint32_t m = 8 * (i + 1);
-                    uint32_t n = 8 * (j + 1);
-                    uint32_t k = 8 * (u + 1);
+    for (uint32_t trans_a = 0; trans_a <= 1; trans_a++) {
+        for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
+            for (uint32_t i = 0; i < 8; i++) {
+                for (uint32_t j = 0; j < 8; j++) {
+                    for (uint32_t u = 0; u < 4; u++) {
+                        uint32_t m = 8 * (i + 1);
+                        uint32_t n = 8 * (j + 1);
+                        uint32_t k = 8 * (u + 1);
 
-                    uint32_t lda = trans_a ? k : m;
-                    uint32_t ldb = trans_b ? n : k;
-                    uint32_t ldc = trans_c ? n : m;
+                        uint32_t lda = trans_a ? k : m;
+                        uint32_t ldb = trans_b ? n : k;
+                        uint32_t ldc = trans_c ? n : m;
 
-                    verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c);
+                        verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c);
+                    }
                 }
             }
         }

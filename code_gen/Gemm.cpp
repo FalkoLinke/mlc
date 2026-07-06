@@ -172,6 +172,39 @@ std::vector<mat_tiled_rect_t> tile_matrix_v1(mat_rect_t root) {
   return result;
 }
 
+std::vector<mat_tiled_rect_t> tile_matrix_v2(mat_rect_t root) {
+  std::vector<mat_tiled_rect_t> result;
+  
+  mat_rect_t covered_area_16_16 = tiled_subrect(root, 16, 16);
+  if (!mat_rect_is_empty(covered_area_16_16)) {
+    result.push_back({.rect = covered_area_16_16, .mt = 16, .nt = 16});
+  }
+
+  std::vector<mat_rect_t> remaining_areas_16_16 = split_mat_rect(root, covered_area_16_16);
+  for (mat_rect_t area : remaining_areas_16_16) {
+    if (mat_rect_is_empty(area)) {
+      continue;
+    }
+
+    uint32_t mt = std::min(16u, area.mend - area.mbegin);
+    uint32_t nt = std::min(16u, area.nend - area.nbegin);
+    mat_rect_t covered_area_16_16_p = tiled_subrect(area, mt, nt);
+    if (!mat_rect_is_empty(covered_area_16_16_p)) {
+      result.push_back({.rect = covered_area_16_16_p, .mt = mt, .nt = nt});
+    }
+
+    std::vector<mat_rect_t> remaining_areas_16_16_p = split_mat_rect(area, covered_area_16_16_p);
+    for (mat_rect_t area : remaining_areas_16_16_p) {
+      if (mat_rect_is_empty(area)) {
+        continue;
+      }
+      result.push_back({.rect = area, .mt = area.mend - area.mbegin, .nt = area.nend - area.nbegin});
+    }
+  }
+
+  return result;
+}
+
 void print_tiling(std::vector<mat_tiled_rect_t> tiling) {
   for (mat_tiled_rect_t tiled_rect : tiling) {
     std::cout << "(" << tiled_rect.rect.mbegin << "-" << tiled_rect.rect.mend << ", " << tiled_rect.rect.nbegin << "-" << tiled_rect.rect.nend << ") (" << tiled_rect.mt << ", " << tiled_rect.nt << ")" << std::endl;
@@ -947,7 +980,7 @@ void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, st
 mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, dtype_t  dtype) {
   // compute tiling
   mat_rect_t root = {.mbegin = 0, .mend = m, .nbegin = 0, .nend = n};
-  std::vector<mat_tiled_rect_t> tiling = tile_matrix_v1(root);
+  std::vector<mat_tiled_rect_t> tiling = tile_matrix_v2(root);
 
   // generate kernel for tiling
   try {
