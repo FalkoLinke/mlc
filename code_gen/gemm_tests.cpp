@@ -107,6 +107,20 @@ TEST_CASE("test 16x16 microkernel", "[test]") {
     verify_gemm(16, 8, 512, 16, 16, 16, 0, 1, 1);
 }
 
+TEST_CASE("test 16x16 microkernel trans_a=1", "[test]") {
+    verify_gemm(16, 16, 1, 16, 16, 16, 1, 1, 0);
+    verify_gemm(16, 16, 8, 16, 16, 16, 1, 1, 0);
+    verify_gemm(16, 16, 16, 16, 16, 16, 1, 1, 0);
+    verify_gemm(16, 16, 17, 17, 16, 16, 1, 1, 0);
+    verify_gemm(16, 16, 512, 512, 16, 16, 1, 1, 0);
+    verify_gemm(16, 16, 1, 16, 16, 16, 1, 1, 1);
+    verify_gemm(16, 16, 512, 512, 16, 16, 1, 1, 1);
+    verify_gemm(16, 8, 1, 16, 16, 16, 1, 1, 0);
+    verify_gemm(16, 8, 512, 512, 16, 16, 1, 1, 0);
+    verify_gemm(16, 8, 1, 16, 16, 16, 1, 1, 1);
+    verify_gemm(16, 8, 512, 512, 16, 16, 1, 1, 1);
+}
+
 TEST_CASE("test multiples of 32", "[test]") {
     uint32_t trans_a = 0;
     uint32_t trans_b = 1;

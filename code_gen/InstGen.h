@@ -621,6 +621,14 @@ class mini_jit::InstGen {
     static uint32_t sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, gpr_t rm);
 
     /**
+     * @brief Generate an SVE `MOV (vector, unpredicated)` instruction.
+     * ```s
+     * mov zd.d, zn.d
+     * ```
+     */
+    static uint32_t sve_mov(sve_zr_t zd, sve_zr_t zn);
+
+    /**
      * @brief Generate an SVE `PFALSE` instruction.
      * ```s
      * pfalse pd.b
@@ -651,6 +659,38 @@ class mini_jit::InstGen {
      * ```
      */
     static uint32_t sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t rn, gpr_t rm);
+
+    /**
+     * @brief Generate an SVE `TRN1 (vectors)` instruction.
+     * ```s
+     * trn1 zd.sz, zn.sz, zm.sz
+     * ```
+     */
+    static uint32_t sve_trn1(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz);
+
+    /**
+     * @brief Generate an SVE `TRN2 (vectors)` instruction.
+     * ```s
+     * trn1 zd.sz, zn.sz, zm.sz
+     * ```
+     */
+    static uint32_t sve_trn2(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz); 
+
+    /**
+     * @brief Generate an SVE `UZP1 (vectors)` instruction.
+     * ```s
+     * uzp1 zd.sz, zn.sz, zm.sz
+     * ```
+     */
+    static uint32_t sve_uzp1(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz);
+
+    /**
+     * @brief Generate an SVE `UZP2 (vectors)` instruction.
+     * ```s
+     * uzp2 zd.sz, zn.sz, zm.sz
+     * ```
+     */
+    static uint32_t sve_uzp2(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz);
 
     /**
      * @brief Generate an SVE `WHILELT (predicate)` instruction.
@@ -687,12 +727,28 @@ class mini_jit::InstGen {
     static uint32_t sme_st1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t rs, uint32_t offs2, pr_t pg3, gpr_t rn, gpr_t rm);
 
     /**
+     * @brief Generate an SME `UZP (two registers)` instruction.
+     * ```s
+     * uzp { <zd>.sz - <zd + 1>.sz }, zn.sz, zm.sz
+     * ```
+     */
+    static uint32_t sme_uzp(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz);
+
+    /**
      * @brief Generate an SME `ZERO (tiles)` instruction.
      * ```s
      * zero mask8
      * ```
      */
     static uint32_t sme_zero( uint32_t mask8 );
+
+    /**
+     * @brief Generate an SME `ZIP (four registers)` instruction.
+     * ```s
+     * zip {<zd>.sz - <zd + 3>.sz}, {<zn.sz> - <zn + 3>.sz}
+     * ```
+     */
+    static uint32_t sme_zip( sve_zr_t zd, sve_zr_t zn, sve_size_t sz);
 
     /**
      * @brief Converts the given instruction to a hex string.

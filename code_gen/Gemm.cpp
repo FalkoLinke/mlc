@@ -321,7 +321,77 @@ void generate_predicate_init(mini_jit::Kernel& kernel, InstGen::pr_t pr, InstGen
   kernel.add_instr(ig.sve_whilelt(pr, sz, r1, r2));
 }
 
+void generate_matrix_load_vec_m16_n16(mini_jit::Kernel& kernel, uint32_t transpose, InstGen::gpr_t ptr_reg, InstGen::gpr_t ld_reg, InstGen::pr_t pred_reg, uint32_t vecs_count) {
+  InstGen ig;
 
+  vecs_count = std::min(16u, vecs_count);
+
+  // load
+  for (uint32_t i = 0; i < vecs_count; i++) {
+    InstGen::sve_zr_t zr = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+    kernel.add_instr(ig.sve_ld1w(zr, pred_reg, ptr_reg, 0));
+    kernel.add_instr(ig.base_add(ptr_reg, ptr_reg, ld_reg, InstGen::shift_kind_t::lsl, 2));
+  }
+
+  if (!transpose) {
+    return;
+  }
+
+  // transpose
+  kernel.add_instr(ig.sme_zip(InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z0, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sme_zip(InstGen::sve_zr_t::z4, InstGen::sve_zr_t::z4, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sme_zip(InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z8, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sme_zip(InstGen::sve_zr_t::z12, InstGen::sve_zr_t::z12, InstGen::sve_size_t::d));
+
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z16, InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z4, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z18, InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z12, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z20, InstGen::sve_zr_t::z1, InstGen::sve_zr_t::z5, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z22, InstGen::sve_zr_t::z9, InstGen::sve_zr_t::z13, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z24, InstGen::sve_zr_t::z2, InstGen::sve_zr_t::z6, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z26, InstGen::sve_zr_t::z10, InstGen::sve_zr_t::z14, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z28, InstGen::sve_zr_t::z3, InstGen::sve_zr_t::z7, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z30, InstGen::sve_zr_t::z11, InstGen::sve_zr_t::z15, InstGen::sve_size_t::s));
+
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z16, InstGen::sve_zr_t::z18, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z1, InstGen::sve_zr_t::z16, InstGen::sve_zr_t::z18, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z2, InstGen::sve_zr_t::z17, InstGen::sve_zr_t::z19, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z3, InstGen::sve_zr_t::z17, InstGen::sve_zr_t::z19, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z4, InstGen::sve_zr_t::z20, InstGen::sve_zr_t::z22, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z5, InstGen::sve_zr_t::z20, InstGen::sve_zr_t::z22, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z6, InstGen::sve_zr_t::z21, InstGen::sve_zr_t::z23, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z7, InstGen::sve_zr_t::z21, InstGen::sve_zr_t::z23, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z24, InstGen::sve_zr_t::z26, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z9, InstGen::sve_zr_t::z24, InstGen::sve_zr_t::z26, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z10, InstGen::sve_zr_t::z25, InstGen::sve_zr_t::z27, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z11, InstGen::sve_zr_t::z25, InstGen::sve_zr_t::z27, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z12, InstGen::sve_zr_t::z28, InstGen::sve_zr_t::z30, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z13, InstGen::sve_zr_t::z28, InstGen::sve_zr_t::z30, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z14, InstGen::sve_zr_t::z29, InstGen::sve_zr_t::z31, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z15, InstGen::sve_zr_t::z29, InstGen::sve_zr_t::z31, InstGen::sve_size_t::d));
+
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z16, InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z1, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z18, InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z1, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z17, InstGen::sve_zr_t::z2, InstGen::sve_zr_t::z3, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z19, InstGen::sve_zr_t::z2, InstGen::sve_zr_t::z3, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z20, InstGen::sve_zr_t::z4, InstGen::sve_zr_t::z5, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z22, InstGen::sve_zr_t::z4, InstGen::sve_zr_t::z5, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z21, InstGen::sve_zr_t::z6, InstGen::sve_zr_t::z7, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z23, InstGen::sve_zr_t::z6, InstGen::sve_zr_t::z7, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z24, InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z9, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z26, InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z9, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z25, InstGen::sve_zr_t::z10, InstGen::sve_zr_t::z11, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z27, InstGen::sve_zr_t::z10, InstGen::sve_zr_t::z11, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z28, InstGen::sve_zr_t::z12, InstGen::sve_zr_t::z13, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z30, InstGen::sve_zr_t::z12, InstGen::sve_zr_t::z13, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z29, InstGen::sve_zr_t::z14, InstGen::sve_zr_t::z15, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z31, InstGen::sve_zr_t::z14, InstGen::sve_zr_t::z15, InstGen::sve_size_t::d));
+
+  for (uint32_t i = 0; i < 16; i++) {
+    InstGen::sve_zr_t zd = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+    InstGen::sve_zr_t zn = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
+    kernel.add_instr(ig.sve_mov(zd, zn));
+  }
+}
 
 
 
@@ -346,7 +416,6 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
   InstGen::gpr_t gpr_lda = InstGen::gpr_t::x3;
   InstGen::gpr_t gpr_ldb = InstGen::gpr_t::x4;
   InstGen::gpr_t gpr_ldc =  InstGen::gpr_t::x5;
-
 
   kernel.add_instr(ig.ssve_ptrue(p0, InstGen::sve_size_t::s));
 
@@ -420,6 +489,8 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   uint32_t ms_count = std::min(16u, tiled_rect.mt);
   uint32_t ns_count = std::min(16u, tiled_rect.nt);
 
+  uint32_t dtype_size = 4;
+
   InstGen ig;
 
   InstGen::gpr_t gpr_a = InstGen::gpr_t::x0;
@@ -429,9 +500,12 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   InstGen::gpr_t gpr_ldb = InstGen::gpr_t::x4;
   InstGen::gpr_t gpr_ldc = InstGen::gpr_t::x5;
 
+  InstGen::pr_t p0 = InstGen::pr_t::p0;
   InstGen::pr_t prm = InstGen::pr_t::p1;
   InstGen::pr_t prn = InstGen::pr_t::p2;
+  InstGen::pr_t prk = InstGen::pr_t::p3;
 
+  kernel.add_instr(ig.ssve_ptrue(p0, InstGen::sve_size_t::s));
   generate_predicate_init(kernel, prm, InstGen::sve_size_t::s, InstGen::gpr_t::x6, InstGen::gpr_t::x7, 0, ms_count);
   generate_predicate_init(kernel, prn, InstGen::sve_size_t::s, InstGen::gpr_t::x6, InstGen::gpr_t::x7, 0, ns_count);
 
@@ -441,33 +515,117 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   } else {
     generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
   }
-  
   kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
 
-  std::string const loop_start_label = label_prefix + "_loop01";
-  std::string const loop_end_label = label_prefix + "_end01";
-  InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
 
-  InstGen::sve_zr_t za = InstGen::sve_zr_t::z0;
-  InstGen::sve_zr_t zb = InstGen::sve_zr_t::z1;
+  if (!trans_a && trans_b) {
+    std::string const loop_start_label = label_prefix + "_loop01";
+    std::string const loop_end_label = label_prefix + "_end01";
+    InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
 
-  kernel.add_instr(ig.base_movz(loop_reg, k));
-  kernel.add_label(loop_start_label);
-  kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
+    InstGen::sve_zr_t za = InstGen::sve_zr_t::z0;
+    InstGen::sve_zr_t zb = InstGen::sve_zr_t::z1;
 
-  kernel.add_instr(ig.sve_ld1w(za, prm, gpr_a, 0));
-  kernel.add_instr(ig.sve_ld1w(zb, prn, gpr_b, 0));
-  if (trans_c) {
-    kernel.add_instr(fmopa(0, prm, prn, za, zb));
+    kernel.add_instr(ig.base_movz(loop_reg, k));
+    kernel.add_label(loop_start_label);
+    kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
+
+    kernel.add_instr(ig.sve_ld1w(za, prm, gpr_a, 0));
+    kernel.add_instr(ig.sve_ld1w(zb, prn, gpr_b, 0));
+    if (trans_c) {
+      kernel.add_instr(fmopa(0, prm, prn, za, zb));
+    } else {
+      kernel.add_instr(fmopa(0, prn, prm, zb, za));
+    }
+
+    kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
+    kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
+    kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
+    kernel.add_labeled_instr(ig.base_b(loop_start_label));
+    kernel.add_label(loop_end_label);
+
+
   } else {
-    kernel.add_instr(fmopa(0, prn, prm, zb, za));
+    uint32_t kloop_iters_count = k / 16;
+    uint32_t kloop_remainder = k % 16;
+
+    std::string const loop_start_label = label_prefix + "_loop01";
+    std::string const loop_end_label = label_prefix + "_end01";
+    InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
+    InstGen::gpr_t gpr_abckp = InstGen::gpr_t::x10;
+    InstGen::gpr_t gpr_bbckp = InstGen::gpr_t::x11;
+    InstGen::gpr_t gpr_sa = InstGen::gpr_t::x12;
+    InstGen::gpr_t gpr_sb = InstGen::gpr_t::x13;
+
+    kernel.add_instr(ig.base_mov(gpr_abckp, gpr_a));
+    kernel.add_instr(ig.base_mov(gpr_bbckp, gpr_b));
+    if (trans_a) {
+      kernel.add_instr(ig.base_movz(gpr_sa, 1));
+    } else {
+      kernel.add_instr(ig.base_mov(gpr_sa, gpr_lda));
+    }
+    if (trans_b) {
+      kernel.add_instr(ig.base_mov(gpr_sb, gpr_ldb));
+    } else {
+      kernel.add_instr(ig.base_movz(gpr_sb, 1));
+    }
+
+    if (kloop_iters_count >= 1) {
+      kernel.add_instr(ig.base_movz(loop_reg, kloop_iters_count));
+      kernel.add_label(loop_start_label);
+      kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
+
+      kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
+      kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
+      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? p0 : prm, trans_a ? ms_count : 16);
+      for (uint32_t i = 0; i < 16; i++) {
+        InstGen::sve_zr_t zd = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
+        InstGen::sve_zr_t zn = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+        kernel.add_instr(ig.sve_mov(zd, zn));
+      }
+      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? p0 : prn, !trans_b ? ns_count : 16);
+
+      for (uint32_t i = 0; i < 16; i++) {
+        InstGen::sve_zr_t za = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
+        InstGen::sve_zr_t zb = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+        if (trans_c) {
+          kernel.add_instr(fmopa(0, prm, prn, za, zb));
+        } else {
+          kernel.add_instr(fmopa(0, prn, prm, zb, za));
+        }
+      }
+
+      kernel.add_instr(ig.base_add(gpr_abckp, gpr_abckp, gpr_sa, InstGen::shift_kind_t::lsl, 6));
+      kernel.add_instr(ig.base_add(gpr_bbckp, gpr_bbckp, gpr_sb, InstGen::shift_kind_t::lsl, 6));
+      kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
+      kernel.add_labeled_instr(ig.base_b(loop_start_label));
+      kernel.add_label(loop_end_label);
+    }
+
+    if (kloop_remainder != 0) {
+      kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
+      kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
+      generate_predicate_init(kernel, prk, InstGen::sve_size_t::s, InstGen::gpr_t::x6, InstGen::gpr_t::x7, 0, kloop_remainder);
+      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? prk : prm, trans_a ? ms_count : kloop_remainder);
+      for (uint32_t i = 0; i < 16; i++) {
+        InstGen::sve_zr_t zd = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
+        InstGen::sve_zr_t zn = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+        kernel.add_instr(ig.sve_mov(zd, zn));
+      }
+      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? prk : prn, !trans_b ? ns_count : kloop_remainder);
+
+      for (uint32_t i = 0; i < kloop_remainder; i++) {
+        InstGen::sve_zr_t za = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
+        InstGen::sve_zr_t zb = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+        if (trans_c) {
+          kernel.add_instr(fmopa(0, prm, prn, za, zb));
+        } else {
+          kernel.add_instr(fmopa(0, prn, prm, zb, za));
+        }
+      }
+    }
   }
 
-  kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
-  kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
-  kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
-  kernel.add_labeled_instr(ig.base_b(loop_start_label));
-  kernel.add_label(loop_end_label);
 
 
   if (trans_c) {
