@@ -146,7 +146,6 @@ TEST_CASE("test multiples of 32", "[test]") {
 }
 
 TEST_CASE("test nonmultiples of 32", "[test]") {
-    uint32_t trans_a = 0;
     uint32_t trans_b = 1;
 
     for (uint32_t trans_a = 0; trans_a <= 1; trans_a++) {
