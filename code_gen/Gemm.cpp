@@ -426,8 +426,24 @@ void generate_matrix_load_vec_m16_n16(mini_jit::Kernel& kernel, uint32_t transpo
   }
 }
 
+void generate_matrix_temp_store(mini_jit::Kernel& kernel, InstGen::gpr_t gpr_memory_ptr, InstGen::gpr_t gpr_mat_ptr, InstGen::sve_zr_t zn) {
+  InstGen ig;
 
+  kernel.add_instr(ig.base_add(gpr_mat_ptr, gpr_memory_ptr, 8 * 16 * 4));
+  for (int32_t i = 0; i < 16; i++) {
+    InstGen::sve_zr_t zr = static_cast<InstGen::sve_zr_t>((zn + i) % 32);
+    kernel.add_instr(ig.sve_st1w(zr, InstGen::sve_size_t::s, InstGen::pr_t::p0, gpr_mat_ptr, i - 8));
+  }
+}
 
+void generate_matrix_temp_load(mini_jit::Kernel& kernel, InstGen::gpr_t gpr_mat_ptr, InstGen::sve_zr_t zn) {
+  InstGen ig;
+
+  for (int32_t i = 0; i < 16; i++) {
+    InstGen::sve_zr_t zr = static_cast<InstGen::sve_zr_t>((zn + i) % 32);
+    kernel.add_instr(ig.sve_ld1w(zr, InstGen::pr_t::p0, gpr_mat_ptr, i - 8));
+  }
+}
 
 
 
@@ -532,6 +548,8 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   InstGen::gpr_t gpr_lda = InstGen::gpr_t::x3;
   InstGen::gpr_t gpr_ldb = InstGen::gpr_t::x4;
   InstGen::gpr_t gpr_ldc = InstGen::gpr_t::x5;
+  InstGen::gpr_t gpr_mem = InstGen::gpr_t::x6;
+  InstGen::gpr_t gpr_mat = InstGen::gpr_t::x14;
 
   InstGen::pr_t p0 = InstGen::pr_t::p0;
   InstGen::pr_t prm = InstGen::pr_t::p1;
@@ -539,22 +557,22 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   InstGen::pr_t prk = InstGen::pr_t::p3;
 
   kernel.add_instr(ig.ssve_ptrue(p0, InstGen::sve_size_t::s));
-  generate_predicate_init(kernel, prm, InstGen::sve_size_t::s, InstGen::gpr_t::x6, InstGen::gpr_t::x7, 0, ms_count);
-  generate_predicate_init(kernel, prn, InstGen::sve_size_t::s, InstGen::gpr_t::x6, InstGen::gpr_t::x7, 0, ns_count);
+  generate_predicate_init(kernel, prm, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, ms_count);
+  generate_predicate_init(kernel, prn, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, ns_count);
 
-  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x6, gpr_c));
+  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x7, gpr_c));
   if (trans_c) {
     generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prn, ms_count, 0);
   } else {
     generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
   }
-  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x7));
 
 
   if (!trans_a && trans_b) {
     std::string const loop_start_label = label_prefix + "_loop01";
     std::string const loop_end_label = label_prefix + "_end01";
-    InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
+    InstGen::gpr_t loop_reg = InstGen::gpr_t::x7;
 
     InstGen::sve_zr_t za = InstGen::sve_zr_t::z0;
     InstGen::sve_zr_t zb = InstGen::sve_zr_t::z1;
@@ -584,7 +602,7 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
 
     std::string const loop_start_label = label_prefix + "_loop01";
     std::string const loop_end_label = label_prefix + "_end01";
-    InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
+    InstGen::gpr_t loop_reg = InstGen::gpr_t::x7;
     InstGen::gpr_t gpr_abckp = InstGen::gpr_t::x10;
     InstGen::gpr_t gpr_bbckp = InstGen::gpr_t::x11;
     InstGen::gpr_t gpr_sa = InstGen::gpr_t::x12;
@@ -610,14 +628,12 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
 
       kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
       kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
-      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? p0 : prm, trans_a ? ms_count : 16);
-      for (uint32_t i = 0; i < 16; i++) {
-        InstGen::sve_zr_t zd = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
-        InstGen::sve_zr_t zn = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
-        kernel.add_instr(ig.sve_mov(zd, zn));
-      }
-      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? p0 : prn, !trans_b ? ns_count : 16);
 
+      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? p0 : prm, trans_a ? ms_count : 16);
+      generate_matrix_temp_store(kernel, gpr_mem, gpr_mat, InstGen::sve_zr_t::z0);
+      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? p0 : prn, !trans_b ? ns_count : 16);
+      generate_matrix_temp_load(kernel, gpr_mat, InstGen::sve_zr_t::z16);
+      
       for (uint32_t i = 0; i < 16; i++) {
         InstGen::sve_zr_t za = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
         InstGen::sve_zr_t zb = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
@@ -638,14 +654,11 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
     if (kloop_remainder != 0) {
       kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
       kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
-      generate_predicate_init(kernel, prk, InstGen::sve_size_t::s, InstGen::gpr_t::x6, InstGen::gpr_t::x7, 0, kloop_remainder);
+      generate_predicate_init(kernel, prk, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, kloop_remainder);
       generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? prk : prm, trans_a ? ms_count : kloop_remainder);
-      for (uint32_t i = 0; i < 16; i++) {
-        InstGen::sve_zr_t zd = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
-        InstGen::sve_zr_t zn = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
-        kernel.add_instr(ig.sve_mov(zd, zn));
-      }
+      generate_matrix_temp_store(kernel, gpr_mem, gpr_mat, InstGen::sve_zr_t::z0);
       generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? prk : prn, !trans_b ? ns_count : kloop_remainder);
+      generate_matrix_temp_load(kernel, gpr_mat, InstGen::sve_zr_t::z16);
 
       for (uint32_t i = 0; i < kloop_remainder; i++) {
         InstGen::sve_zr_t za = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
@@ -704,7 +717,7 @@ gemm_microkernel_desc_t select_gemm_microkernel(mini_jit::Kernel& kernel, std::s
     gemm_microkernel_desc_t result;
     result.mt = tiled_rect.mt;
     result.nt = tiled_rect.nt;
-    result.stack_mem_size = trans_a && !trans_b ? 16 * 16 * dtype_size : 0;
+    result.stack_mem_size = 16 * 16 * dtype_size;
     result.generator = generate_gemm_microkernel_predicated_m16_n16;
     return result;
   }
