@@ -172,6 +172,39 @@ std::vector<mat_tiled_rect_t> tile_matrix_v1(mat_rect_t root) {
   return result;
 }
 
+std::vector<mat_tiled_rect_t> tile_matrix_v2(mat_rect_t root) {
+  std::vector<mat_tiled_rect_t> result;
+  
+  mat_rect_t covered_area_16_16 = tiled_subrect(root, 16, 16);
+  if (!mat_rect_is_empty(covered_area_16_16)) {
+    result.push_back({.rect = covered_area_16_16, .mt = 16, .nt = 16});
+  }
+
+  std::vector<mat_rect_t> remaining_areas_16_16 = split_mat_rect(root, covered_area_16_16);
+  for (mat_rect_t area : remaining_areas_16_16) {
+    if (mat_rect_is_empty(area)) {
+      continue;
+    }
+
+    uint32_t mt = std::min(16u, area.mend - area.mbegin);
+    uint32_t nt = std::min(16u, area.nend - area.nbegin);
+    mat_rect_t covered_area_16_16_p = tiled_subrect(area, mt, nt);
+    if (!mat_rect_is_empty(covered_area_16_16_p)) {
+      result.push_back({.rect = covered_area_16_16_p, .mt = mt, .nt = nt});
+    }
+
+    std::vector<mat_rect_t> remaining_areas_16_16_p = split_mat_rect(area, covered_area_16_16_p);
+    for (mat_rect_t area : remaining_areas_16_16_p) {
+      if (mat_rect_is_empty(area)) {
+        continue;
+      }
+      result.push_back({.rect = area, .mt = area.mend - area.mbegin, .nt = area.nend - area.nbegin});
+    }
+  }
+
+  return result;
+}
+
 void print_tiling(std::vector<mat_tiled_rect_t> tiling) {
   for (mat_tiled_rect_t tiled_rect : tiling) {
     std::cout << "(" << tiled_rect.rect.mbegin << "-" << tiled_rect.rect.mend << ", " << tiled_rect.rect.nbegin << "-" << tiled_rect.rect.nend << ") (" << tiled_rect.mt << ", " << tiled_rect.nt << ")" << std::endl;
@@ -253,38 +286,7 @@ auto reg_w = [](uint32_t id) { return static_cast<gpr_t>(id); };
 
 
 
-
-
-
-/**
- * The signature of a function which generates a GEMM microkernel of a certain fixed size (m x n).
- * 
- * @param kernel: The kernel into which to generate the microkernel.
- * @param label_prefix: A label prefix for unique labels.
- * @param k: The k dimension.
- * @param trans_a: 1 if A is row-major, 0 if A is col-major.
- * @param trans_b: 1 if B is row-major, 0 if B is col-major.
- * @param trans_c: 1 if C is row-major, 0 if C is col-major.
- * @param dtype: The data type of the matrices.
- */
-typedef void(gemm_microkernel_generator)(mini_jit::Kernel&, std::string const&, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t);
-
-/**
- * The signature of a function which generates a predicated GEMM microkernel of a certain fixed size (m x n).
- * 
- * @param kernel: The kernel into which to generate the microkernel.
- * @param label_prefix: A label prefix for unique labels.
- * @param prm: Predicate register for the last 16 indices of the m dimension.
- * @param prn: Predicate register for the last 16 indices of the n dimension.
- * @param ms_count: The number of true indices in the m dimension. Must be less or equal to the fixed m size.
- * @param ns_count: The number of true indices in the n dimension. Must be less or equal to the fixed n size.
- * @param k: The k dimension.
- * @param trans_a: 1 if A is row-major, 0 if A is col-major.
- * @param trans_b: 1 if B is row-major, 0 if B is col-major.
- * @param trans_c: 1 if C is row-major, 0 if C is col-major.
- * @param dtype: The data type of the matrices.
- */
-typedef void(gemm_microkernel_predicated_generator)(mini_jit::Kernel&, std::string const&, pr_t prm, pr_t prn, uint32_t ms_count, uint32_t ns_count, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t);
+typedef void(gemm_microkernel_generator_t)(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype);
 
 /**
  * A descriptor for a single GEMM microkernel generation function.
@@ -296,22 +298,21 @@ typedef void(gemm_microkernel_predicated_generator)(mini_jit::Kernel&, std::stri
  * - x3: Leading dimension of A.
  * - x4: Leading dimension of B.
  * - x5: Leading dimension of C.
+ * - x6: Pointer to stack memory.
  * 
  * x0 - x7 and x9 - x14 may be overwritten by the microkernel.
  * x15, x19 - x30 are retained.
  * All of the scalable vector registers z0 - z31 may be overwritten.
- * All of the scalable predicate registers are retained. p0 is expected to have all elements set to true.
+ * All of the scalable predicate registers may be overwritten.
  * The ZA matrix may be overwritten.
  */
 struct gemm_microkernel_desc_t {
-  /** The size of m intrinsic to the generated microkernel. */
-  uint32_t m;
-  /** The size of n intrinsic to the generated microkernel. */
-  uint32_t n;
-  /** A pointer to an unpredicated generation function. Either this or `predicated_generator` is `NULL`. */
-  gemm_microkernel_generator* generator;
-  /** A pointer to an predicated generation function. Either this or `generator` is `NULL`. */
-  gemm_microkernel_predicated_generator* predicated_generator;
+  uint32_t mt;
+  uint32_t nt;
+
+  uint32_t stack_mem_size;
+
+  gemm_microkernel_generator_t* generator;
 };
 
 
@@ -353,6 +354,96 @@ void generate_predicate_init(mini_jit::Kernel& kernel, InstGen::pr_t pr, InstGen
   kernel.add_instr(ig.sve_whilelt(pr, sz, r1, r2));
 }
 
+void generate_matrix_load_vec_m16_n16(mini_jit::Kernel& kernel, uint32_t transpose, InstGen::gpr_t ptr_reg, InstGen::gpr_t ld_reg, InstGen::pr_t pred_reg, uint32_t vecs_count) {
+  InstGen ig;
+
+  vecs_count = std::min(16u, vecs_count);
+
+  // load
+  for (uint32_t i = 0; i < vecs_count; i++) {
+    InstGen::sve_zr_t zr = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+    kernel.add_instr(ig.sve_ld1w(zr, pred_reg, ptr_reg, 0));
+    kernel.add_instr(ig.base_add(ptr_reg, ptr_reg, ld_reg, InstGen::shift_kind_t::lsl, 2));
+  }
+
+  if (!transpose) {
+    return;
+  }
+
+  // transpose
+  kernel.add_instr(ig.sme_zip(InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z0, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sme_zip(InstGen::sve_zr_t::z4, InstGen::sve_zr_t::z4, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sme_zip(InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z8, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sme_zip(InstGen::sve_zr_t::z12, InstGen::sve_zr_t::z12, InstGen::sve_size_t::d));
+
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z16, InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z4, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z18, InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z12, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z20, InstGen::sve_zr_t::z1, InstGen::sve_zr_t::z5, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z22, InstGen::sve_zr_t::z9, InstGen::sve_zr_t::z13, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z24, InstGen::sve_zr_t::z2, InstGen::sve_zr_t::z6, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z26, InstGen::sve_zr_t::z10, InstGen::sve_zr_t::z14, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z28, InstGen::sve_zr_t::z3, InstGen::sve_zr_t::z7, InstGen::sve_size_t::s));
+  kernel.add_instr(ig.sme_uzp(InstGen::sve_zr_t::z30, InstGen::sve_zr_t::z11, InstGen::sve_zr_t::z15, InstGen::sve_size_t::s));
+
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z16, InstGen::sve_zr_t::z18, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z1, InstGen::sve_zr_t::z16, InstGen::sve_zr_t::z18, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z2, InstGen::sve_zr_t::z17, InstGen::sve_zr_t::z19, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z3, InstGen::sve_zr_t::z17, InstGen::sve_zr_t::z19, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z4, InstGen::sve_zr_t::z20, InstGen::sve_zr_t::z22, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z5, InstGen::sve_zr_t::z20, InstGen::sve_zr_t::z22, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z6, InstGen::sve_zr_t::z21, InstGen::sve_zr_t::z23, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z7, InstGen::sve_zr_t::z21, InstGen::sve_zr_t::z23, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z24, InstGen::sve_zr_t::z26, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z9, InstGen::sve_zr_t::z24, InstGen::sve_zr_t::z26, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z10, InstGen::sve_zr_t::z25, InstGen::sve_zr_t::z27, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z11, InstGen::sve_zr_t::z25, InstGen::sve_zr_t::z27, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z12, InstGen::sve_zr_t::z28, InstGen::sve_zr_t::z30, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z13, InstGen::sve_zr_t::z28, InstGen::sve_zr_t::z30, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp1(InstGen::sve_zr_t::z14, InstGen::sve_zr_t::z29, InstGen::sve_zr_t::z31, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_uzp2(InstGen::sve_zr_t::z15, InstGen::sve_zr_t::z29, InstGen::sve_zr_t::z31, InstGen::sve_size_t::d));
+
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z16, InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z1, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z18, InstGen::sve_zr_t::z0, InstGen::sve_zr_t::z1, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z17, InstGen::sve_zr_t::z2, InstGen::sve_zr_t::z3, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z19, InstGen::sve_zr_t::z2, InstGen::sve_zr_t::z3, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z20, InstGen::sve_zr_t::z4, InstGen::sve_zr_t::z5, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z22, InstGen::sve_zr_t::z4, InstGen::sve_zr_t::z5, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z21, InstGen::sve_zr_t::z6, InstGen::sve_zr_t::z7, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z23, InstGen::sve_zr_t::z6, InstGen::sve_zr_t::z7, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z24, InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z9, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z26, InstGen::sve_zr_t::z8, InstGen::sve_zr_t::z9, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z25, InstGen::sve_zr_t::z10, InstGen::sve_zr_t::z11, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z27, InstGen::sve_zr_t::z10, InstGen::sve_zr_t::z11, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z28, InstGen::sve_zr_t::z12, InstGen::sve_zr_t::z13, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z30, InstGen::sve_zr_t::z12, InstGen::sve_zr_t::z13, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn1(InstGen::sve_zr_t::z29, InstGen::sve_zr_t::z14, InstGen::sve_zr_t::z15, InstGen::sve_size_t::d));
+  kernel.add_instr(ig.sve_trn2(InstGen::sve_zr_t::z31, InstGen::sve_zr_t::z14, InstGen::sve_zr_t::z15, InstGen::sve_size_t::d));
+
+  for (uint32_t i = 0; i < 16; i++) {
+    InstGen::sve_zr_t zd = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+    InstGen::sve_zr_t zn = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
+    kernel.add_instr(ig.sve_mov(zd, zn));
+  }
+}
+
+void generate_matrix_temp_store(mini_jit::Kernel& kernel, InstGen::gpr_t gpr_memory_ptr, InstGen::gpr_t gpr_mat_ptr, InstGen::sve_zr_t zn) {
+  InstGen ig;
+
+  kernel.add_instr(ig.base_add(gpr_mat_ptr, gpr_memory_ptr, 8 * 16 * 4));
+  for (int32_t i = 0; i < 16; i++) {
+    InstGen::sve_zr_t zr = static_cast<InstGen::sve_zr_t>((zn + i) % 32);
+    kernel.add_instr(ig.sve_st1w(zr, InstGen::sve_size_t::s, InstGen::pr_t::p0, gpr_mat_ptr, i - 8));
+  }
+}
+
+void generate_matrix_temp_load(mini_jit::Kernel& kernel, InstGen::gpr_t gpr_mat_ptr, InstGen::sve_zr_t zn) {
+  InstGen ig;
+
+  for (int32_t i = 0; i < 16; i++) {
+    InstGen::sve_zr_t zr = static_cast<InstGen::sve_zr_t>((zn + i) % 32);
+    kernel.add_instr(ig.sve_ld1w(zr, InstGen::pr_t::p0, gpr_mat_ptr, i - 8));
+  }
+}
 
 
 
@@ -363,11 +454,7 @@ void generate_predicate_init(mini_jit::Kernel& kernel, InstGen::pr_t pr, InstGen
 
 
 
-
-
-
-
-void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
   InstGen ig;
 
   InstGen::pr_t p0 = InstGen::pr_t::p0;
@@ -378,7 +465,6 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
   InstGen::gpr_t gpr_lda = InstGen::gpr_t::x3;
   InstGen::gpr_t gpr_ldb = InstGen::gpr_t::x4;
   InstGen::gpr_t gpr_ldc =  InstGen::gpr_t::x5;
-
 
   kernel.add_instr(ig.ssve_ptrue(p0, InstGen::sve_size_t::s));
 
@@ -411,10 +497,17 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
   kernel.add_instr(ig.sve_ld1w(zr_b0, p0, gpr_b, 0));
   kernel.add_instr(ig.sve_ld1w(zr_b1, p0, gpr_b, 1));
 
-  kernel.add_instr(fmopa(0, p0, p0, zr_b0, zr_a0));
-  kernel.add_instr(fmopa(1, p0, p0, zr_b1, zr_a0));
-  kernel.add_instr(fmopa(2, p0, p0, zr_b0, zr_a1));
-  kernel.add_instr(fmopa(3, p0, p0, zr_b1, zr_a1));
+  if (trans_c) {
+    kernel.add_instr(fmopa(0, p0, p0, zr_a0, zr_b0));
+    kernel.add_instr(fmopa(2, p0, p0, zr_a0, zr_b1));
+    kernel.add_instr(fmopa(1, p0, p0, zr_a1, zr_b0));
+    kernel.add_instr(fmopa(3, p0, p0, zr_a1, zr_b1));
+  } else {
+    kernel.add_instr(fmopa(0, p0, p0, zr_b0, zr_a0));
+    kernel.add_instr(fmopa(1, p0, p0, zr_b1, zr_a0));
+    kernel.add_instr(fmopa(2, p0, p0, zr_b0, zr_a1));
+    kernel.add_instr(fmopa(3, p0, p0, zr_b1, zr_a1));
+  }
 
   kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
   kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
@@ -441,12 +534,11 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
 
 
 
+void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+  uint32_t ms_count = std::min(16u, tiled_rect.mt);
+  uint32_t ns_count = std::min(16u, tiled_rect.nt);
 
-
-
-void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std::string const& label_prefix, uint32_t ms_count, uint32_t ns_count, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
-  ms_count = std::min(16u, ms_count);
-  ns_count = std::min(16u, ns_count);
+  uint32_t dtype_size = 4;
 
   InstGen ig;
 
@@ -456,40 +548,137 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   InstGen::gpr_t gpr_lda = InstGen::gpr_t::x3;
   InstGen::gpr_t gpr_ldb = InstGen::gpr_t::x4;
   InstGen::gpr_t gpr_ldc = InstGen::gpr_t::x5;
+  InstGen::gpr_t gpr_mem = InstGen::gpr_t::x6;
+  InstGen::gpr_t gpr_mat = InstGen::gpr_t::x14;
 
+  InstGen::pr_t p0 = InstGen::pr_t::p0;
   InstGen::pr_t prm = InstGen::pr_t::p1;
   InstGen::pr_t prn = InstGen::pr_t::p2;
+  InstGen::pr_t prk = InstGen::pr_t::p3;
 
-  generate_predicate_init(kernel, prm, InstGen::sve_size_t::s, InstGen::gpr_t::x6, InstGen::gpr_t::x7, 0, ms_count);
-  generate_predicate_init(kernel, prn, InstGen::sve_size_t::s, InstGen::gpr_t::x6, InstGen::gpr_t::x7, 0, ns_count);
+  kernel.add_instr(ig.ssve_ptrue(p0, InstGen::sve_size_t::s));
+  generate_predicate_init(kernel, prm, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, ms_count);
+  generate_predicate_init(kernel, prn, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, ns_count);
 
-  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x6, gpr_c));
-  generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
-  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
-
-  std::string const loop_start_label = label_prefix + "_loop01";
-  std::string const loop_end_label = label_prefix + "_end01";
-  InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
-
-  InstGen::sve_zr_t za = InstGen::sve_zr_t::z0;
-  InstGen::sve_zr_t zb = InstGen::sve_zr_t::z1;
-
-  kernel.add_instr(ig.base_movz(loop_reg, k));
-  kernel.add_label(loop_start_label);
-  kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
-
-  kernel.add_instr(ig.sve_ld1w(za, prm, gpr_a, 0));
-  kernel.add_instr(ig.sve_ld1w(zb, prn, gpr_b, 0));
-  kernel.add_instr(fmopa(0, prn, prm, zb, za));
-
-  kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
-  kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
-  kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
-  kernel.add_labeled_instr(ig.base_b(loop_start_label));
-  kernel.add_label(loop_end_label);
+  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x7, gpr_c));
+  if (trans_c) {
+    generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prn, ms_count, 0);
+  } else {
+    generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
+  }
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x7));
 
 
-  generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
+  if (!trans_a && trans_b) {
+    std::string const loop_start_label = label_prefix + "_loop01";
+    std::string const loop_end_label = label_prefix + "_end01";
+    InstGen::gpr_t loop_reg = InstGen::gpr_t::x7;
+
+    InstGen::sve_zr_t za = InstGen::sve_zr_t::z0;
+    InstGen::sve_zr_t zb = InstGen::sve_zr_t::z1;
+
+    kernel.add_instr(ig.base_movz(loop_reg, k));
+    kernel.add_label(loop_start_label);
+    kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
+
+    kernel.add_instr(ig.sve_ld1w(za, prm, gpr_a, 0));
+    kernel.add_instr(ig.sve_ld1w(zb, prn, gpr_b, 0));
+    if (trans_c) {
+      kernel.add_instr(fmopa(0, prm, prn, za, zb));
+    } else {
+      kernel.add_instr(fmopa(0, prn, prm, zb, za));
+    }
+
+    kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
+    kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
+    kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
+    kernel.add_labeled_instr(ig.base_b(loop_start_label));
+    kernel.add_label(loop_end_label);
+
+
+  } else {
+    uint32_t kloop_iters_count = k / 16;
+    uint32_t kloop_remainder = k % 16;
+
+    std::string const loop_start_label = label_prefix + "_loop01";
+    std::string const loop_end_label = label_prefix + "_end01";
+    InstGen::gpr_t loop_reg = InstGen::gpr_t::x7;
+    InstGen::gpr_t gpr_abckp = InstGen::gpr_t::x10;
+    InstGen::gpr_t gpr_bbckp = InstGen::gpr_t::x11;
+    InstGen::gpr_t gpr_sa = InstGen::gpr_t::x12;
+    InstGen::gpr_t gpr_sb = InstGen::gpr_t::x13;
+
+    kernel.add_instr(ig.base_mov(gpr_abckp, gpr_a));
+    kernel.add_instr(ig.base_mov(gpr_bbckp, gpr_b));
+    if (trans_a) {
+      kernel.add_instr(ig.base_movz(gpr_sa, 1));
+    } else {
+      kernel.add_instr(ig.base_mov(gpr_sa, gpr_lda));
+    }
+    if (trans_b) {
+      kernel.add_instr(ig.base_mov(gpr_sb, gpr_ldb));
+    } else {
+      kernel.add_instr(ig.base_movz(gpr_sb, 1));
+    }
+
+    if (kloop_iters_count >= 1) {
+      kernel.add_instr(ig.base_movz(loop_reg, kloop_iters_count));
+      kernel.add_label(loop_start_label);
+      kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
+
+      kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
+      kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
+
+      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? p0 : prm, trans_a ? ms_count : 16);
+      generate_matrix_temp_store(kernel, gpr_mem, gpr_mat, InstGen::sve_zr_t::z0);
+      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? p0 : prn, !trans_b ? ns_count : 16);
+      generate_matrix_temp_load(kernel, gpr_mat, InstGen::sve_zr_t::z16);
+      
+      for (uint32_t i = 0; i < 16; i++) {
+        InstGen::sve_zr_t za = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
+        InstGen::sve_zr_t zb = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+        if (trans_c) {
+          kernel.add_instr(fmopa(0, prm, prn, za, zb));
+        } else {
+          kernel.add_instr(fmopa(0, prn, prm, zb, za));
+        }
+      }
+
+      kernel.add_instr(ig.base_add(gpr_abckp, gpr_abckp, gpr_sa, InstGen::shift_kind_t::lsl, 6));
+      kernel.add_instr(ig.base_add(gpr_bbckp, gpr_bbckp, gpr_sb, InstGen::shift_kind_t::lsl, 6));
+      kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
+      kernel.add_labeled_instr(ig.base_b(loop_start_label));
+      kernel.add_label(loop_end_label);
+    }
+
+    if (kloop_remainder != 0) {
+      kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
+      kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
+      generate_predicate_init(kernel, prk, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, kloop_remainder);
+      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? prk : prm, trans_a ? ms_count : kloop_remainder);
+      generate_matrix_temp_store(kernel, gpr_mem, gpr_mat, InstGen::sve_zr_t::z0);
+      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? prk : prn, !trans_b ? ns_count : kloop_remainder);
+      generate_matrix_temp_load(kernel, gpr_mat, InstGen::sve_zr_t::z16);
+
+      for (uint32_t i = 0; i < kloop_remainder; i++) {
+        InstGen::sve_zr_t za = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z16 + i);
+        InstGen::sve_zr_t zb = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+        if (trans_c) {
+          kernel.add_instr(fmopa(0, prm, prn, za, zb));
+        } else {
+          kernel.add_instr(fmopa(0, prn, prm, zb, za));
+        }
+      }
+    }
+  }
+
+
+
+  if (trans_c) {
+    generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, prn, ms_count, 0);
+  } else {
+    generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, prm, ns_count, 0);
+  }
 }
 
 
@@ -512,22 +701,34 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
 
 
 
+gemm_microkernel_desc_t select_gemm_microkernel(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+  uint32_t dtype_size = 4;
 
-
-void generate_gemm_microkernel(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
   if (tiled_rect.mt == 32 && tiled_rect.nt == 32) {
-    generate_gemm_microkernel_m32_n32(kernel, label_prefix, k, trans_a, trans_b, trans_c, dtype);
-    return;
+    gemm_microkernel_desc_t result;
+    result.mt = 32;
+    result.nt = 32;
+    result.stack_mem_size = 0;
+    result.generator = generate_gemm_microkernel_m32_n32;
+    return result;
   }
 
   if (tiled_rect.mt <= 16 && tiled_rect.nt <= 16) {
-    generate_gemm_microkernel_predicated_m16_n16(kernel, label_prefix, tiled_rect.mt, tiled_rect.nt, k, trans_a, trans_b, trans_c, dtype);
-    return;
+    gemm_microkernel_desc_t result;
+    result.mt = tiled_rect.mt;
+    result.nt = tiled_rect.nt;
+    result.stack_mem_size = 16 * 16 * dtype_size;
+    result.generator = generate_gemm_microkernel_predicated_m16_n16;
+    return result;
   }
 
   throw mini_jit::Gemm::error_t::error;
 }
 
+void generate_gemm_microkernel(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+  gemm_microkernel_desc_t desc = select_gemm_microkernel(kernel, label_prefix, tiled_rect, k, trans_a, trans_b, trans_c, dtype);
+  desc.generator(kernel, label_prefix, tiled_rect, k, trans_a, trans_b, trans_c, dtype);
+}
 
 void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const& label_prefix, mat_tiled_rect_t tiled_rect, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
   if (mat_rect_is_empty(tiled_rect.rect)) {
@@ -549,7 +750,7 @@ void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const&
   }
 
   InstGen ig;
-  InstGen::gpr_t gpr_tmp1 = InstGen::gpr_t::x6;
+  InstGen::gpr_t gpr_tmp1 = InstGen::gpr_t::x7;
 
   InstGen::gpr_t gpr_a = InstGen::gpr_t::x0;
   InstGen::gpr_t gpr_b = InstGen::gpr_t::x1;
@@ -586,8 +787,8 @@ void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const&
     kernel.add_instr(ig.base_mul(gpr_c_sm, gpr_ldc, gpr_c_sm));
   } else {
     kernel.add_instr(ig.base_movz(gpr_c_sm, mt));
-    kernel.add_instr(ig.base_movz(InstGen::gpr_t::x6, nt));
-    kernel.add_instr(ig.base_mul(gpr_c_sn, gpr_ldc, InstGen::gpr_t::x6));
+    kernel.add_instr(ig.base_movz(gpr_tmp1, nt));
+    kernel.add_instr(ig.base_mul(gpr_c_sn, gpr_ldc, gpr_tmp1));
   }
 
   // initialize data pointers to point to the first segment
@@ -649,7 +850,9 @@ void generate_gemm_microkernel_loop(mini_jit::Kernel& kernel, std::string const&
   kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp2));
   kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp1));
   kernel.add_instr(ig.base_mov(gpr_c, gpr_cbckp2));
-  
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x7, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 32, InstGen::addr_mode_t::signed_offset));
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::signed_offset));
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x6, InstGen::gpr_t::x7, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
   generate_gemm_microkernel(kernel, label_prefix, tiled_rect, k, trans_a, trans_b, trans_c, dtype);
 
   kernel.add_instr(ig.base_add(gpr_cbckp2, gpr_cbckp2, gpr_c_sm, InstGen::shift_kind_t::lsl, 2));
@@ -676,6 +879,7 @@ void generate_gemm_loops(mini_jit::Kernel& kernel, std::string const& label_pref
   kernel.add_instr(ig.base_stp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.base_stp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.base_stp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+  kernel.add_instr(ig.base_stp(InstGen::gpr_t::x6, InstGen::gpr_t::x7, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
 
   for (uint32_t i = 0; i < tiling.size(); i++) {
     mat_tiled_rect_t tiled_rect = tiling[i];
@@ -683,18 +887,39 @@ void generate_gemm_loops(mini_jit::Kernel& kernel, std::string const& label_pref
       continue;
     }
 
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::signed_offset));
-    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 32, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x6, InstGen::gpr_t::x7, InstGen::gpr_t::sp, 0, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 32, InstGen::addr_mode_t::signed_offset));
+    kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 48, InstGen::addr_mode_t::signed_offset));
     generate_gemm_microkernel_loop(kernel, label_prefix + "_" + std::to_string(i), tiled_rect, k, trans_a, trans_b, trans_c, dtype);
   }
 
+  kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x6, InstGen::gpr_t::x7, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x4, InstGen::gpr_t::x5, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x2, InstGen::gpr_t::x3, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x0, InstGen::gpr_t::x1, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
 }
 
 
+
+
+
+
+uint32_t max_stack_mem_size_for_tiling(mini_jit::Kernel& kernel, std::string const& label_prefix, std::vector<mat_tiled_rect_t> const& tiling, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+  uint32_t result = 0;
+  for (mat_tiled_rect_t tiled_rect : tiling) {
+    gemm_microkernel_desc_t desc = select_gemm_microkernel(kernel, label_prefix, tiled_rect, k, trans_a, trans_b, trans_c, dtype);
+    result = std::max(result, desc.stack_mem_size);
+  }
+  return result;
+}
+
+void append_words(mini_jit::Kernel& kernel, std::vector<uint32_t> const& words, std::string const& label) {
+  kernel.add_label(label);
+  for (uint32_t word : words) {
+    kernel.add_data(word);
+  }
+}
 
 
 void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, std::vector<mat_tiled_rect_t> const& tiling, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
@@ -712,6 +937,12 @@ void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, st
   kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v14, InstGen::simd_fp_t::v15, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
   kernel.add_instr(ig.base_mov(InstGen::gpr_t::x29, InstGen::gpr_t::sp));
+  // allocate requested stack memory
+  uint32_t stack_mem_size = max_stack_mem_size_for_tiling(kernel, label_prefix, tiling, k, trans_a, trans_b, trans_c, dtype);
+  if (stack_mem_size != 0) {
+    kernel.add_instr(ig.base_sub(InstGen::gpr_t::sp, InstGen::gpr_t::sp, stack_mem_size));
+    kernel.add_instr(ig.base_mov(InstGen::gpr_t::x6, InstGen::gpr_t::sp));
+  }
   kernel.add_instr(ig.base_smstart());
 
   // setup expected register values
@@ -722,6 +953,11 @@ void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, st
 
   // function epilogue
   kernel.add_instr(ig.base_smstop());
+  // deallocate requested stack memory
+  if (stack_mem_size != 0) {
+    kernel.add_instr(ig.base_add(InstGen::gpr_t::sp, InstGen::gpr_t::sp, stack_mem_size));
+  }
+  // pop callee saved registers
   kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v14, InstGen::simd_fp_t::v15, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v10, InstGen::simd_fp_t::v11, InstGen::simd_sz_t::simd_d, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
@@ -733,6 +969,16 @@ void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, st
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x19, InstGen::gpr_t::x20, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ldp(InstGen::gpr_t::x29, InstGen::gpr_t::x30, InstGen::gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
   kernel.add_instr(ig.base_ret());
+
+  // data for transpose algorithms
+  append_words(kernel, {0, 16, 2, 18, 4, 20, 6, 22, 8, 24, 10, 26, 12, 28, 14, 30}, "_trn1_2x2");
+  append_words(kernel, {1, 17, 3, 19, 5, 21, 7, 23, 9, 25, 11, 27, 13, 29, 15, 31}, "_trn2_2x2");
+  append_words(kernel, {0, 1, 16, 17, 4, 5, 20, 21, 8, 9, 24, 25, 12, 13, 28, 29}, "_trn1_4x4");
+  append_words(kernel, {2, 3, 18, 19, 6, 7, 22, 23, 10, 11, 26, 27, 14, 15, 30, 31}, "_trn2_4x4");
+  append_words(kernel, {0, 1, 2, 3, 16, 17, 18, 19, 8, 9, 10, 11, 24, 25, 26, 27}, "_trn1_8x8");
+  append_words(kernel, {4, 5, 6, 7, 20, 21, 22, 23, 12, 13, 14, 15, 28, 29, 30, 31}, "_trn2_8x8");
+  append_words(kernel, {0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23}, "_trn1_16x16");
+  append_words(kernel, {8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 29, 30, 31}, "_trn2_16x16");
 }
 
 
@@ -747,7 +993,7 @@ void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, st
 mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, dtype_t  dtype) {
   // compute tiling
   mat_rect_t root = {.mbegin = 0, .mend = m, .nbegin = 0, .nend = n};
-  std::vector<mat_tiled_rect_t> tiling = tile_matrix_v1(root);
+  std::vector<mat_tiled_rect_t> tiling = tile_matrix_v2(root);
 
   // generate kernel for tiling
   try {

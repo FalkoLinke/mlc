@@ -91,6 +91,8 @@ class mini_jit::Kernel {
 
     void add_label( std::string label );
 
+    void add_data( uint32_t value );
+
     void add_data( uint64_t value );
 
     /**

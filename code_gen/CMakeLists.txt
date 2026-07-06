@@ -69,5 +69,9 @@ add_executable(gemm_tests.out gemm_tests.cpp)
 target_compile_options(gemm_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(gemm_tests.out PRIVATE code_gen mlc_common Catch2::Catch2WithMain)
 
+add_executable(gemm_benchmarks_driver.out gemm_benchmarks_driver.cpp)
+target_compile_options(gemm_benchmarks_driver.out PRIVATE ${CXX_FLAGS})
+target_link_libraries(gemm_benchmarks_driver.out PRIVATE code_gen mlc_common)
+
 
 

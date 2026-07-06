@@ -444,6 +444,16 @@ uint32_t mini_jit::InstGen::sve_ld1w( sve_zr_t zt, pr_t pg, gpr_t rn, gpr_t rm) 
   return ins;
 }
 
+uint32_t mini_jit::InstGen::sve_mov(sve_zr_t zd, sve_zr_t zn) {
+  uint32_t ins = 0x04603000;
+
+  ins |= (zd & 0x1f);
+  ins |= (zn & 0x1f) << 5;
+  ins |= (zn & 0x1f) << 16;
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::ssve_pfalse( pr_t pd ) {
   uint32_t ins = 0x2518e400;
 
@@ -483,6 +493,50 @@ uint32_t mini_jit::InstGen::sve_st1w( sve_zr_t zt, sve_size_t sz, pr_t pg, gpr_t
   ins |= (pg & 0x7) << 10;
   ins |= (rm & 0x1f) << 16;
   ins |= (sz & 0x1) << 21;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sve_trn1(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz) {
+  uint32_t ins = 0x05207000;
+
+  ins |= (zd & 0x1f);
+  ins |= (zn & 0x1f) << 5;
+  ins |= (zm & 0x1f) << 16;
+  ins |= (sz & 0x3) << 22;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sve_trn2(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz) {
+  uint32_t ins = 0x05207400;
+
+  ins |= (zd & 0x1f);
+  ins |= (zn & 0x1f) << 5;
+  ins |= (zm & 0x1f) << 16;
+  ins |= (sz & 0x3) << 22;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sve_uzp1(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz) {
+  uint32_t ins = 0x05206800;
+
+  ins |= (zd & 0x1f);
+  ins |= (zn & 0x1f) << 5;
+  ins |= (zm & 0x1f) << 16;
+  ins |= (sz & 0x3) << 22;
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sve_uzp2(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz) {
+  uint32_t ins = 0x05206c00;
+
+  ins |= (zd & 0x1f);
+  ins |= (zn & 0x1f) << 5;
+  ins |= (zm & 0x1f) << 16;
+  ins |= (sz & 0x3) << 22;
 
   return ins;
 }
@@ -540,10 +594,31 @@ uint32_t mini_jit::InstGen::sme_st1w(uint32_t za_tile2, sme_hv_kind_t hv, gpr_t 
   return ins;
 }
 
+uint32_t mini_jit::InstGen::sme_uzp(sve_zr_t zd, sve_zr_t zn, sve_zr_t zm, sve_size_t sz) {
+  uint32_t ins = 0xc120d001;
+
+  ins |= ((zd >> 1) & 0xf) << 1;
+  ins |= (zn & 0x1f) << 5;
+  ins |= (zm & 0x1f) << 16;
+  ins |= (sz & 0x3) << 22;
+
+  return ins;
+}
+
 uint32_t mini_jit::InstGen::sme_zero( uint32_t mask8 ) {
   uint32_t ins = 0xc0080000;
 
   ins |= (mask8 & 0xff);
+
+  return ins;
+}
+
+uint32_t mini_jit::InstGen::sme_zip( sve_zr_t zd, sve_zr_t zn, sve_size_t sz) {
+  uint32_t ins = 0xc136e000;
+
+  ins |= ((zd >> 2) & 0x7) << 2;
+  ins |= ((zn >> 2) & 0x7) << 7;
+  ins |= (sz & 0x3) << 22;
 
   return ins;
 }
