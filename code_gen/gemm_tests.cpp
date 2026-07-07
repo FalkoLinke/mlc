@@ -149,9 +149,9 @@ TEST_CASE("test nonmultiples of 32", "[test]") {
     for (uint32_t trans_a = 0; trans_a <= 1; trans_a++) {
         for (uint32_t trans_b = 0; trans_b <= 1; trans_b++) {
             for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
-                for (uint32_t i = 0; i < 8; i++) {
-                    for (uint32_t j = 0; j < 8; j++) {
-                        for (uint32_t u = 0; u < 4; u++) {
+                for (uint32_t i = 0; i < 12; i++) {
+                    for (uint32_t j = 0; j < 12; j++) {
+                        for (uint32_t u = 0; u < 12; u++) {
                             uint32_t m = 8 * (i + 1);
                             uint32_t n = 8 * (j + 1);
                             uint32_t k = 8 * (u + 1);

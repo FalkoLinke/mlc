@@ -426,10 +426,9 @@ void generate_matrix_load_vec_m16_n16(mini_jit::Kernel& kernel, uint32_t transpo
   }
 }
 
-void generate_matrix_temp_store(mini_jit::Kernel& kernel, InstGen::gpr_t gpr_memory_ptr, InstGen::gpr_t gpr_mat_ptr, InstGen::sve_zr_t zn) {
+void generate_matrix_temp_store(mini_jit::Kernel& kernel, InstGen::gpr_t gpr_mat_ptr, InstGen::sve_zr_t zn) {
   InstGen ig;
 
-  kernel.add_instr(ig.base_add(gpr_mat_ptr, gpr_memory_ptr, 8 * 16 * 4));
   for (int32_t i = 0; i < 16; i++) {
     InstGen::sve_zr_t zr = static_cast<InstGen::sve_zr_t>((zn + i) % 32);
     kernel.add_instr(ig.sve_st1w(zr, InstGen::sve_size_t::s, InstGen::pr_t::p0, gpr_mat_ptr, i - 8));
@@ -458,6 +457,7 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
   InstGen ig;
 
   InstGen::pr_t p0 = InstGen::pr_t::p0;
+  InstGen::pr_t prk = InstGen::pr_t::p1;
 
   InstGen::gpr_t gpr_a = InstGen::gpr_t::x0;
   InstGen::gpr_t gpr_b = InstGen::gpr_t::x1;
@@ -466,64 +466,192 @@ void generate_gemm_microkernel_m32_n32(mini_jit::Kernel& kernel, std::string con
   InstGen::gpr_t gpr_ldb = InstGen::gpr_t::x4;
   InstGen::gpr_t gpr_ldc =  InstGen::gpr_t::x5;
 
+  InstGen::gpr_t gpr_mem = InstGen::gpr_t::x6;
+  InstGen::gpr_t gpr_mat1 = InstGen::gpr_t::x7;
+  InstGen::gpr_t gpr_mat2 = InstGen::gpr_t::x9;
+  InstGen::gpr_t gpr_mat3 = InstGen::gpr_t::x10;
+  
+  InstGen::gpr_t gpr_abckp = InstGen::gpr_t::x11;
+  InstGen::gpr_t gpr_bbckp = InstGen::gpr_t::x12;
+  InstGen::gpr_t gpr_unitstride = InstGen::gpr_t::x13;
+  InstGen::gpr_t loop_reg = InstGen::gpr_t::x14;
+
+  uint32_t kloop_iteration_count = k / 16;
+  uint32_t kloop_remainder = k % 16;
+
   kernel.add_instr(ig.ssve_ptrue(p0, InstGen::sve_size_t::s));
+  generate_predicate_init(kernel, prk, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, kloop_remainder);
 
   // load C into ZA tiles
-  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x6, gpr_c));
+  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x10, gpr_c));
   generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 0);
   generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
-  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x10));
   kernel.add_instr(ig.base_add(gpr_c, gpr_c, 4 * 16));
   generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 2);
   generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 3);
-  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x10));
+
+  kernel.add_instr(ig.base_add(gpr_mat1, gpr_mem, 8 * 16 * 4));
+  kernel.add_instr(ig.base_add(gpr_mat2, gpr_mem, 8 * 16 * 4 + 16 * 16 * 4));
+  kernel.add_instr(ig.base_add(gpr_mat3, gpr_mem, 8 * 16 * 4 + 2 * 16 * 16 * 4));
+  kernel.add_instr(ig.base_movz(gpr_unitstride, 1));
 
   // perform gemm
-  std::string const loop_start_label = label_prefix + "_loop01";
-  std::string const loop_end_label = label_prefix + "_end01";
-  InstGen::gpr_t loop_reg = InstGen::gpr_t::x6;
+  if (!trans_a && trans_b) {
+    std::string const loop_start_label = label_prefix + "_loop01";
+    std::string const loop_end_label = label_prefix + "_end01";
 
-  InstGen::sve_zr_t zr_a0 = InstGen::sve_zr_t::z0;
-  InstGen::sve_zr_t zr_a1 = InstGen::sve_zr_t::z1;
-  InstGen::sve_zr_t zr_b0 = InstGen::sve_zr_t::z2;
-  InstGen::sve_zr_t zr_b1 = InstGen::sve_zr_t::z3;
+    InstGen::sve_zr_t zr_a0 = InstGen::sve_zr_t::z0;
+    InstGen::sve_zr_t zr_a1 = InstGen::sve_zr_t::z1;
+    InstGen::sve_zr_t zr_b0 = InstGen::sve_zr_t::z2;
+    InstGen::sve_zr_t zr_b1 = InstGen::sve_zr_t::z3;
 
-  kernel.add_instr(ig.base_movz(loop_reg, k));
-  kernel.add_label(loop_start_label);
-  kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
+    kernel.add_instr(ig.base_movz(loop_reg, k));
+    kernel.add_label(loop_start_label);
+    kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
 
-  kernel.add_instr(ig.sve_ld1w(zr_a0, p0, gpr_a, 0));
-  kernel.add_instr(ig.sve_ld1w(zr_a1, p0, gpr_a, 1));
-  kernel.add_instr(ig.sve_ld1w(zr_b0, p0, gpr_b, 0));
-  kernel.add_instr(ig.sve_ld1w(zr_b1, p0, gpr_b, 1));
+    kernel.add_instr(ig.sve_ld1w(zr_a0, p0, gpr_a, 0));
+    kernel.add_instr(ig.sve_ld1w(zr_a1, p0, gpr_a, 1));
+    kernel.add_instr(ig.sve_ld1w(zr_b0, p0, gpr_b, 0));
+    kernel.add_instr(ig.sve_ld1w(zr_b1, p0, gpr_b, 1));
 
-  if (trans_c) {
-    kernel.add_instr(fmopa(0, p0, p0, zr_a0, zr_b0));
-    kernel.add_instr(fmopa(2, p0, p0, zr_a0, zr_b1));
-    kernel.add_instr(fmopa(1, p0, p0, zr_a1, zr_b0));
-    kernel.add_instr(fmopa(3, p0, p0, zr_a1, zr_b1));
+    if (trans_c) {
+      kernel.add_instr(fmopa(0, p0, p0, zr_a0, zr_b0));
+      kernel.add_instr(fmopa(2, p0, p0, zr_a0, zr_b1));
+      kernel.add_instr(fmopa(1, p0, p0, zr_a1, zr_b0));
+      kernel.add_instr(fmopa(3, p0, p0, zr_a1, zr_b1));
+    } else {
+      kernel.add_instr(fmopa(0, p0, p0, zr_b0, zr_a0));
+      kernel.add_instr(fmopa(1, p0, p0, zr_b1, zr_a0));
+      kernel.add_instr(fmopa(2, p0, p0, zr_b0, zr_a1));
+      kernel.add_instr(fmopa(3, p0, p0, zr_b1, zr_a1));
+    }
+
+    kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
+    kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
+    kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
+    kernel.add_labeled_instr(ig.base_b(loop_start_label));
+    kernel.add_label(loop_end_label);
+
+
+
   } else {
-    kernel.add_instr(fmopa(0, p0, p0, zr_b0, zr_a0));
-    kernel.add_instr(fmopa(1, p0, p0, zr_b1, zr_a0));
-    kernel.add_instr(fmopa(2, p0, p0, zr_b0, zr_a1));
-    kernel.add_instr(fmopa(3, p0, p0, zr_b1, zr_a1));
+    std::string const loop_start_label = label_prefix + "_loop01";
+    std::string const loop_end_label = label_prefix + "_end01";
+
+    InstGen::gpr_t gpr_a_sm = trans_a ? gpr_lda : gpr_unitstride;
+    InstGen::gpr_t gpr_a_sk = trans_a ? gpr_unitstride : gpr_lda;
+    InstGen::gpr_t gpr_b_sn = trans_b ? gpr_unitstride : gpr_ldb;
+    InstGen::gpr_t gpr_b_sk = trans_b ? gpr_ldb : gpr_unitstride;
+
+    if (kloop_iteration_count >= 1 || kloop_remainder != 0) {
+      kernel.add_instr(ig.base_mov(gpr_abckp, gpr_a));
+      kernel.add_instr(ig.base_mov(gpr_bbckp, gpr_b));
+    }
+
+    if (kloop_iteration_count >= 1) {
+      kernel.add_instr(ig.base_movz(loop_reg, kloop_iteration_count));
+      kernel.add_label(loop_start_label);
+      kernel.add_labeled_instr(ig.base_cbz(loop_reg, loop_end_label));
+
+      kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
+      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, p0, 16);
+      generate_matrix_temp_store(kernel, gpr_mat1, InstGen::sve_zr_t::z0);
+      kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
+      kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_a_sm, InstGen::shift_kind_t::lsl, 6));
+      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, p0, 16);
+      generate_matrix_temp_store(kernel, gpr_mat2, InstGen::sve_zr_t::z0);
+      
+      kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
+      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, p0, 16);
+      generate_matrix_temp_store(kernel, gpr_mat3, InstGen::sve_zr_t::z0);
+      kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
+      kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_b_sn, InstGen::shift_kind_t::lsl, 6));
+      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, p0, 16);
+
+      for (uint32_t i = 0; i < 16; i++) {
+        InstGen::sve_zr_t zr_a0 = InstGen::sve_zr_t::z16;
+        InstGen::sve_zr_t zr_a1 = InstGen::sve_zr_t::z17;
+        InstGen::sve_zr_t zr_b0 = InstGen::sve_zr_t::z18;
+        InstGen::sve_zr_t zr_b1 = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+        
+        kernel.add_instr(ig.sve_ld1w(zr_a0, p0, gpr_mat1, i - 8));
+        kernel.add_instr(ig.sve_ld1w(zr_a1, p0, gpr_mat2, i - 8));
+        kernel.add_instr(ig.sve_ld1w(zr_b0, p0, gpr_mat3, i - 8));
+
+        if (trans_c) {
+          kernel.add_instr(fmopa(0, p0, p0, zr_a0, zr_b0));
+          kernel.add_instr(fmopa(2, p0, p0, zr_a0, zr_b1));
+          kernel.add_instr(fmopa(1, p0, p0, zr_a1, zr_b0));
+          kernel.add_instr(fmopa(3, p0, p0, zr_a1, zr_b1));
+        } else {
+          kernel.add_instr(fmopa(0, p0, p0, zr_b0, zr_a0));
+          kernel.add_instr(fmopa(1, p0, p0, zr_b1, zr_a0));
+          kernel.add_instr(fmopa(2, p0, p0, zr_b0, zr_a1));
+          kernel.add_instr(fmopa(3, p0, p0, zr_b1, zr_a1));
+        } 
+      }
+
+      kernel.add_instr(ig.base_add(gpr_abckp, gpr_abckp, gpr_a_sk, InstGen::shift_kind_t::lsl, 6));
+      kernel.add_instr(ig.base_add(gpr_bbckp, gpr_bbckp, gpr_b_sk, InstGen::shift_kind_t::lsl, 6));
+      kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
+      kernel.add_labeled_instr(ig.base_b(loop_start_label));
+      kernel.add_label(loop_end_label);
+    }
+
+    if (kloop_remainder != 0) {
+      kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
+      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? prk : p0, trans_a ? 16 : kloop_remainder);
+      generate_matrix_temp_store(kernel, gpr_mat1, InstGen::sve_zr_t::z0);
+      kernel.add_instr(ig.base_mov(gpr_a, gpr_abckp));
+      kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_a_sm, InstGen::shift_kind_t::lsl, 6));
+      generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? prk : p0, trans_a ? 16 : kloop_remainder);
+      generate_matrix_temp_store(kernel, gpr_mat2, InstGen::sve_zr_t::z0);
+      
+      kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
+      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? prk : p0, !trans_b ? 16 : kloop_remainder);
+      generate_matrix_temp_store(kernel, gpr_mat3, InstGen::sve_zr_t::z0);
+      kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
+      kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_b_sn, InstGen::shift_kind_t::lsl, 6));
+      generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? prk : p0, !trans_b ? 16 : kloop_remainder);
+
+      for (uint32_t i = 0; i < kloop_remainder; i++) {
+        InstGen::sve_zr_t zr_a0 = InstGen::sve_zr_t::z16;
+        InstGen::sve_zr_t zr_a1 = InstGen::sve_zr_t::z17;
+        InstGen::sve_zr_t zr_b0 = InstGen::sve_zr_t::z18;
+        InstGen::sve_zr_t zr_b1 = static_cast<InstGen::sve_zr_t>(InstGen::sve_zr_t::z0 + i);
+        
+        kernel.add_instr(ig.sve_ld1w(zr_a0, p0, gpr_mat1, i - 8));
+        kernel.add_instr(ig.sve_ld1w(zr_a1, p0, gpr_mat2, i - 8));
+        kernel.add_instr(ig.sve_ld1w(zr_b0, p0, gpr_mat3, i - 8));
+
+        if (trans_c) {
+          kernel.add_instr(fmopa(0, p0, p0, zr_a0, zr_b0));
+          kernel.add_instr(fmopa(2, p0, p0, zr_a0, zr_b1));
+          kernel.add_instr(fmopa(1, p0, p0, zr_a1, zr_b0));
+          kernel.add_instr(fmopa(3, p0, p0, zr_a1, zr_b1));
+        } else {
+          kernel.add_instr(fmopa(0, p0, p0, zr_b0, zr_a0));
+          kernel.add_instr(fmopa(1, p0, p0, zr_b1, zr_a0));
+          kernel.add_instr(fmopa(2, p0, p0, zr_b0, zr_a1));
+          kernel.add_instr(fmopa(3, p0, p0, zr_b1, zr_a1));
+        } 
+      }
+    }
   }
 
-  kernel.add_instr(ig.base_add(gpr_a, gpr_a, gpr_lda, InstGen::shift_kind_t::lsl, 2));
-  kernel.add_instr(ig.base_add(gpr_b, gpr_b, gpr_ldb, InstGen::shift_kind_t::lsl, 2));
-  kernel.add_instr(ig.base_sub(loop_reg, loop_reg, 1));
-  kernel.add_labeled_instr(ig.base_b(loop_start_label));
-  kernel.add_label(loop_end_label);
+
 
   // store C from ZA tiles
-  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x6, gpr_c));
+  kernel.add_instr(ig.base_mov(InstGen::gpr_t::x14, gpr_c));
   generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 0);
   generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 1);
-  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x14));
   kernel.add_instr(ig.base_add(gpr_c, gpr_c, 4 * 16));
   generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 2);
   generate_matrix_predicated_store_za_m16_n16(kernel, gpr_c, gpr_ldc, p0, 16, 3);
-  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x6));
+  kernel.add_instr(ig.base_mov(gpr_c, InstGen::gpr_t::x14));
 }
 
 
@@ -559,7 +687,8 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
   kernel.add_instr(ig.ssve_ptrue(p0, InstGen::sve_size_t::s));
   generate_predicate_init(kernel, prm, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, ms_count);
   generate_predicate_init(kernel, prn, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, ns_count);
-
+  kernel.add_instr(ig.base_add(gpr_mat, gpr_mem, 8 * 16 * 4));
+  
   kernel.add_instr(ig.base_mov(InstGen::gpr_t::x7, gpr_c));
   if (trans_c) {
     generate_matrix_predicated_load_za_m16_n16(kernel, gpr_c, gpr_ldc, prn, ms_count, 0);
@@ -630,7 +759,7 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
       kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
 
       generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? p0 : prm, trans_a ? ms_count : 16);
-      generate_matrix_temp_store(kernel, gpr_mem, gpr_mat, InstGen::sve_zr_t::z0);
+      generate_matrix_temp_store(kernel, gpr_mat, InstGen::sve_zr_t::z0);
       generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? p0 : prn, !trans_b ? ns_count : 16);
       generate_matrix_temp_load(kernel, gpr_mat, InstGen::sve_zr_t::z16);
       
@@ -656,7 +785,7 @@ void generate_gemm_microkernel_predicated_m16_n16(mini_jit::Kernel& kernel, std:
       kernel.add_instr(ig.base_mov(gpr_b, gpr_bbckp));
       generate_predicate_init(kernel, prk, InstGen::sve_size_t::s, InstGen::gpr_t::x10, InstGen::gpr_t::x11, 0, kloop_remainder);
       generate_matrix_load_vec_m16_n16(kernel, trans_a, gpr_a, gpr_lda, trans_a ? prk : prm, trans_a ? ms_count : kloop_remainder);
-      generate_matrix_temp_store(kernel, gpr_mem, gpr_mat, InstGen::sve_zr_t::z0);
+      generate_matrix_temp_store(kernel, gpr_mat, InstGen::sve_zr_t::z0);
       generate_matrix_load_vec_m16_n16(kernel, !trans_b, gpr_b, gpr_ldb, !trans_b ? prk : prn, !trans_b ? ns_count : kloop_remainder);
       generate_matrix_temp_load(kernel, gpr_mat, InstGen::sve_zr_t::z16);
 
@@ -708,7 +837,7 @@ gemm_microkernel_desc_t select_gemm_microkernel(mini_jit::Kernel& kernel, std::s
     gemm_microkernel_desc_t result;
     result.mt = 32;
     result.nt = 32;
-    result.stack_mem_size = 0;
+    result.stack_mem_size = 3 * 16 * 16 * dtype_size;
     result.generator = generate_gemm_microkernel_m32_n32;
     return result;
   }
@@ -993,7 +1122,7 @@ void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, st
 mini_jit::Gemm::error_t mini_jit::Gemm::generate( uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, dtype_t  dtype) {
   // compute tiling
   mat_rect_t root = {.mbegin = 0, .mend = m, .nbegin = 0, .nend = n};
-  std::vector<mat_tiled_rect_t> tiling = tile_matrix_v2(root);
+  std::vector<mat_tiled_rect_t> tiling = tile_matrix_v1(root);
 
   // generate kernel for tiling
   try {
