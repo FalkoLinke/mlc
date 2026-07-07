@@ -1100,6 +1100,7 @@ void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, st
   kernel.add_instr(ig.base_ret());
 
   // data for transpose algorithms
+  /*
   append_words(kernel, {0, 16, 2, 18, 4, 20, 6, 22, 8, 24, 10, 26, 12, 28, 14, 30}, "_trn1_2x2");
   append_words(kernel, {1, 17, 3, 19, 5, 21, 7, 23, 9, 25, 11, 27, 13, 29, 15, 31}, "_trn2_2x2");
   append_words(kernel, {0, 1, 16, 17, 4, 5, 20, 21, 8, 9, 24, 25, 12, 13, 28, 29}, "_trn1_4x4");
@@ -1108,6 +1109,7 @@ void generate_gemm(mini_jit::Kernel& kernel, std::string const& label_prefix, st
   append_words(kernel, {4, 5, 6, 7, 20, 21, 22, 23, 12, 13, 14, 15, 28, 29, 30, 31}, "_trn2_8x8");
   append_words(kernel, {0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23}, "_trn1_16x16");
   append_words(kernel, {8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 29, 30, 31}, "_trn2_16x16");
+  */
 }
 
 
