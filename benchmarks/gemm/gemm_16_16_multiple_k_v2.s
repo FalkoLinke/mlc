@@ -68,7 +68,6 @@ FUNCLABEL(gemm_16_16_multiple_k_v2):
 
 K_loop:
 
-
     // load A z0 and B z2 16 floats at a time and perform the outer product
     ld1w {z0.S}, p0/z, [x7]
     ld1w {z1.S}, p0/z, [x8]
@@ -127,15 +126,15 @@ K_loop:
     // b.ne K_loop
 
     // store Results
-    mov w12, #0
-    mov w13, #4
-    mov w14, #8
-    mov w15, #12
+    // mov w12, #0
+    // mov w13, #4
+    // mov w14, #8
+    // mov w15, #12
+    // mov x16, #128
+    // mov x17, #192
     mov w8, #0
     mov x6, x2
-    mov x9, #64
-    mov x16, #128
-    mov x17, #192
+    // mov x9, #64
 
     // .rept 4
     // mova  {z0.s, z1.s, z2.s, z3.s}, za1h.s[W13, 0:3]
@@ -168,21 +167,17 @@ K_loop:
     fadd za.s[w8,0,VGx4], {z8.s - z11.s}
     add w8, w8, #4;
 
-    st1w { za0h.S[w12, 0] }, p0, [x6]
-    add w12, w12, #1
-    st1w { za0h.S[w13, 0] }, p0, [x6, x9, LSL #2]
-    add w13, w13, #1
-    st1w { za0h.S[w14, 0] }, p0, [x6, x16, LSL #2]
-    add w14, w14, #1
-    st1w { za0h.S[w15, 0] }, p0, [x6, x17, LSL #2]
-    add w15, w15, #1
-    add x6, x6, x10
+    // st1w { za0h.S[w12, 0] }, p0, [x6]
+    // add w12, w12, #1
+    // st1w { za0h.S[w13, 0] }, p0, [x6, x9, LSL #2]
+    // add w13, w13, #1
+    // st1w { za0h.S[w14, 0] }, p0, [x6, x16, LSL #2]
+    // add w14, w14, #1
+    // st1w { za0h.S[w15, 0] }, p0, [x6, x17, LSL #2]
+    // add w15, w15, #1
+    // add x6, x6, x10
 
     .endr
-
-
-
-
 
 
     // .rept 4
@@ -236,15 +231,12 @@ K_loop:
     // mova  {Z30.S - Z33.S}, ZA1H.S[W13, 0:3]
     // mov w13, #0
 
-
-
-
-    // mov w13, #0
-    // .rept 16
-    // st1w { za0h.S[w13, 0] }, p0, [x6]
-    // add w13, w13, #1
-    // add x6, x6, x10
-    // .endr 
+    mov w13, #0
+    .rept 16
+    st1w { za0h.S[w13, 0] }, p0, [x6]
+    add w13, w13, #1
+    add x6, x6, x10
+    .endr 
 
     smstop
     ldp d14, d15, [sp], #16
