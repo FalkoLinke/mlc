@@ -82,12 +82,20 @@ void benchmark_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32
 int main() {
     std::cout << "m\t\tn\t\tk\t\ttrans_a\t\ttrans_b\t\ttrans_c\t\tGFlops\t\tDuration [s]" << std::endl;
 
-    benchmark_gemm(16, 16, 512, 0, 1, 0, mini_jit::Gemm::dtype_t::fp32);
-    benchmark_gemm(16, 16, 512, 0, 1, 1, mini_jit::Gemm::dtype_t::fp32);
-    benchmark_gemm(32, 32, 512, 0, 1, 0, mini_jit::Gemm::dtype_t::fp32);
-    benchmark_gemm(32, 32, 512, 0, 1, 1, mini_jit::Gemm::dtype_t::fp32);
-    benchmark_gemm(512, 512, 512, 0, 1, 0, mini_jit::Gemm::dtype_t::fp32);
-    benchmark_gemm(512, 512, 512, 0, 1, 1, mini_jit::Gemm::dtype_t::fp32);
+    for (uint32_t trans_a = 0; trans_a <= 1; trans_a++) {
+        for (uint32_t trans_b = 0; trans_b <= 1; trans_b++) {
+            for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
+                benchmark_gemm(8, 8, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+                benchmark_gemm(16, 16, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+                benchmark_gemm(24, 24, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+                benchmark_gemm(32, 32, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+                benchmark_gemm(48, 48, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+                benchmark_gemm(64, 64, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+                benchmark_gemm(300, 300, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+                benchmark_gemm(512, 512, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+            }
+        }
+    }
 
     return 0;
 }
