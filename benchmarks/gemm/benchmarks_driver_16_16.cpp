@@ -137,6 +137,12 @@ int main() {
 
     verified = verify_gemm(desc_gemm_16_16_trZA_mk);
     std::cout << verified << std::endl;
+    
+    verified = verify_gemm(desc_gemm_512_512_trZA);
+    std::cout << verified << std::endl;    
+
+    verified = verify_gemm(desc_gemm_512_512_trSME);
+    std::cout << verified << std::endl;
 
     std::cout << "m\tn\tk\ttrans_a\ttrans_b\ttrans_c\tDescription\tGFlops\tDuration [s]" << std::endl;
 
@@ -145,6 +151,8 @@ int main() {
     benchmark_gemm_kernel(desc_gemm_16_16_multiple_k_v2, 10000000);
     benchmark_gemm_kernel(desc_gemm_16_16_trSME_mk, 10000000);
     benchmark_gemm_kernel(desc_gemm_16_16_trZA_mk, 10000000);
+    benchmark_gemm_kernel(desc_gemm_512_512_trZA, 10000);
+    benchmark_gemm_kernel(desc_gemm_512_512_trSME, 10000);
 
     return 0;
 }

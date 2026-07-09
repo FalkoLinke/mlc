@@ -43,13 +43,13 @@ void benchmark_kernel(kernel_t* kernel, uint64_t reps, uint64_t k_loop) {
 int main() {
     uint64_t reps = 20000000;
 
-    std::cout << "GiBs\t\tBytes transferred [GiBs]\t\tDuration [s]" << std::endl;
+    std::cout << "GiBs\t\tBytes trans\t\tDuration [s]" << std::endl;
 
     benchmark_kernel(&copy_sve, reps, 1);
     benchmark_kernel(&transpose_16x16_fp32_za, 400, 50000);
     benchmark_kernel(&transpose_16x16_fp32_tbl, 400, 50000);
     benchmark_kernel(&transpose_16x16_fp32_tbl_v2, 400, 50000);
-    benchmark_kernel(&transpose_16x16_fp32_simd, reps, 1);
+    //benchmark_kernel(&transpose_16x16_fp32_simd, reps, 1);
     benchmark_kernel(&transpose_16x16_fp32_sme2, 400, 50000);
 
     return 0;

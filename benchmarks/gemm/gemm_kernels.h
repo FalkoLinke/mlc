@@ -206,7 +206,7 @@ extern "C" {
         .trans_a = false,
         .trans_b = true,
         .trans_c = false,
-        .desc = "16_16 multi_k v2",
+        .desc = "16_16 mul_k_v2",
         .func = gemm_16_16_multiple_k_v2,
     };    
     void gemm_16_16_trSME_mk(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
@@ -230,6 +230,28 @@ extern "C" {
         .trans_c = false,
         .desc = "16_16_trZA_mk",
         .func = gemm_16_16_trZA_mk,
+    };
+    void gemm_512_512_trZA(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_512_512_trZA = {
+        .m = 512,
+        .n = 512,
+        .k = 512,
+        .trans_a = true,
+        .trans_b = true,
+        .trans_c = false,
+        .desc = "512_512_trZA",
+        .func = gemm_512_512_trZA,
+    };
+    void gemm_512_512_trSME(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_512_512_trSME = {
+        .m = 512,
+        .n = 512,
+        .k = 512,
+        .trans_a = true,
+        .trans_b = true,
+        .trans_c = false,
+        .desc = "512_512_trSME",
+        .func = gemm_512_512_trSME,
     };
 }
 

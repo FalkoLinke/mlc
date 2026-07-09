@@ -176,7 +176,6 @@ K_loop:
     // st1w { za0h.S[w15, 0] }, p0, [x6, x17, LSL #2]
     // add w15, w15, #1
     // add x6, x6, x10
-
     .endr
 
 
