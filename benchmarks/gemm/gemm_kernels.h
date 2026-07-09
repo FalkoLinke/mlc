@@ -209,16 +209,27 @@ extern "C" {
         .desc = "16_16 multi_k v2",
         .func = gemm_16_16_multiple_k_v2,
     };    
-    void gemm_16_16_trans_multiple_k(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
-    static gemm_kernel_desc_t desc_gemm_16_16_trans_multiple_k = {
+    void gemm_16_16_trSME_mk(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_16_16_trSME_mk = {
         .m = 16,
         .n = 16,
         .k = 512,
         .trans_a = true,
         .trans_b = true,
         .trans_c = false,
-        .desc = "16_16 tr1 multi_k",
-        .func = gemm_16_16_trans_multiple_k,
+        .desc = "16_16_trSME_mk",
+        .func = gemm_16_16_trSME_mk,
+    };
+    void gemm_16_16_trZA_mk(float const* in0, float const* in1, float* out, uint64_t lda, uint64_t ldb, uint64_t ldc);
+    static gemm_kernel_desc_t desc_gemm_16_16_trZA_mk = {
+        .m = 16,
+        .n = 16,
+        .k = 512,
+        .trans_a = true,
+        .trans_b = true,
+        .trans_c = false,
+        .desc = "16_16_trZA_mk",
+        .func = gemm_16_16_trZA_mk,
     };
 }
 

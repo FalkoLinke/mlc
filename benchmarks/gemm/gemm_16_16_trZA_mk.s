@@ -24,8 +24,8 @@
                       int64_t         ld_b,
                       int64_t         ld_c );
 */
-    .global FUNCLABEL(gemm_16_16_trans_multiple_k)
-FUNCLABEL(gemm_16_16_trans_multiple_k):
+    .global FUNCLABEL(gemm_16_16_trZA_mk)
+FUNCLABEL(gemm_16_16_trZA_mk):
 
     stp x29, x30, [sp, #-16]!
     stp d8, d9, [sp, #-16]!
@@ -68,139 +68,127 @@ FUNCLABEL(gemm_16_16_trans_multiple_k):
 
 K_loop:
 
-    ld1w {z0.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z1.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z2.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z3.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z4.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z5.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z6.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z7.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z8.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z9.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z10.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z11.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z12.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z13.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z14.S}, p0/z, [x7]
-    add x7, x7, x11
-    ld1w {z15.S}, p0/z, [x7]
-    add x7, x7, x11
+    // save accumulator tile za0 
+    mov w14, #0
+    mova { z16.S - z19.S }, za0h.S[w14, 0:3 ]
+    add w14, w14, #4
+    mova { z20.S - z23.S }, za0h.S[w14, 0:3 ]
+    add w14, w14, #4
+    mova { z24.S - z27.S }, za0h.S[w14, 0:3 ]
+    add w14, w14, #4
+    mova { z28.S - z31.S }, za0h.S[w14, 0:3 ]
 
-    zip { z0.s - z3.s }, { z0.s - z3.s }
-    zip { z4.s - z7.s }, { z4.s - z7.s }
-    zip { z8.s - z11.s }, { z8.s - z11.s }
-    zip { z12.s - z15.s }, { z12.s - z15.s }
+    // Trans A: 
+    mov w13, #0
+    .rept 16
+    ld1w { z0.S }, p0/Z, [x7]
+    mova za0h.S[w13, #0], p0/m, z0.S
+    add x7, x7, x11
+    add w13, w13, #1
+    .endr
 
-    mov x13, #16
+    // read the transposed A block out of the vertical slices
+    mov w14, #0
+    mova { z0.S - z3.S }, za0v.S[w14, 0:3 ]
+    add w14, w14, #4
+    mova { z4.S - z7.S }, za0v.S[w14, 0:3 ]
+    add w14, w14, #4
+    mova { z8.S - z11.S }, za0v.S[w14, 0:3 ]
+    add w14, w14, #4
+    mova { z12.S - z15.S }, za0v.S[w14, 0:3 ]
+
+    // restore accumulator tile za0
+    mov w14, #0
+    mova za0h.S[w14, 0:3 ], { z16.S - z19.S }
+    add w14, w14, #4
+    mova za0h.S[w14, 0:3 ], { z20.S - z23.S }
+    add w14, w14, #4
+    mova za0h.S[w14, 0:3 ], { z24.S - z27.S }
+    add w14, w14, #4
+    mova za0h.S[w14, 0:3 ], { z28.S - z31.S }
+    
     // load A z0 and B z2 16 floats at a time and perform the outer product
     ld1w {z16.S}, p0/z, [x8]
     fmopa za0.s, p0/m, p0/m, z16.s, z0.s
     add x8, x8, x12
 
-
     ld1w {z16.S}, p0/z, [x8]
     fmopa za1.s, p0/m, p0/m, z16.s, z1.s
     add x8, x8, x12
 
-
     ld1w {z16.S}, p0/z, [x8]
     fmopa za2.s, p0/m, p0/m, z16.s, z2.s
-
     add x8, x8, x12
         
     ld1w {z16.S}, p0/z, [x8]
     fmopa za3.s, p0/m, p0/m, z16.s, z3.s
     add x8, x8, x12
 
-
     ld1w {z16.S}, p0/z, [x8]
     fmopa za0.s, p0/m, p0/m, z16.s, z4.s
     add x8, x8, x12
-
 
     ld1w {z16.S}, p0/z, [x8]
     fmopa za1.s, p0/m, p0/m, z16.s, z5.s
     add x8, x8, x12
 
-
     ld1w {z16.S}, p0/z, [x8]
     fmopa za2.s, p0/m, p0/m, z16.s, z6.s
-
     add x8, x8, x12
         
     ld1w {z16.S}, p0/z, [x8]
     fmopa za3.s, p0/m, p0/m, z16.s, z7.s
     add x8, x8, x12
-    
+
     ld1w {z16.S}, p0/z, [x8]
     fmopa za0.s, p0/m, p0/m, z16.s, z8.s
     add x8, x8, x12
-
 
     ld1w {z16.S}, p0/z, [x8]
     fmopa za1.s, p0/m, p0/m, z16.s, z9.s
     add x8, x8, x12
 
-
     ld1w {z16.S}, p0/z, [x8]
     fmopa za2.s, p0/m, p0/m, z16.s, z10.s
-
     add x8, x8, x12
         
     ld1w {z16.S}, p0/z, [x8]
     fmopa za3.s, p0/m, p0/m, z16.s, z11.s
     add x8, x8, x12
 
-
     ld1w {z16.S}, p0/z, [x8]
     fmopa za0.s, p0/m, p0/m, z16.s, z12.s
     add x8, x8, x12
-
 
     ld1w {z16.S}, p0/z, [x8]
     fmopa za1.s, p0/m, p0/m, z16.s, z13.s
     add x8, x8, x12
 
-
     ld1w {z16.S}, p0/z, [x8]
     fmopa za2.s, p0/m, p0/m, z16.s, z14.s
-
     add x8, x8, x12
         
     ld1w {z16.S}, p0/z, [x8]
     fmopa za3.s, p0/m, p0/m, z16.s, z15.s
     add x8, x8, x12
 
+    sub x7, x7, x11, lsl #4  // back up 16 rows
+    add x7, x7, #64          // advance k by 16 floats
 
     subs x9, x9, #16
     b.ne K_loop
 
 
     // store C
-    mov w12, #0
-    mov w13, #4
-    mov w14, #8
-    mov w15, #12
+    // mov w12, #0
+    // mov w13, #4
+    // mov w14, #8
+    // mov w15, #12
+    // mov x9, #64
+    // mov x16, #128
+    // mov x17, #192
     mov w8, #0
     mov x6, x2
-    mov x9, #64
-    mov x16, #128
-    mov x17, #192
 
     .rept 4
     mova { z0.s - z3.s }, za.s[w8, 1 , VGx4]
@@ -213,24 +201,23 @@ K_loop:
     fadd za.s[w8,0,VGx4], {z8.s - z11.s}
     add w8, w8, #4;
 
-    st1w { za0h.S[w12, 0] }, p0, [x6]
-    add w12, w12, #1
-    st1w { za0h.S[w13, 0] }, p0, [x6, x9, LSL #2]
-    add w13, w13, #1
-    st1w { za0h.S[w14, 0] }, p0, [x6, x16, LSL #2]
-    add w14, w14, #1
-    st1w { za0h.S[w15, 0] }, p0, [x6, x17, LSL #2]
-    add w15, w15, #1
-    add x6, x6, x10
-
+    // st1w { za0h.S[w12, 0] }, p0, [x6]
+    // add w12, w12, #1
+    // st1w { za0h.S[w13, 0] }, p0, [x6, x9, LSL #2]
+    // add w13, w13, #1
+    // st1w { za0h.S[w14, 0] }, p0, [x6, x16, LSL #2]
+    // add w14, w14, #1
+    // st1w { za0h.S[w15, 0] }, p0, [x6, x17, LSL #2]
+    // add w15, w15, #1
+    // add x6, x6, x10
     .endr
 
-    // mov w13, #0
-    // .rept 16
-    // st1w { za0h.S[w13, 0] }, p0, [x6]
-    // add w13, w13, #1
-    // add x6, x6, x10
-    // .endr 
+    mov w13, #0
+    .rept 16
+    st1w { za0h.S[w13, 0] }, p0, [x6]
+    add w13, w13, #1
+    add x6, x6, x10
+    .endr 
 
     smstop
     ldp d14, d15, [sp], #16
