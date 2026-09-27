@@ -98,26 +98,19 @@ The following executables are provided:
 
 ### neon (Week 2)
 
-To build the source code of the `neon` subdirectory, execute the following commands:
-```
-cd neon/src
-make
-```
+The `neon` subdirectory is built by the top-level CMake build described above.
 
-The following executables are provided:
+The following executables are provided in `build/neon`:
 - `benchmark_driver`: Executes the microbenchmarks.
-- `permutation_driver`: Benchmarks the implementation of `permutation`.
+- `permutation_driver`: Verifies and benchmarks the `permutation` kernels for several sizes of `c`.
+- `permutation_tests`: Executes the unit tests for the `permutation` kernels.
 
 
 ### assembly (Week 1)
 
-To build the source code of the `assembly` subdirectory, execute the following commands:
-```
-cd assembly/src
-make
-```
+The `assembly` subdirectory is built by the top-level CMake build described above.
 
-The following executables are provided:
+The following executables are provided in `build/assembly`:
 - `base_math_driver`: Executes the unit tests for the implemented functions.
 
 
