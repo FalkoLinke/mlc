@@ -21,6 +21,8 @@ documentation for details.
    weeks/week05
    weeks/week06
    weeks/week07
+   weeks/week08
+   weeks/group_specific
 
 
 

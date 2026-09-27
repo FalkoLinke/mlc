@@ -1,6 +1,6 @@
 # Code Generation
 
-## Kernel creation
+## Kernel creation - week 5
 
 Implement your SSVE and SME kernels using just-in-time code generation.
 
@@ -9,7 +9,7 @@ Implement your SSVE and SME kernels using just-in-time code generation.
    1. Convert the mnemonics of your `identity_16_16`, `zero_16_16`, `relu_16_16`, and `gemm_512_512_512` kernels to instruction words.
    2. Verify and benchmark your kernels.
 
-## Code Generation
+## Code Generation - week 6
 
 The provided header files [Unary.h](data/Unary.h) and [Gemm.h](data/Gemm.h) specify the interface for the kernel generator. The `generate` function generates a kernel, and `get_kernel` returns a function pointer to the kernel.
 

@@ -1,4 +1,4 @@
-# Tiled Execution Intermediate Representation
+# Tiled Execution Intermediate Representation - week 7
 
 The Tiled Execution Intermediate Representation (TEIR) is a descriptive way to express tensor operations. TEIR consists of axes, primitives and schedules in form of iteration and invocation nodes. See [TEIR](https://tnzr.org/compile/chapters/teir.html) for further details.
 
@@ -11,7 +11,7 @@ The Tiled Execution Intermediate Representation (TEIR) is a descriptive way to e
     - [matmul.teir](data/matmul.teir): A blocked matrix multiplication kernel $mk,kn \rightarrow mn$ with $(8192, 8192, 8192)$ as $m_0k_0m_1k_1,k_0n_0k_1n_1 \rightarrow m_0n_0m_1n_1$ with $(256,32,128,64,16,512)$.
     - [contraction.teir](data/contraction.teir): A tensor contraction kernel $pqtu,trus \rightarrow pqrs$ with $(128, 96, 96, 64, 32, 256)$.
 
-## Optimization
+## Optimization - week 8
 
 TEIR can be adjusted through the following transformations:
  - Split Iteration Node
