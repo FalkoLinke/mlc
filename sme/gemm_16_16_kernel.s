@@ -28,7 +28,7 @@
 FUNCLABEL(gemm_16_16):
 
 
-    //smstart
+    smstart
     ptrue p0.s, vl16
 
     // K Variables loop counter in x29
@@ -36,7 +36,7 @@ FUNCLABEL(gemm_16_16):
     mov x7, x0
     lsl x11, x3, #2
     mov x8, x1
-    lsl x12, x4, #2
+    lsl x17, x4, #2                      // ld_b * 4, x12 is used as ZA tile selector
 
     // load C
     mov w12, #0
@@ -68,7 +68,7 @@ K_loop:
     fmopa za0.s, p0/m, p0/m, z2.s, z0.s
 
     add x7, x7, x11
-    add x8, x8, x12
+    add x8, x8, x17
 
     subs x9, x9, #1
     cbnz x9, K_loop
@@ -95,6 +95,6 @@ K_loop:
 
     .endr
 
-    //smstop
+    smstop
     
     ret

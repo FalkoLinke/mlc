@@ -34,6 +34,27 @@ Unary::error_t Unary::generate_16x16_microkernel(Unary::ptype_t op, uint32_t tra
 
     InstGen ig;
 
+    // Without a transpose the data does not have to be routed through the ZA tile:
+    // each row is loaded into a vector register, processed and stored directly.
+    // The `zero` primitive is handled by the ZA path below, since its ZA tile is
+    // zeroed once outside of the microkernel.
+    if (op != ptype_t::zero && trans_b == 0) {
+        kernel.add_instr(ig.base_movz(gpr_t::x6, 0));
+        kernel.add_instr(ig.base_movz(gpr_t::x7, 0));
+        for (uint32_t c = 0; c < 16; c++) {
+            sve_zr_t zr = (sve_zr_t)((sve_zr_t::z0 + c) % 8);
+            kernel.add_instr(ig.sve_ld1w(zr, pr_t::p0, gpr_t::x0, gpr_t::x6));
+            kernel.add_instr(ig.base_add(gpr_t::x6, gpr_t::x6, gpr_t::x2));
+            if (op == ptype_t::relu) {
+                kernel.add_instr(ig.sve_fmax(zr, sve_size_t::s, pr_t::p0, 0));
+            }
+            kernel.add_instr(ig.sve_st1w(zr, sve_size_t::s, pr_t::p0, gpr_t::x1, gpr_t::x7));
+            kernel.add_instr(ig.base_add(gpr_t::x7, gpr_t::x7, gpr_t::x3));
+        }
+
+        return Unary::error_t::success;
+    }
+
     // load 16x16 matrix
     if (op == ptype_t::identity) {
         kernel.add_instr(ig.base_movz(gpr_t::x6, 0));

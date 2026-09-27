@@ -58,6 +58,20 @@ if(OpenMP_FOUND)
     target_link_libraries(gemm_driver_16_16_multi PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
+add_executable(gemm_tests gemm_tests.cpp
+    gemm_16_16_kernel.s
+    gemm_32_32_1_kernel.s
+    gemm_32_32_512_kernel.s
+    gemm_512_32_512_kernel.s
+    gemm_512_512_512_kernel.s
+    gemm_M_N_K_16th_kernel.s
+)
+target_compile_options(gemm_tests PRIVATE ${CXX_FLAGS})
+target_link_libraries(gemm_tests PRIVATE Catch2::Catch2WithMain mlc_common)
+mlc_add_sme_tests(gemm_tests)
+
+
+
 add_executable(gemm_driver_16_16 gemm_driver_16_16.cpp gemm_16_16_kernel.s)
 target_compile_options(gemm_driver_16_16 PRIVATE ${CXX_FLAGS})
 

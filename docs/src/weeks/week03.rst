@@ -88,15 +88,29 @@ The RELU operation copies the input 16x16 matrix to the target matrix while
 setting all negative entries to zero.
 Furthermore the output matrix may optionally be transposed in the process.
 
-We implement the RELU operation by first copying the input matrix to the output matrix
-using our previous 16x16 identity operation.
-Negative entries are then set to zero by looping over the rows of the output matrix,
-and using the ``fmax`` instruction of the following form::
+Our first implementation copied the input matrix to the output matrix using our 16x16
+``identity`` operation and afterwards set the negative entries of the output matrix to zero
+in a second pass. This moved every element twice: once for the copy and once more for the
+maximum. Since the kernel is limited by memory bandwidth and not by arithmetic, the second
+pass roughly doubled its runtime.
 
+The current implementation therefore performs the operation in a single pass. Each row is
+loaded into a vector register, the maximum is applied while the data is still in the register,
+and the result is written to the output matrix::
+
+    ld1w z0.s, p0/z, [x0]
     fmax z0.s, p0/m, z0.s, #0.0
+    st1w z0.s, p0, [x1]
 
-We optimized our implementation by loading and processing four rows of the matrix in one 
-loop iteration.
+If a transposed output is requested, the transposition is performed through the ZA tile.
+Each row is loaded into a vector register, the ``fmax`` is applied, and the row is then moved
+into a horizontal slice of ``za0.s``. Afterwards the vertical slices of the tile are written
+to the output matrix, which yields the transposed result.
+In this case one additional register-to-register move per row is unavoidable, because
+``fmax`` operates on vector registers while the transposition requires the data to pass
+through the ZA tile.
+
+In the transposing case four rows are loaded and processed per loop iteration.
 
 
 
@@ -147,6 +161,38 @@ to compute the partial results for this specific tile.
 
 
 
+Verification
+------------
+
+All kernels of this week are tested with `Catch2 <https://github.com/catchorg/Catch2>`_.
+The tests are registered with CTest and are executed by ``ctest`` together with the tests
+of the other weeks.
+
+The unary kernels are tested in ``sme/unary_tests.cpp`` against the reference implementations
+in ``common/mlc_common.hpp``. Besides the dense 16x16 case, each kernel is also applied to a
+16x16 submatrix of a 512x512 matrix. These tests verify that a kernel writes its own submatrix
+only and does not touch the surrounding elements.
+
+The GEMM kernels are tested in ``sme/gemm_tests.cpp``. Every kernel is executed on random
+matrices and compared against the reference GEMM ``gemm_ref``, which accumulates in ``double``.
+The comparison uses a relative tolerance of :math:`10^{-4}`, since the kernels accumulate in FP32.
+
+Writing these tests uncovered two problems in ``gemm_16_16``:
+
+* The kernel did not execute ``smstart``, so calling it from a driver raised an illegal
+  instruction exception.
+* The register ``x12`` was used both for the scaled leading dimension of B and as the ZA tile
+  selector, so the stride was overwritten before the K loop used it. The kernel produced
+  correct results only because the overwritten value happened to match the stride of a
+  densely stored B with :math:`n = 16`. The leading dimension of B is now kept in ``x17``.
+
+The tests also document a limitation of the kernels of this week. They are written for fixed
+matrix shapes and derive their loop bounds from the leading dimensions, which requires A and B
+to be stored densely (:math:`ld_a = m`, :math:`ld_b = n`). Only ``gemm_512_32_512`` supports a
+leading dimension of C larger than :math:`m`. The code generator of week 6 does not have this
+restriction.
+
+
 Benchmarks
 ----------
 
@@ -162,14 +208,45 @@ determine the number of bytes processed per second ``v`` as follows::
 
     v = s / t
 
-When executing our benchmarks on the ``edward.inf-ra.uni-jena.de`` machine,
-we obtain the following results:
+The following results were obtained on the ``edward.inf-ra.uni-jena.de`` machine with our
+first implementation, in which the transposing kernels and the ``relu`` kernel moved the
+data twice:
 
 * ``identity``: 35.3 GiBs
 * transposing ``identity``: 1.05 GiBs
 * ``zero``: 65.49 GiBs
 * ``relu``: 1.55 GiBs
 * transposing ``relu``: 0.99 GiBs
+
+After rewriting the transposing kernels to use the ZA tile and the ``relu`` kernel to apply
+``fmax`` in a single pass, we measured the current implementation on an Apple M4:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Kernel
+     - GiB/s
+   * - ``identity``
+     - 8.21
+   * - transposing ``identity``
+     - 10.66
+   * - ``zero``
+     - 16.58
+   * - ``relu``
+     - 11.12
+   * - transposing ``relu``
+     - 10.01
+
+The two machines cannot be compared directly, so the absolute values differ from the
+measurements above. What the rewrite changed is the relation between the kernels:
+in the first implementation the transposing kernels and ``relu`` were more than an order of
+magnitude slower than ``identity``, while they now all achieve a comparable bandwidth.
+
+All of these kernels operate on a single 16x16 matrix, which is only 1 KiB of data.
+Each call therefore enters and leaves streaming mode with ``smstart`` and ``smstop``,
+and the cost of these two instructions dominates the measurement.
+This is the reason why the values are far below the bandwidth reached by the generated
+kernels of week 6, which process much larger matrices per call.
 
 
 

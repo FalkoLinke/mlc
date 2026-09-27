@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <iostream>
 #include <math.h>
+#include <cmath>
+#include <algorithm>
 
 
 
@@ -216,6 +218,69 @@ void print_mat(T const* a, uint64_t m, uint64_t n, int64_t lda) {
     }
 }
 
+
+
+
+/**
+ * @brief Reference implementation of a GEMM computing C += A * B.
+ *
+ * The accumulation is performed in `double` in order to provide a more accurate
+ * result than the kernels, which accumulate in FP32.
+ *
+ * @param a: The column major matrix A with m rows and k columns.
+ * @param b: The row major matrix B with k rows and n columns.
+ * @param c: The column major matrix C with m rows and n columns.
+ * @param m: The number of rows of A and C.
+ * @param n: The number of columns of B and C.
+ * @param k: The number of columns of A and rows of B.
+ * @param lda: The leading dimension of A.
+ * @param ldb: The leading dimension of B.
+ * @param ldc: The leading dimension of C.
+ */
+template <typename T>
+void gemm_ref(T const* a, T const* b, T* c,
+              uint64_t m, uint64_t n, uint64_t k,
+              int64_t lda, int64_t ldb, int64_t ldc) {
+    for (uint64_t col = 0; col < n; col++) {
+        for (uint64_t row = 0; row < m; row++) {
+            double sum = 0.0;
+            for (uint64_t i = 0; i < k; i++) {
+                sum += static_cast<double>(*(a + i * lda + row)) * static_cast<double>(*(b + i * ldb + col));
+            }
+            *(c + col * ldc + row) += static_cast<T>(sum);
+        }
+    }
+}
+
+
+/**
+ * @brief Determines the largest relative deviation between the m x n matrices A and B.
+ *
+ * Elements whose reference value is close to zero are compared absolutely.
+ *
+ * @param a: The column major matrix A.
+ * @param b: The column major reference matrix B.
+ * @param m: The number of rows of A and B.
+ * @param n: The number of columns of A and B.
+ * @param lda: The leading dimension of A.
+ * @param ldb: The leading dimension of B.
+ */
+template <typename T>
+double max_rel_diff(T const* a, T const* b, uint64_t m, uint64_t n, int64_t lda, int64_t ldb) {
+    double max_diff = 0.0;
+    for (uint64_t c = 0; c < n; c++) {
+        for (uint64_t r = 0; r < m; r++) {
+            double const va = static_cast<double>(*(a + c * lda + r));
+            double const vb = static_cast<double>(*(b + c * ldb + r));
+            double const scale = std::abs(vb) > 1.0 ? std::abs(vb) : 1.0;
+            double const diff = std::abs(va - vb) / scale;
+            if (diff > max_diff) {
+                max_diff = diff;
+            }
+        }
+    }
+    return max_diff;
+}
 
 
 #endif /*COMMON_MLC_COMMON_HPP*/

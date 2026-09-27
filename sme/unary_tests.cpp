@@ -88,7 +88,7 @@ void ref_relu_16_16(float const* a, float* b, int64_t ld_a, int64_t ld_b, int32_
 
 
 
-TEST_CASE("test01", "[test]") {
+TEST_CASE("identity_16_16 copies a dense matrix", "[sme][unary]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -102,7 +102,7 @@ TEST_CASE("test01", "[test]") {
     REQUIRE(result);
 }
 
-TEST_CASE("test02", "[test]") {
+TEST_CASE("zero_16_16 clears a dense matrix", "[sme][unary]") {
     float a[16 * 16];
     float b[16 * 16];
 
@@ -116,7 +116,7 @@ TEST_CASE("test02", "[test]") {
     REQUIRE(result);
 }
 
-TEST_CASE("test03", "[test]") {
+TEST_CASE("identity_16_16 matches the reference", "[sme][unary]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -130,7 +130,7 @@ TEST_CASE("test03", "[test]") {
     REQUIRE(result);
 }
 
-TEST_CASE("test04", "[test]") {
+TEST_CASE("transposing identity_16_16 matches the reference", "[sme][unary]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -144,7 +144,7 @@ TEST_CASE("test04", "[test]") {
     REQUIRE(result);
 }
 
-TEST_CASE("test05", "[test]") {
+TEST_CASE("relu_16_16 matches the reference", "[sme][unary]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -161,7 +161,7 @@ TEST_CASE("test05", "[test]") {
     REQUIRE(result);
 } 
 
-TEST_CASE("test06", "[test]") {
+TEST_CASE("transposing relu_16_16 matches the reference", "[sme][unary]") {
     float a[16 * 16];
     float b[16 * 16];
     float exp[16 * 16];
@@ -178,7 +178,7 @@ TEST_CASE("test06", "[test]") {
     REQUIRE(result);
 } 
 
-TEST_CASE("test07", "[test]") {
+TEST_CASE("zero_16_16 only clears its submatrix", "[sme][unary]") {
     int const rows = 512;
     float a[rows * rows];
     float b[rows * rows];
@@ -195,7 +195,7 @@ TEST_CASE("test07", "[test]") {
     REQUIRE(result);
 }
 
-TEST_CASE("test08", "[test]") {
+TEST_CASE("identity_16_16 only writes its submatrix", "[sme][unary]") {
     int const rows = 512;
     float a[rows * rows];
     float b[rows * rows];
@@ -213,7 +213,7 @@ TEST_CASE("test08", "[test]") {
     REQUIRE(result);
 }
 
-TEST_CASE("test09", "[test]") {
+TEST_CASE("transposing identity_16_16 only writes its submatrix", "[sme][unary]") {
     int const rows = 512;
     float a[rows * rows];
     float b[rows * rows];
@@ -231,7 +231,7 @@ TEST_CASE("test09", "[test]") {
     REQUIRE(result);
 }
 
-TEST_CASE("test10", "[test]") {
+TEST_CASE("relu_16_16 only writes its submatrix", "[sme][unary]") {
     int const rows = 512;
     int sub_off = rows / 4 + rows / 4 * rows;
 
@@ -253,7 +253,7 @@ TEST_CASE("test10", "[test]") {
     REQUIRE(result);
 } 
 
-TEST_CASE("test11", "[test]") {
+TEST_CASE("transposing relu_16_16 only writes its submatrix", "[sme][unary]") {
     int const rows = 512;
     int sub_off = rows / 4 + rows / 4 * rows;
     

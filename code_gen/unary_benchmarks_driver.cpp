@@ -4,7 +4,7 @@
 #include "unary_kernels.h"
 
 
-int counter = 0;
+uint64_t counter = 0;   // the benchmarks execute more than 2^31 iterations
 
 
 
