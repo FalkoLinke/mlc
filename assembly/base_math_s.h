@@ -1,6 +1,8 @@
 #ifndef ASSEMBLY_BASE_MATH_S_H
 #define ASSEMBLY_BASE_MATH_S_H
 
+#include <cstdint>
+
 extern "C" {
 
 

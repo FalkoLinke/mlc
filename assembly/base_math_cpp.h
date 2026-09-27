@@ -1,6 +1,8 @@
 #ifndef ASSEMBLY_BASE_MATH_CPP_H
 #define ASSEMBLY_BASE_MATH_CPP_H
 
+#include <cstdint>
+
 
 
 int64_t inner_product_cpp(uint32_t const *i_a,

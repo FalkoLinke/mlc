@@ -1,95 +1,98 @@
-	.global _add
-_add:
-	add x0, x0, x1
-	ret
+#ifdef __APPLE__
+#define FUNCLABEL(NAME) _##NAME
+#else
+#define FUNCLABEL(NAME) NAME
+#endif /* __APPLE__ */
+
+
+    .text
+
+
+
+/*
+int32_t add(int32_t const a,
+            int32_t const b);
+*/
+    .global FUNCLABEL(add)
+FUNCLABEL(add):
+    add w0, w0, w1
+    ret
 
 
 
 
-; int64_t inner_product(uint32_t const *i_a,
-;                       uint32_t const *i_b,
-;                       uint32_t const i_size); 
-	.global _inner_product
-_inner_product:
-	mov x3, x2	; x3 - size
-	mov x2, x1	; x2 - ptr to b
-	mov x1, x0	; x1 - ptr to a
-	mov x0, #0	; x0 - result register
+/*
+int64_t inner_product(uint32_t const *i_a,
+                      uint32_t const *i_b,
+                      uint32_t const  i_size);
 
-loop01:
-	cmp x3, #0
-	beq end01 
-	
-	ldr w4, [x1]
-	ldr w5, [x2]
-	mul w4, w4, w5
-	adds w0, w0, w4	
+x0 - pointer to a
+x1 - pointer to b
+w2 - size (counts down to zero)
+x3 - accumulated result
+w4 - current element of a
+w5 - current element of b
+x6 - product of the current elements
+*/
+    .global FUNCLABEL(inner_product)
+FUNCLABEL(inner_product):
+    mov x3, #0
+    cbz w2, inner_product_end
 
-	adds x1, x1, #4
-	adds x2, x2, #4
-	subs x3, x3, #1
-	b loop01
-end01:
-	ret
+inner_product_loop:
+    ldr w4, [x0], #4                        // load a[i], advance pointer
+    ldr w5, [x1], #4                        // load b[i], advance pointer
+    umull x6, w4, w5                        // widening 32x32 -> 64 bit multiply
+    add x3, x3, x6
+    subs w2, w2, #1
+    b.ne inner_product_loop
 
-
-
-
-
-
-; void outer_product(uint32_t const *i_a,
-;                    uint32_t const *i_b,
-;                    uint32_t const i_size,
-;                    uint64_t *o_c); 
-	.global _outer_product
-_outer_product:
-	mov x4, x2
-	mov x2, x3
-	mov x3, x4
-	mov x6, x1
-
-	; x0 - ptr to a
-	; x1 - ptr to b
-	; x2 - ptr to c
-	; x3 - size
-	; x4 - row counter
-	; x5 - column counter
-	; x6 - copy of base ptr to b
-
-	mov x4, x3
-loop02:
-	cmp x4, #0
-	beq end02	
-
-
-	mov x1, x6
-	mov x5, x3
-loop03:
-	cmp x5, #0
-	beq end03
-
-	mov x7, #0
-	mov x20, #0
-	ldr w7, [x0]
-	ldr w20, [x1]
-	mul x7, x7, x20
-	str x7, [x2]
-
-	adds x2, x2, #8
-
-	adds x1, x1, #4
-	subs x5, x5, #1
-	b loop03
-end03:
-
-	adds x0, x0, #4
-	subs x4, x4, #1
-	b loop02
-end02:
-	ret
+inner_product_end:
+    mov x0, x3
+    ret
 
 
 
 
+/*
+void outer_product(uint32_t const *i_a,
+                   uint32_t const *i_b,
+                   uint32_t const  i_size,
+                   uint64_t       *o_c);
 
+Only caller-saved scratch registers (x0 - x15) are used,
+therefore no registers have to be saved on the stack.
 
+x0 - pointer to the current element of a
+x1 - base pointer to b
+w2 - size
+x3 - pointer to the current element of c
+w4 - row counter
+w5 - column counter
+x6 - pointer to the current element of b
+w7 - current element of a
+w8 - current element of b
+x9 - product of the current elements
+*/
+    .global FUNCLABEL(outer_product)
+FUNCLABEL(outer_product):
+    cbz w2, outer_product_end
+
+    mov w4, w2
+outer_product_row_loop:
+    ldr w7, [x0], #4                        // load a[row], advance pointer
+    mov x6, x1                              // restart at b[0]
+    mov w5, w2
+
+outer_product_col_loop:
+    ldr w8, [x6], #4                        // load b[col], advance pointer
+    umull x9, w7, w8                        // widening 32x32 -> 64 bit multiply
+    str x9, [x3], #8                        // store c[row * size + col], advance pointer
+    subs w5, w5, #1
+    b.ne outer_product_col_loop
+
+    subs w4, w4, #1
+    b.ne outer_product_row_loop
+
+outer_product_end:
+    ret
