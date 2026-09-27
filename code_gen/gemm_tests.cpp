@@ -80,7 +80,8 @@ void verify_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t lda, uint32_t ldb,
         print_mat(exp.data(), c_d1, c_d2, ldc);
     }
 
-    float diff = max_abs_diff(c.data(), exp.data(), c.size());
+    // relative comparison: the sums of large k are affected by the FP32 accumulation order
+    double diff = max_rel_diff(c.data(), exp.data(), c_d1, c_d2, ldc, ldc);
     REQUIRE(diff < 1e-4);
 }
 
@@ -171,3 +172,45 @@ TEST_CASE("test nonmultiples of 32", "[test]") {
 
 
 
+
+TEST_CASE("test task settings m, n, k in {64, 128, 512}", "[test]") {
+    uint32_t const sizes[] = {64, 128, 512};
+    for (uint32_t trans_a = 0; trans_a <= 1; trans_a++) {
+        for (uint32_t trans_b = 0; trans_b <= 1; trans_b++) {
+            for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
+                for (uint32_t m : sizes) {
+                    for (uint32_t n : sizes) {
+                        for (uint32_t k : sizes) {
+                            uint32_t lda = trans_a ? k : m;
+                            uint32_t ldb = trans_b ? n : k;
+                            uint32_t ldc = trans_c ? n : m;
+
+                            verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("test odd sizes", "[test]") {
+    uint32_t const sizes[] = {1, 7, 13, 17, 33, 50};
+    for (uint32_t trans_a = 0; trans_a <= 1; trans_a++) {
+        for (uint32_t trans_b = 0; trans_b <= 1; trans_b++) {
+            for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
+                for (uint32_t m : sizes) {
+                    for (uint32_t n : sizes) {
+                        for (uint32_t k : sizes) {
+                            uint32_t lda = trans_a ? k : m;
+                            uint32_t ldb = trans_b ? n : k;
+                            uint32_t ldc = trans_c ? n : m;
+
+                            verify_gemm(m, n, k, lda, ldb, ldc, trans_a, trans_b, trans_c);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

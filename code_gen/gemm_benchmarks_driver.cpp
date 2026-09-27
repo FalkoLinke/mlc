@@ -1,5 +1,7 @@
 #include <iostream>
 #include <chrono>
+#include <string>
+#include <vector>
 
 #include "Gemm.h"
 
@@ -19,7 +21,6 @@ void benchmark_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32
         return;
     }
     mini_jit::Gemm::kernel_t kernel = gemm.get_kernel();
-    gemm.write("test.bin");
 
     // allocate memory
     uint32_t a_d1 = trans_a ? k : m;
@@ -79,23 +80,50 @@ void benchmark_gemm(uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32
 
 
 
-int main() {
-    std::cout << "m\t\tn\t\tk\t\ttrans_a\t\ttrans_b\t\ttrans_c\t\tGFlops\t\tDuration [s]" << std::endl;
-
-    for (uint32_t trans_a = 0; trans_a <= 1; trans_a++) {
-        for (uint32_t trans_b = 0; trans_b <= 1; trans_b++) {
-            for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
-                benchmark_gemm(8, 8, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
-                benchmark_gemm(16, 16, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
-                benchmark_gemm(24, 24, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
-                benchmark_gemm(32, 32, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
-                benchmark_gemm(48, 48, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
-                benchmark_gemm(64, 64, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
-                benchmark_gemm(300, 300, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
-                benchmark_gemm(512, 512, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+/**
+ * Benchmarks the 27 settings required by the task: m, n, k in {64, 128, 512}
+ * with column-major A, row-major B and column-major C.
+ */
+void benchmark_task_settings() {
+    uint32_t const sizes[] = {64, 128, 512};
+    for (uint32_t m : sizes) {
+        for (uint32_t n : sizes) {
+            for (uint32_t k : sizes) {
+                benchmark_gemm(m, n, k, 0, 1, 0, mini_jit::Gemm::dtype_t::fp32);
             }
         }
     }
+}
 
+/**
+ * Benchmarks all eight storage formats of A, B and C for square matrices of different sizes.
+ */
+void benchmark_layouts() {
+    uint32_t const sizes[] = {8, 16, 24, 32, 48, 64, 300, 512};
+    for (uint32_t trans_a = 0; trans_a <= 1; trans_a++) {
+        for (uint32_t trans_b = 0; trans_b <= 1; trans_b++) {
+            for (uint32_t trans_c = 0; trans_c <= 1; trans_c++) {
+                for (uint32_t size : sizes) {
+                    benchmark_gemm(size, size, 512, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32);
+                }
+            }
+        }
+    }
+}
+
+int main(int argc, char** argv) {
+    std::string const mode = argc > 1 ? argv[1] : "all";
+    if (mode != "all" && mode != "task" && mode != "layouts") {
+        std::cerr << "usage: " << argv[0] << " [all|task|layouts]" << std::endl;
+        return 1;
+    }
+
+    std::cout << "m\t\tn\t\tk\t\ttrans_a\t\ttrans_b\t\ttrans_c\t\tGFlops\t\tDuration [s]" << std::endl;
+    if (mode == "all" || mode == "task") {
+        benchmark_task_settings();
+    }
+    if (mode == "all" || mode == "layouts") {
+        benchmark_layouts();
+    }
     return 0;
 }
