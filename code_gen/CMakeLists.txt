@@ -41,6 +41,7 @@ target_link_libraries(main.out PRIVATE code_gen mlc_common)
 add_executable(unary_tests.out unary_tests.cpp KernelFactory.cpp unary_kernels.cpp)
 target_compile_options(unary_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(unary_tests.out PRIVATE Catch2::Catch2 code_gen mlc_common)
+mlc_add_sme_tests(unary_tests.out)
 
 add_executable(unary_benchmarks_driver.out unary_benchmarks_driver.cpp KernelFactory.cpp unary_kernels.cpp)
 target_compile_options(unary_benchmarks_driver.out PRIVATE ${CXX_FLAGS})
@@ -61,13 +62,14 @@ add_executable(gemm_driver_512_512_512.out gemm_driver_512_512_512.cpp gemm_kern
 target_compile_options(gemm_driver_512_512_512.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(gemm_driver_512_512_512.out PRIVATE code_gen mlc_common)
 
-add_executable(gemm_driver_M_N_K.out gemm_driver_M_N_K.cpp)
+add_executable(gemm_driver_M_N_K.out gemm_driver_m_n_k.cpp)
 target_compile_options(gemm_driver_M_N_K.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(gemm_driver_M_N_K.out PRIVATE code_gen mlc_common)
 
 add_executable(gemm_tests.out gemm_tests.cpp)
 target_compile_options(gemm_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(gemm_tests.out PRIVATE code_gen mlc_common Catch2::Catch2WithMain)
+mlc_add_sme_tests(gemm_tests.out)
 
 add_executable(gemm_benchmarks_driver.out gemm_benchmarks_driver.cpp)
 target_compile_options(gemm_benchmarks_driver.out PRIVATE ${CXX_FLAGS})

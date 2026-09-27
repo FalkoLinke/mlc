@@ -18,6 +18,7 @@ set_source_files_properties(${KERNELS} PROPERTIES COMPILE_FLAGS "-x assembler-wi
 add_executable(base_math_driver base_math_driver.cpp base_math.cpp ${KERNELS})
 target_compile_options(base_math_driver PRIVATE ${CXX_FLAGS})
 target_link_libraries(base_math_driver PRIVATE Catch2::Catch2WithMain)
+mlc_add_tests(base_math_driver)
 
 
 

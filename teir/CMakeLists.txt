@@ -15,6 +15,7 @@ add_executable(teir_interpreter_tests.out
 )
 target_compile_options(teir_interpreter_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(teir_interpreter_tests.out PRIVATE Catch2::Catch2WithMain code_gen mlc_common)
+mlc_add_sme_tests(teir_interpreter_tests.out)
 
 
 
@@ -27,6 +28,7 @@ add_executable(teir_compiler_tests.out
 )
 target_compile_options(teir_compiler_tests.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(teir_compiler_tests.out PRIVATE Catch2::Catch2WithMain code_gen mlc_common)
+mlc_add_sme_tests(teir_compiler_tests.out)
 
 
 

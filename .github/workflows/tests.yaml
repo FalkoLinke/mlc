@@ -1,0 +1,41 @@
+name: "Build and test"
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    # arm64 runner, hosted runners do not support SME:
+    # SME and JIT tests are built but only registered with ctest on hosts supporting SME
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: brew install cmake llvm libomp
+
+      # same commands as in README.md ("Build commands using homebrew clang and openmp")
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          /opt/homebrew/opt/cmake/bin/cmake -D CMAKE_CXX_COMPILER="/opt/homebrew/opt/llvm/bin/clang++" -D CMAKE_PREFIX_PATH="/opt/homebrew/opt/libomp;$CMAKE_PREFIX_PATH" ..
+
+      - name: Build
+        run: |
+          cd build
+          /opt/homebrew/opt/cmake/bin/cmake --build . -j 3
+
+      - name: Test
+        run: |
+          cd build
+          /opt/homebrew/opt/cmake/bin/ctest --output-on-failure

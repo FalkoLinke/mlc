@@ -20,6 +20,13 @@ cd build
 /opt/homebrew/opt/cmake/bin/cmake --build .
 ```
 
+Run all unit tests (Catch2, registered with CTest) from the `build` directory:
+```
+/opt/homebrew/opt/cmake/bin/ctest --output-on-failure
+```
+SME and JIT tests are only registered on processors supporting SME (e.g. Apple M4).
+Use `-D MLC_SME_TESTS=ON|OFF` when configuring to override the detection.
+
 
 
 
