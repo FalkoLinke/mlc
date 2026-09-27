@@ -149,8 +149,8 @@ int main() {
     benchmark_gemm_kernel(desc_gemm_16_16_ref_single_k, 10000000);
     benchmark_gemm_kernel(desc_gemm_16_16_multiple_k, 10000000);
     benchmark_gemm_kernel(desc_gemm_16_16_multiple_k_v2, 10000000);
-    benchmark_gemm_kernel(desc_gemm_16_16_trSME_mk, 10000000);
     benchmark_gemm_kernel(desc_gemm_16_16_trZA_mk, 10000000);
+    benchmark_gemm_kernel(desc_gemm_16_16_trSME_mk, 10000000);
     benchmark_gemm_kernel(desc_gemm_512_512_trZA, 10000);
     benchmark_gemm_kernel(desc_gemm_512_512_trSME, 10000);
 

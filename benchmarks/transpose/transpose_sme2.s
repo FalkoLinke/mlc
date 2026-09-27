@@ -57,9 +57,9 @@ _transpose_16x16_fp32_sme2:
 
     uzp1 z26.d, z16.d, z18.d
     uzp2 z27.d, z16.d, z18.d
-    // 2. Transponiere sie an die korrekten 128-Bit-Positionen
-    trn1 z28.d, z26.d, z27.d   // z0 ist jetzt exakt das Ergebnis deines 'uzp1 .q'
-    trn2 z30.d, z26.d, z27.d   // z1 ist jetzt exakt das Ergebnis deines 'uzp2 .q'
+
+    trn1 z28.d, z26.d, z27.d  
+    trn2 z30.d, z26.d, z27.d  
 
 
     uzp1 z26.d, z17.d, z19.d

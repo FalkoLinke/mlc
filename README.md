@@ -28,6 +28,20 @@ SME and JIT tests are only registered on processors supporting SME (e.g. Apple M
 Use `-D MLC_SME_TESTS=ON|OFF` when configuring to override the detection.
 
 
+## Continuous Integration
+
+
+The GitHub Actions workflow ``.github/workflows/tests.yaml`` builds the whole project on every push
+and pull request using the build commands from the ``README.md`` and runs all tests with ``ctest``.
+The hosted ``macos-latest`` runners are arm64 machines without SME support.
+CMake detects whether the host supports SME (``sysctl hw.optional.arm.FEAT_SME`` on macOS,
+``/proc/cpuinfo`` on Linux). On hosts without SME the SME and JIT tests are still built,
+but not registered with CTest, so the pipeline tests the portable parts
+and every test runs on SME capable machines such as the Apple M4.
+
+The documentation workflow ``.github/workflows/sphinx.yaml`` builds this report with
+``sphinx-build -W --keep-going``, so every Sphinx warning fails the pipeline.
+
 
 
 ## Build source code
