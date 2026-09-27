@@ -98,6 +98,7 @@ Benchmark
 ^^^^^^^^^^^^^^^^^^
 
 .. code-block:: none
+
    === TEIR @contraction Interpreter Benchmark ===
 
    Tensor shapes:
@@ -128,6 +129,7 @@ Benchmark
 
 
 .. code-block:: none
+
    === TEIR @matmul Interpreter Benchmark ===
 
    Tensor shapes:
@@ -157,6 +159,7 @@ Benchmark
    worst  4.683 s  ->  234.81 GFLOP/s
 
 .. code-block:: none
+
    === TEIR @transposition Interpreter Benchmark ===
 
    Tensor shapes:

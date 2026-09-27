@@ -29,6 +29,7 @@ the SSVE registers.
 Our implementation for a transposing ``identity`` relies on the fact, that
 the following two commands may be used to transpose 2x2 FP32 matrices stored 
 in the registers ``z0`` and ``z1``::
+
     trn1 z4.s, z0.s, z1.s
     trn2 z5.s, z0.s, z1.s
 
@@ -42,6 +43,7 @@ First we transpose each of the 2x2 submatrices located in the corners of the
 input matrix.
 Then we use the following instructions to transpose the higher-level 
 2x2 matrix of submatrices::
+
     trn1 z0.d, z4.d, z6.d
     trn1 z1.d, z5.d, z7.d
     trn2 z2.d, z4.d, z6.d
@@ -90,6 +92,7 @@ We implement the RELU operation by first copying the input matrix to the output 
 using our previous 16x16 identity operation.
 Negative entries are then set to zero by looping over the rows of the output matrix,
 and using the ``fmax`` instruction of the following form::
+
     fmax z0.s, p0/m, z0.s, #0.0
 
 We optimized our implementation by loading and processing four rows of the matrix in one 
@@ -156,6 +159,7 @@ a given kernel on a contiguous 16x16 FP32 input matrix and a contiguous 16x16 FP
 output matrix while measuring the time taken ``t`` for all repetitions.
 If we let ``s`` be the total number of bytes processed by the kernel, then we
 determine the number of bytes processed per second ``v`` as follows::
+
     v = s / t
 
 When executing our benchmarks on the ``edward.inf-ra.uni-jena.de`` machine,
@@ -174,18 +178,19 @@ GEMM
 ^^^^^^^^^^^^^^^^
 
 
-BENCHMARK ERGEBNISSE.
+We determine the GFLOPS of our GEMM kernels as follows:
 
-```
-double flops_per_call = 2.0 * M * N * K;
-double total_flops = flops_per_call * num_iterations;
-double gflops = (total_flops / 1e9) / duration;
-```
+.. code-block:: c++
+
+   double flops_per_call = 2.0 * M * N * K;
+   double total_flops = flops_per_call * num_iterations;
+   double gflops = (total_flops / 1e9) / duration;
 
 When executing our benchmarks on the ``edward.inf-ra.uni-jena.de`` machine,
 we obtain the following results:
-* ``gemm_kernel_32_32_1 ``: 50.498 GFLOPS
-* ``gemm_kernel_32_32_512 ``: 1824.63 GFLOPS
-* ``gemm_kernel_512_32_512 ``: 1821.79 GFLOPS
-* ``gemm_kernel_512_512_512 ``: 1802.76 GFLOPS
+
+* ``gemm_kernel_32_32_1``: 50.498 GFLOPS
+* ``gemm_kernel_32_32_512``: 1824.63 GFLOPS
+* ``gemm_kernel_512_32_512``: 1821.79 GFLOPS
+* ``gemm_kernel_512_512_512``: 1802.76 GFLOPS
 

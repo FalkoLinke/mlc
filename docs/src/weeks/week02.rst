@@ -75,8 +75,8 @@ on the provided Raspberry Pi machines.
 Permutation
 -------------------------
 
-.. literalinclude:: ../../../neon/src/permutation_kernel.s
-   :language: armasm
+.. literalinclude:: ../../../neon/permutation_kernel.s
+   :language: gas
 
 
 * ``permutation_kernel c=4``:     GiB/s: 31.5954
