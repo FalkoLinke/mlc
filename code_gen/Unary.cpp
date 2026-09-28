@@ -127,6 +127,11 @@ Unary::error_t Unary::generate( uint32_t m, uint32_t n, uint32_t trans_b, dtype_
         return err;
     }
 
+    // smstart and smstop zero the vector registers, so the callee-saved d8 - d15 are saved on the stack
+    kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v8, InstGen::simd_fp_t::v9, InstGen::simd_sz_t::simd_d, gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+    kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v10, InstGen::simd_fp_t::v11, InstGen::simd_sz_t::simd_d, gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+    kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
+    kernel.add_instr(ig.neon_stp(InstGen::simd_fp_t::v14, InstGen::simd_fp_t::v15, InstGen::simd_sz_t::simd_d, gpr_t::sp, -16, InstGen::addr_mode_t::pre_index));
     kernel.add_instr(ig.base_smstart());
     kernel.add_instr(ig.ssve_ptrue(pr_t::p0, sve_size_t::s));
     kernel.add_instr(ig.base_mov(gpr_t::x4, gpr_t::x0));
@@ -171,6 +176,10 @@ Unary::error_t Unary::generate( uint32_t m, uint32_t n, uint32_t trans_b, dtype_
     kernel.add_label("loop01_end");
 
     kernel.add_instr(ig.base_smstop());
+    kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v14, InstGen::simd_fp_t::v15, InstGen::simd_sz_t::simd_d, gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+    kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v12, InstGen::simd_fp_t::v13, InstGen::simd_sz_t::simd_d, gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+    kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v10, InstGen::simd_fp_t::v11, InstGen::simd_sz_t::simd_d, gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
+    kernel.add_instr(ig.neon_ldp(InstGen::simd_fp_t::v8, InstGen::simd_fp_t::v9, InstGen::simd_sz_t::simd_d, gpr_t::sp, 16, InstGen::addr_mode_t::post_index));
     kernel.add_instr(ig.base_ret());
     kernel.set_kernel();
     return Unary::error_t::success;

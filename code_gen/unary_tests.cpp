@@ -409,3 +409,30 @@ int main(int argc, char** argv) {
 }
 
 
+
+
+
+TEST_CASE("unary kernels preserve the callee-saved registers d8 - d15", "[unary][abi]") {
+    Unary::ptype_t const ptype = GENERATE(Unary::ptype_t::zero, Unary::ptype_t::identity, Unary::ptype_t::relu);
+    uint32_t const trans_b = GENERATE(0, 1);
+    CAPTURE(ptype, trans_b);
+
+    struct call_t {
+        Unary::kernel_t kernel;
+        float* a;
+        float* b;
+    };
+
+    std::vector<float> a(32 * 32, 1.0f);
+    std::vector<float> b(32 * 32, 0.0f);
+
+    Unary unary;
+    REQUIRE(unary.generate(32, 32, trans_b, Unary::dtype_t::fp32, ptype) == Unary::error_t::success);
+    call_t call = {unary.get_kernel(), a.data(), b.data()};
+
+    auto invoke = [](void* arg) {
+        call_t* call = (call_t*)arg;
+        call->kernel(call->a, call->b, 32, 32);
+    };
+    REQUIRE(callee_saved_fp_preserved(invoke, &call));
+}
