@@ -10,6 +10,8 @@ set(CXX_FLAGS -Wall -Wextra -march=armv9.2-a+nosve+sme+sme2 -O2)
 add_library(teir_runtime
   teir.cpp
   teir_lowering.cpp
+  teir_transform.cpp
+  teir_passes.cpp
   teir_interpreter.cpp
   teir_compiler.cpp
   UnaryCache.cpp
@@ -46,3 +48,12 @@ mlc_add_sme_tests(teir_runtime_tests.out)
 add_executable(teir_benchmarks.out teir_benchmarks.cpp)
 target_compile_options(teir_benchmarks.out PRIVATE ${CXX_FLAGS})
 target_link_libraries(teir_benchmarks.out PRIVATE teir_runtime)
+
+add_executable(teir_ablation.out teir_ablation.cpp)
+target_compile_options(teir_ablation.out PRIVATE ${CXX_FLAGS})
+target_link_libraries(teir_ablation.out PRIVATE teir_runtime)
+
+add_executable(teir_optimization_tests.out teir_optimization_tests.cpp)
+target_compile_options(teir_optimization_tests.out PRIVATE ${CXX_FLAGS})
+target_link_libraries(teir_optimization_tests.out PRIVATE Catch2::Catch2WithMain teir_runtime)
+mlc_add_sme_tests(teir_optimization_tests.out)

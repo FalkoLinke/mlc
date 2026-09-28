@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <random>
+#include <string>
 #include <vector>
 
 #include "teir.h"
@@ -33,8 +34,12 @@ inline uint64_t teir_example_floats(uint64_t outer_extent, uint64_t outer_stride
  * `data/matmul.teir`: mk,kn->mn as m0k0m1k1,k0n0k1n1->m0n0m1n1.
  * File extents: m0=256, m1=32, n0=128, n1=64, k0=16, k1=512.
  * Tensor order: in0, in1, out.
+ *
+ * In the file the zero invocation is a child of `iter_k0` and therefore only zeroes the first output block.
+ * `zero_per_block = true` instead zeroes every output block before its first contribution:
+ * `iter_n0` gets the children `[inv_zero guard first(@k0), inv_gemm]`, the rest of the schedule is unchanged.
  */
-inline teir_operation teir_example_matmul(uint64_t m0, uint64_t m1, uint64_t n0, uint64_t n1, uint64_t k0, uint64_t k1, bool parallel = true) {
+inline teir_operation teir_example_matmul(uint64_t m0, uint64_t m1, uint64_t n0, uint64_t n1, uint64_t k0, uint64_t k1, bool parallel = true, bool zero_per_block = false) {
     // in0: m0 k0 m1 k1
     uint64_t in0_k1 = teir_fp32;
     uint64_t in0_m1 = k1 * in0_k1;
@@ -73,12 +78,12 @@ inline teir_operation teir_example_matmul(uint64_t m0, uint64_t m1, uint64_t n0,
         teir_schedule(
             {"iter_k0"},
             {
-                teir_iter_node("iter_k0", "k0", teir_policy_t::policy_sequential, {"inv_zero", "iter_m0"}),
+                teir_iter_node("iter_k0", "k0", teir_policy_t::policy_sequential, zero_per_block ? std::vector<std::string>{"iter_m0"} : std::vector<std::string>{"inv_zero", "iter_m0"}),
                 teir_iter_node("iter_m0", "m0", teir_example_policy(parallel),    {"iter_n0"}),
-                teir_iter_node("iter_n0", "n0", teir_example_policy(parallel),    {"inv_gemm"}),
+                teir_iter_node("iter_n0", "n0", teir_example_policy(parallel),    zero_per_block ? std::vector<std::string>{"inv_zero", "inv_gemm"} : std::vector<std::string>{"inv_gemm"}),
             },
             {
-                teir_inv_node("inv_zero", "zero"),
+                zero_per_block ? teir_inv_node("inv_zero", "zero", {teir_guard(teir_guard_kind::first, "k0")}) : teir_inv_node("inv_zero", "zero"),
                 teir_inv_node("inv_gemm", "gemm"),
             }
         )
@@ -191,6 +196,93 @@ inline teir_operation teir_example_transposition(uint64_t a, uint64_t b, uint64_
             }
         )
     );
+}
+
+
+/**
+ * Einsum acspx,bspy->abcyx of the week 8 task with the extents (a, b, c, s, p, x, y) = (4, 4, 3, 64, 64, 1536, 1152).
+ * All tensors are stored densely in the order of their indices (the last index has unit stride).
+ * Tensor order: in0, in1, out.
+ *
+ * The schedule is written in the style of the example files: the unit-stride axes x (M), y (N) and the innermost
+ * contraction axis p (K) form the GEMM primitive, all other axes are iterated sequentially and the output is zeroed
+ * before the first contribution:
+ *   iter_a -> iter_b -> iter_c -> iter_s -> [inv_zero guard first(@s), inv_gemm]
+ */
+inline teir_operation teir_example_einsum(uint64_t a, uint64_t b, uint64_t c, uint64_t s, uint64_t p, uint64_t x, uint64_t y) {
+    // in0: a c s p x
+    uint64_t in0_x = teir_fp32;
+    uint64_t in0_p = x * in0_x;
+    uint64_t in0_s = p * in0_p;
+    uint64_t in0_c = s * in0_s;
+    uint64_t in0_a = c * in0_c;
+    // in1: b s p y
+    uint64_t in1_y = teir_fp32;
+    uint64_t in1_p = y * in1_y;
+    uint64_t in1_s = p * in1_p;
+    uint64_t in1_b = s * in1_s;
+    // out: a b c y x
+    uint64_t out_x = teir_fp32;
+    uint64_t out_y = x * out_x;
+    uint64_t out_c = y * out_y;
+    uint64_t out_b = c * out_c;
+    uint64_t out_a = b * out_b;
+
+    return teir_operation(
+        "einsum",
+        {
+            teir_tensor("in0", teir_dtype_t::dtype_fp32),
+            teir_tensor("in1", teir_dtype_t::dtype_fp32),
+            teir_tensor("out", teir_dtype_t::dtype_fp32),
+        },
+        {
+            teir_axis("a", a, {in0_a, 0,     out_a}, {0, 0, 0}),
+            teir_axis("b", b, {0,     in1_b, out_b}, {0, 0, 0}),
+            teir_axis("c", c, {in0_c, 0,     out_c}, {0, 0, 0}),
+            teir_axis("s", s, {in0_s, in1_s, 0    }, {0, 0, 0}),
+            teir_axis("p", p, {in0_p, in1_p, 0    }, {0, 0, 0}),
+            teir_axis("x", x, {in0_x, 0,     out_x}, {0, 0, 0}),
+            teir_axis("y", y, {0,     in1_y, out_y}, {0, 0, 0}),
+        },
+        {
+            teir_primitive("zero", teir_ptype_t::ptype_zero,     {"out"},               {{"M", {"x"}}, {"N", {"y"}}},                 {{"data_type", "f32"}}),
+            teir_primitive("gemm", teir_ptype_t::ptype_contract, {"in0", "in1", "out"}, {{"M", {"x"}}, {"N", {"y"}}, {"K", {"p"}}}, {{"data_type", "f32"}}),
+        },
+        teir_schedule(
+            {"iter_a"},
+            {
+                teir_iter_node("iter_a", "a", teir_policy_t::policy_sequential, {"iter_b"}),
+                teir_iter_node("iter_b", "b", teir_policy_t::policy_sequential, {"iter_c"}),
+                teir_iter_node("iter_c", "c", teir_policy_t::policy_sequential, {"iter_s"}),
+                teir_iter_node("iter_s", "s", teir_policy_t::policy_sequential, {"inv_zero", "inv_gemm"}),
+            },
+            {
+                teir_inv_node("inv_zero", "zero", {teir_guard(teir_guard_kind::first, "s")}),
+                teir_inv_node("inv_gemm", "gemm"),
+            }
+        )
+    );
+}
+
+/** Reference implementation of `teir_example_einsum`, overwriting `out`. */
+inline void teir_example_einsum_ref(float const* in0, float const* in1, float* out, uint64_t a, uint64_t b, uint64_t c, uint64_t s, uint64_t p, uint64_t x, uint64_t y) {
+    for (uint64_t ia = 0; ia < a; ia++) {
+        for (uint64_t ib = 0; ib < b; ib++) {
+            for (uint64_t ic = 0; ic < c; ic++) {
+                for (uint64_t iy = 0; iy < y; iy++) {
+                    for (uint64_t ix = 0; ix < x; ix++) {
+                        double sum = 0.0;
+                        for (uint64_t is = 0; is < s; is++) {
+                            for (uint64_t ip = 0; ip < p; ip++) {
+                                sum += (double)in0[(((ia * c + ic) * s + is) * p + ip) * x + ix] * (double)in1[((ib * s + is) * p + ip) * y + iy];
+                            }
+                        }
+                        out[(((ia * b + ib) * c + ic) * y + iy) * x + ix] = (float)sum;
+                    }
+                }
+            }
+        }
+    }
 }
 
 
