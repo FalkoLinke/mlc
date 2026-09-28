@@ -10,10 +10,10 @@ Todo Übungen
     Tests sind vorhanden, aber kein Unittest-Framework wie Catch2 o.ä.
     Wie schon besprochen ist die ReLU Implementierung nicht optimal, da Daten doppelt bewegt werden. Zuerst für den Copy und dann nochmal für die max-Funktion.
 - [x] Übung 5 10/10 code_gen
-- [ ] Übung 6 9/10 code_gen
+- [x] Übung 6 9/10 code_gen
     Benchmarks sehen gut aus.
     Im Bericht fehlt der Teil zu GEMM und gerade bei solchen Zahlen bieten sich Graphen an, da diese weitere Infos bringen können.
-- [ ] Übung 7 8/10 teir
+- [x] Übung 7 8/10 teir
     Im Bericht fehlen die Benchmarks und die Beschreibung des Interpreters.
     Die Parallelisierung fehlt.
 - [ ] Übung 8 0/10

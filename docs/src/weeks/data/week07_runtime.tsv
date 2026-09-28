@@ -1,0 +1,13 @@
+example	runtime	policy	threads	best_s	median_s	best_perf	median_perf	unit	max_rel_diff
+matmul	interpreter	sequential	1	3.6461	3.6535	301.55	300.95	GFLOPS	0.00e+00
+matmul	compiler	sequential	1	2.6698	2.6961	411.84	407.81	GFLOPS	0.00e+00
+matmul	interpreter	parallel	10	1.3311	1.3363	826.01	822.80	GFLOPS	0.00e+00
+matmul	compiler	parallel	10	1.3491	1.3535	815.01	812.32	GFLOPS	0.00e+00
+contraction	interpreter	sequential	1	4.6361	4.6512	266.81	265.94	GFLOPS	0.00e+00
+contraction	compiler	sequential	1	3.5738	3.5795	346.12	345.57	GFLOPS	0.00e+00
+contraction	interpreter	parallel	10	1.9602	1.9772	631.04	625.59	GFLOPS	0.00e+00
+contraction	compiler	parallel	10	1.9571	1.9718	632.02	627.31	GFLOPS	0.00e+00
+transposition	interpreter	sequential	1	0.0153	0.0154	9.87	9.83	GB/s	0.00e+00
+transposition	compiler	sequential	1	0.0041	0.0042	36.51	36.25	GB/s	0.00e+00
+transposition	interpreter	parallel	10	0.0032	0.0032	46.73	46.58	GB/s	0.00e+00
+transposition	compiler	parallel	10	0.0026	0.0027	57.16	56.56	GB/s	0.00e+00

@@ -64,6 +64,7 @@ bool GemmCache::Args::operator<(Args const& other) const {
 
 
 mini_jit::Gemm::kernel_t GemmCache::get_kernel(uint32_t m, uint32_t n, uint32_t k, uint32_t trans_a, uint32_t trans_b, uint32_t trans_c, mini_jit::Gemm::dtype_t dtype) {
+    std::lock_guard<std::mutex> lock(mutex);
     Args args(m, n, k, trans_a, trans_b, trans_c, dtype);
 
     // attempt to load a precreated unary kernel
@@ -100,6 +101,7 @@ mini_jit::Gemm::kernel_t GemmCache::get_kernel(uint32_t m, uint32_t n, uint32_t 
 
 
 void GemmCache::clear() {
+    std::lock_guard<std::mutex> lock(mutex);
     cache.clear();
 }
 

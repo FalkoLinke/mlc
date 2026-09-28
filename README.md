@@ -46,6 +46,17 @@ The documentation workflow ``.github/workflows/sphinx.yaml`` builds this report 
 
 ## Build source code
 
+### teir (Week 7)
+
+The `teir` subdirectory is built by the top-level CMake build described above.
+Parallel iteration nodes use OpenMP, so use the homebrew clang and libomp build commands;
+without OpenMP all iteration nodes run sequentially.
+
+The following executables are provided in `build/teir`:
+- `teir_interpreter_tests.out`, `teir_compiler_tests.out`, `teir_runtime_tests.out`: Execute the unit tests of the TEIR interpreter and compiler.
+- `teir_benchmarks.out [matmul|contraction|transposition|all] [repetitions]`: Verifies and benchmarks the examples of `teir/data`
+  with the interpreter and the compiler, with sequential and parallel policies. Set the number of threads with `OMP_NUM_THREADS`.
+
 ### code_gen (Week 5/6)
 
 To build the source code of the `code_gen` subdirectory execute the following commands:

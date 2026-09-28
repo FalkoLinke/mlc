@@ -3,6 +3,7 @@
 
 
 #include <memory>
+#include <mutex>
 
 #include "Unary.h"
 
@@ -32,6 +33,9 @@ private:
         /** Required for use as a key in `std::map`. */
         bool operator<(Args const& other) const;
     };
+
+    /** Guards `cache`, so that kernels may be requested from multiple threads. */
+    std::mutex mutex;
 
     /** The stored kernels. */
     std::map<Args, std::unique_ptr<mini_jit::Unary>> cache;

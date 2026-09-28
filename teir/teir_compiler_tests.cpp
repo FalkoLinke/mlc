@@ -718,7 +718,6 @@ TEST_CASE( "abc->abc with guard last", "[test]") {
     teir_compiler compiler;
     compiler.compile(abc_abc_op);
     teir_compiler::teir_function_t func = compiler.get_function();
-    compiler.write("test.bin");
 
     std::vector<void*> args = {a.data(), b.data()};
     func(args.data());

@@ -7,6 +7,7 @@
 #include "Unary.h"
 #include "UnaryCache.h"
 #include "GemmCache.h"
+#include "teir_lowering.h"
 
 
 
@@ -35,6 +36,11 @@ struct teir_interpreter {
     private:
         UnaryCache unary_cache;
         GemmCache gemm_cache;
+
+        /** The tile kernel plan of each primitive, indexed like `operation.primitives`. Set up by `run`. */
+        std::vector<teir_tile_plan> plans;
+        /** The generated kernel of each primitive, or `nullptr` if the primitive has no tile kernel. */
+        std::vector<void*> kernels;
 
         uint64_t resolve_tensor_id_idx(std::string const& id) const;
         teir_axis const* resolve_axis_id(std::string const& id) const;
@@ -66,6 +72,14 @@ struct teir_interpreter {
          * @return `true` if the guards are satisfied, `false` otherwise.
          */
         bool guards_satisfied(std::vector<teir_axis const*> const& axis_path, std::vector<uint64_t> const& index_path, std::vector<teir_guard> const& guards);
+        /** Iterates over the children of `iter_node` for the index `i` of its axis. */
+        void iterate_children(teir_iter_node const* iter_node, teir_axis const* axis, uint64_t i, std::vector<teir_axis const*> const& axis_path, std::vector<uint64_t> const& index_path);
+        /**
+         * @brief Recursively executes the schedule node `node`.
+         *
+         * Iteration nodes with the policy `parallel` distribute their iterations over OpenMP threads,
+         * unless they are nested in another parallel iteration node.
+         */
         void iterate(std::string const& node, std::vector<teir_axis const*> axis_path, std::vector<uint64_t> index_path);    
         void lower(teir_inv_node const* inv_node, std::vector<teir_axis const*> axis_path, std::vector<uint64_t> index_path);
 

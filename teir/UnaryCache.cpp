@@ -51,6 +51,7 @@ bool UnaryCache::Args::operator<(Args const& other) const {
 
 
 mini_jit::Unary::kernel_t UnaryCache::get_kernel(uint32_t m, uint32_t n, uint32_t trans_b, mini_jit::Unary::dtype_t dtype, mini_jit::Unary::ptype_t  ptype) {
+    std::lock_guard<std::mutex> lock(mutex);
     Args args(m, n, trans_b, dtype, ptype);
 
     // attempt to load a precreated unary kernel
@@ -87,6 +88,7 @@ mini_jit::Unary::kernel_t UnaryCache::get_kernel(uint32_t m, uint32_t n, uint32_
 
 
 void UnaryCache::clear() {
+    std::lock_guard<std::mutex> lock(mutex);
     cache.clear();
 }
 

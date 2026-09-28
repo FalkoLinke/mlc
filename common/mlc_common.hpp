@@ -10,6 +10,48 @@
 
 
 
+/**
+ * @brief Checks that `func(arg)` preserves the callee-saved registers d8 - d15 (AAPCS64).
+ *
+ * Kernels which switch to streaming mode have to save these registers,
+ * because smstart and smstop zero all vector registers.
+ */
+inline bool callee_saved_fp_preserved(void (*func)(void*), void* arg) {
+    double out[8] = {0.0};
+    asm volatile(
+        "mov x19, %[out]\n"
+        "mov x0, %[arg]\n"
+        "fmov d8, #1.0\n"
+        "fmov d9, #2.0\n"
+        "fmov d10, #3.0\n"
+        "fmov d11, #4.0\n"
+        "fmov d12, #5.0\n"
+        "fmov d13, #6.0\n"
+        "fmov d14, #7.0\n"
+        "fmov d15, #8.0\n"
+        "blr %[func]\n"
+        "stp d8, d9, [x19]\n"
+        "stp d10, d11, [x19, #16]\n"
+        "stp d12, d13, [x19, #32]\n"
+        "stp d14, d15, [x19, #48]\n"
+        :
+        : [func] "r"(func), [arg] "r"(arg), [out] "r"(out)
+        : "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15",
+          "x16", "x17", "x19", "x30",
+          "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15",
+          "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31",
+          "memory", "cc"
+    );
+    for (int i = 0; i < 8; i++) {
+        if (out[i] != (double)(i + 1)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
 
 
 
