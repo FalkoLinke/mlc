@@ -16,6 +16,6 @@ Todo Übungen
 - [x] Übung 7 8/10 teir
     Im Bericht fehlen die Benchmarks und die Beschreibung des Interpreters.
     Die Parallelisierung fehlt.
-- [ ] Übung 8 0/10
+- [x] Übung 8 0/10
 
 - [] Abschlussbericht - group_specific - mlc.pdf - benchmarks and code_gen
