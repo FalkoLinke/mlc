@@ -37,6 +37,15 @@ Beyond the task, which only requires multiples of 16 for ``m`` and ``n``, the ge
 arbitrary sizes of all three dimensions and all eight combinations of storage formats.
 Only FP32 is supported.
 
+.. note::
+
+   This section describes the current state of the generator.
+   At the end of week 6, the generator only supported column-major A and C, row-major B
+   (``trans_a = 0``, ``trans_b = 1``, ``trans_c = 0``) and sizes ``m``, ``n``, ``k`` which are multiples of 16.
+   The support for arbitrary sizes, all storage formats and the in-register transposition
+   was added later as part of the :doc:`group specific component <group_specific>`.
+   The verification and the benchmarks below use the current generator.
+
 
 
 Verification
