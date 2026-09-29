@@ -25,11 +25,11 @@
 */
 
 // one k step of the 2x2-tile outer product:
-// za0 = C(m 0:15,  n 0:15),  za1 = C(m 16:31, n 0:15)
+
 // za2 = C(m 0:15,  n 16:31), za3 = C(m 16:31, n 16:31)
 // \mb0 / \mb1 = A m-vectors of block 0 / block 1 for this k
 .macro K_GROUP mb0, mb1
-    ld1w { z30.S, z31.S }, pn8/Z, [x8]
+    ld1w { z30.S, z31.S }, pn8/Z, [x8]// za0 = C(m 0:15,  n 0:15),  za1 = C(m 16:31, n 0:15)
     add x8, x8, x17 // x17 = ld_b*4, next k row of B
     fmopa za0.s, p0/m, p0/m, z30.s, z\mb0\().s
     fmopa za1.s, p0/m, p0/m, z30.s, z\mb1\().s
@@ -50,6 +50,13 @@ FUNCLABEL(gemm_512_512_trZA):
     smstart
     ptrue p0.s
     ptrue pn8.s
+
+    // reserve the spill buffer for za0 (16 vectors) once and align it to 64 bytes:
+    // with a misaligned buffer every spilled vector crosses two cache lines
+    addsvl  sp, sp, #-17
+    mov     x13, sp
+    and     x13, x13, #0xffffffffffffffc0
+    mov     sp, x13
 
     rdsvl x9, #1   // bytes per vector
     lsr x9, x9, #2 // floats per vector
@@ -110,7 +117,6 @@ K_loop:
 
     // spill accumulator tile za0 to the stack: the A transpose staging below
     // clobbers it. za0.s consists of ZA array vectors 0,4,8,...,60.
-    addsvl  sp, sp, #-16
     mov     w14, #0
     mov     x13, sp
     .rept 16
@@ -164,7 +170,6 @@ K_loop:
     add     w14, w14, #4
     addsvl  x13, x13, #1
     .endr
-    addsvl  sp, sp, #16
 
     // park z30/z31 (A block 1, k=14/15) on the stack: the B loads reuse z30/z31
     addsvl  sp, sp, #-2
@@ -242,6 +247,7 @@ K_loop:
 
 
     smstop
+    mov sp, x29
     ldp d14, d15, [sp], #16
     ldp d12, d13, [sp], #16
     ldp d10, d11, [sp], #16
