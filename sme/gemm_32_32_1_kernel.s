@@ -29,6 +29,11 @@
 FUNCLABEL(gemm_32_32_1):
 
 
+    // smstart and smstop zero the vector registers: save the callee-saved d8 - d15
+    stp d8, d9, [sp, #-16]!
+    stp d10, d11, [sp, #-16]!
+    stp d12, d13, [sp, #-16]!
+    stp d14, d15, [sp, #-16]!
     smstart
     ptrue p0.s
 
@@ -150,5 +155,9 @@ FUNCLABEL(gemm_32_32_1):
     .endr
 
     smstop
+    ldp d14, d15, [sp], #16
+    ldp d12, d13, [sp], #16
+    ldp d10, d11, [sp], #16
+    ldp d8, d9, [sp], #16
     
     ret

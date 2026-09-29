@@ -412,7 +412,7 @@ int main(int argc, char** argv) {
 
 
 
-TEST_CASE("unary kernels preserve the callee-saved registers d8 - d15", "[unary][abi]") {
+TEST_CASE("unary kernels preserve the callee-saved registers", "[unary][abi]") {
     Unary::ptype_t const ptype = GENERATE(Unary::ptype_t::zero, Unary::ptype_t::identity, Unary::ptype_t::relu);
     uint32_t const trans_b = GENERATE(0, 1);
     CAPTURE(ptype, trans_b);
@@ -434,5 +434,5 @@ TEST_CASE("unary kernels preserve the callee-saved registers d8 - d15", "[unary]
         call_t* call = (call_t*)arg;
         call->kernel(call->a, call->b, 32, 32);
     };
-    REQUIRE(callee_saved_fp_preserved(invoke, &call));
+    REQUIRE(callee_saved_preserved(invoke, &call));
 }

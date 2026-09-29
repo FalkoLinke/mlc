@@ -100,19 +100,12 @@ int main() {
     // 1. KORREKTHEIT VERIFIZIEREN
     // ==========================================
     
-    #pragma omp parallel
-    {
-        // JEDER Thread muss für sich selbst starten
-        asm volatile("smstart");
-
-        #pragma omp for collapse(2) schedule(static)
-        for (int j = 0; j < N; j += 16) {
-            for (int i = 0; i < M; i += 16) {
-                gemm_16_16(a.data() + i, b.data() + j, c_asm.data() + j * ld_c + i, ld_a, ld_b, ld_c);
-            }
+    // gemm_16_16 enters and leaves the streaming mode itself, the compiled C++ code has to run in non-streaming mode
+    #pragma omp parallel for collapse(2) schedule(static)
+    for (int j = 0; j < N; j += 16) {
+        for (int i = 0; i < M; i += 16) {
+            gemm_16_16(a.data() + i, b.data() + j, c_asm.data() + j * ld_c + i, ld_a, ld_b, ld_c);
         }
-
-        asm volatile("smstop");
     }
 
 
@@ -143,7 +136,7 @@ int main() {
         }
     }
 
-    if (passed) {
+    if (!passed) {
         std::cout << "============================================\n";
         std::cout << " FEHLGESCHLAGEN! Ergebnisse stimmen nicht überein.\n";
         std::cout << " Erster Fehler bei Index: " << error_index 
@@ -172,7 +165,6 @@ int main() {
     // Wir starten die Threads genau EINMAL ganz außen.
     #pragma omp parallel
     {
-        asm volatile("smstart");
         for (int iter = 0; iter < num_iterations; iter++) {
             
             // #pragma omp for verteilt die Schleife auf die BEREITS WACHEN Threads
@@ -183,7 +175,6 @@ int main() {
                 }
             }
         }
-        asm volatile("smstop");
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();

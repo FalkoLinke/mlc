@@ -142,7 +142,7 @@ TEST_CASE("parallel contraction example matches the sequential interpreter", "[t
 
 
 
-TEST_CASE("compiled functions preserve the callee-saved registers d8 - d15", "[teir][runtime][abi]") {
+TEST_CASE("compiled functions preserve the callee-saved registers", "[teir][runtime][abi]") {
     bool const parallel = GENERATE(false, true);
     CAPTURE(parallel);
 
@@ -165,5 +165,5 @@ TEST_CASE("compiled functions preserve the callee-saved registers d8 - d15", "[t
         call_t* call = (call_t*)arg;
         call->function(call->tensors);
     };
-    REQUIRE(callee_saved_fp_preserved(invoke, &call));
+    REQUIRE(callee_saved_preserved(invoke, &call));
 }

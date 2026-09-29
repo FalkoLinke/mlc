@@ -288,3 +288,18 @@ TEST_CASE("transposing relu_16_16 only writes its submatrix", "[sme][unary]") {
 
 
 
+
+
+TEST_CASE("unary kernels preserve the callee-saved registers", "[sme][unary][abi]") {
+    static std::vector<float> a(16 * 16, -1.0f);
+    static std::vector<float> b(16 * 16, 0.0f);
+    for (int32_t trans_b : {0, 1}) {
+        CAPTURE(trans_b);
+        static int32_t trans;
+        trans = trans_b;
+        REQUIRE(callee_saved_preserved([](void*) { identity_4_4(a.data(), b.data(), 4, 4, trans); }, nullptr));
+        REQUIRE(callee_saved_preserved([](void*) { identity_16_16(a.data(), b.data(), 16, 16, trans); }, nullptr));
+        REQUIRE(callee_saved_preserved([](void*) { relu_16_16(a.data(), b.data(), 16, 16, trans); }, nullptr));
+    }
+    REQUIRE(callee_saved_preserved([](void*) { zero_16_16(b.data(), 16); }, nullptr));
+}

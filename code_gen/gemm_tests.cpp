@@ -214,3 +214,30 @@ TEST_CASE("test odd sizes", "[test]") {
         }
     }
 }
+
+
+TEST_CASE("generated gemm kernels preserve the callee-saved registers", "[gemm][abi]") {
+    struct call_t {
+        mini_jit::Gemm::kernel_t kernel;
+        std::vector<float> a, b, c;
+        int64_t ld_a, ld_b, ld_c;
+    };
+    auto invoke = [](void* arg) {
+        call_t* call = (call_t*)arg;
+        call->kernel(call->a.data(), call->b.data(), call->c.data(), call->ld_a, call->ld_b, call->ld_c);
+    };
+
+    uint32_t const m = 48, n = 40, k = 24;
+    for (uint32_t trans = 0; trans < 8; trans++) {
+        uint32_t trans_a = trans & 1, trans_b = (trans >> 1) & 1, trans_c = (trans >> 2) & 1;
+        CAPTURE(trans_a, trans_b, trans_c);
+        mini_jit::Gemm gemm;
+        REQUIRE(gemm.generate(m, n, k, trans_a, trans_b, trans_c, mini_jit::Gemm::dtype_t::fp32) == mini_jit::Gemm::error_t::success);
+        call_t call = {
+            gemm.get_kernel(),
+            std::vector<float>(m * k, 1.0f), std::vector<float>(k * n, 1.0f), std::vector<float>(m * n, 0.0f),
+            trans_a ? k : m, trans_b ? n : k, trans_c ? n : m,
+        };
+        REQUIRE(callee_saved_preserved(invoke, &call));
+    }
+}

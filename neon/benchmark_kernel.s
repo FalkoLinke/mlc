@@ -23,7 +23,7 @@
     ldp d14, d15, [sp], #16                 // pop callee-saved float registers
     ldp d12, d13, [sp], #16
     ldp d10, d11, [sp], #16
-    ldp d18, d19, [sp], #16
+    ldp d8, d9, [sp], #16
 
     ldp x29, x30, [sp], #16                 // restore link- and frame-registers
     .endm
@@ -117,7 +117,7 @@ fmadd_insts_end:
 end01:
 
     adr x1, fmadd_insts_count
-    ldr x0, [x1]
+    ldr w0, [x1]                            // the instruction count is a 32-bit .long
     mul x0, x0, x2
 
     KERNEL_EPILOGUE
@@ -173,7 +173,7 @@ fmla_4s_insts_end:
 end02:
 
     adr x1, fmla_4s_insts_count
-    ldr x0, [x1]
+    ldr w0, [x1]                            // the instruction count is a 32-bit .long
     mul x0, x0, x2
 
     KERNEL_EPILOGUE
@@ -225,7 +225,7 @@ fmla_2s_insts_end:
 end03:
 
     adr x1, fmla_2s_insts_count
-    ldr x0, [x1]
+    ldr w0, [x1]                            // the instruction count is a 32-bit .long
     mul x0, x0, x2
 
     KERNEL_EPILOGUE
@@ -296,7 +296,7 @@ fmadd_v2_insts_end:
 end04:
 
     adr x1, fmadd_v2_insts_count
-    ldr x0, [x1]
+    ldr w0, [x1]                            // the instruction count is a 32-bit .long
     mul x0, x0, x2
 
     KERNEL_EPILOGUE
@@ -369,7 +369,7 @@ fmla_4s_v2_insts_end:
 end05:
 
     adr x1, fmla_4s_v2_insts_count
-    ldr x0, [x1]
+    ldr w0, [x1]                            // the instruction count is a 32-bit .long
     mul x0, x0, x2
 
     KERNEL_EPILOGUE
@@ -449,7 +449,7 @@ fmla_2s_v2_insts_end:
 end06:
 
     adr x1, fmla_2s_v2_insts_count
-    ldr x0, [x1]
+    ldr w0, [x1]                            // the instruction count is a 32-bit .long
     mul x0, x0, x2
 
     KERNEL_EPILOGUE

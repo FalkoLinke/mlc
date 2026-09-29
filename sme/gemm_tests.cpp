@@ -96,3 +96,31 @@ TEST_CASE("gemm_16_16 computes C += A * B", "[sme][gemm]") {
 TEST_CASE("gemm_M_N_K_16 computes C += A * B", "[sme][gemm]") {
     check_gemm(gemm_M_N_K_16, 512, 512, 512, 512, 512, 512);
 }
+
+
+TEST_CASE("gemm kernels preserve the callee-saved registers", "[sme][gemm][abi]") {
+    struct call_t {
+        gemm_kernel_t* kernel;
+        int64_t m, n, k;
+    };
+    auto invoke = [](void* arg) {
+        call_t* call = (call_t*)arg;
+        std::vector<float> a(call->m * call->k, 1.0f);
+        std::vector<float> b(call->k * call->n, 1.0f);
+        std::vector<float> c(call->m * call->n, 0.0f);
+        call->kernel(a.data(), b.data(), c.data(), call->m, call->n, call->m);
+    };
+
+    std::vector<std::pair<std::string, call_t>> calls = {
+        {"gemm_16_16", {gemm_16_16, 16, 16, 512}},
+        {"gemm_32_32_1", {gemm_32_32_1, 32, 32, 1}},
+        {"gemm_32_32_512", {gemm_32_32_512, 32, 32, 512}},
+        {"gemm_512_32_512", {gemm_512_32_512, 512, 32, 512}},
+        {"gemm_512_512_512", {gemm_512_512_512, 512, 512, 512}},
+        {"gemm_M_N_K_16", {gemm_M_N_K_16, 512, 512, 512}},
+    };
+    for (auto& call : calls) {
+        CAPTURE(call.first);
+        REQUIRE(callee_saved_preserved(invoke, &call.second));
+    }
+}

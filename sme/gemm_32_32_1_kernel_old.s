@@ -29,6 +29,13 @@
 FUNCLABEL(gemm_32_32_1):
 
 
+    // x29 is used as a loop counter and has to be preserved
+    stp x29, x30, [sp, #-16]!
+    // smstart and smstop zero the vector registers: save the callee-saved d8 - d15
+    stp d8, d9, [sp, #-16]!
+    stp d10, d11, [sp, #-16]!
+    stp d12, d13, [sp, #-16]!
+    stp d14, d15, [sp, #-16]!
     smstart
     // C counter
     lsr x29, x5, #1
@@ -107,5 +114,10 @@ store_C_loop:
     cbnz x29, store_C_loop
 
     smstop
+    ldp d14, d15, [sp], #16
+    ldp d12, d13, [sp], #16
+    ldp d10, d11, [sp], #16
+    ldp d8, d9, [sp], #16
+    ldp x29, x30, [sp], #16
     
     ret

@@ -24,6 +24,11 @@ void identity_4_4( float const * a,
 */
     .global FUNCLABEL(identity_4_4)
 FUNCLABEL(identity_4_4):
+    // smstart and smstop zero the vector registers: save the callee-saved d8 - d15
+    stp d8, d9, [sp, #-16]!
+    stp d10, d11, [sp, #-16]!
+    stp d12, d13, [sp, #-16]!
+    stp d14, d15, [sp, #-16]!
     smstart
 
     ptrue p0.s, VL4
@@ -65,6 +70,10 @@ skip01:
     add x1, x1, x3, LSL #2
 
     smstop
+    ldp d14, d15, [sp], #16
+    ldp d12, d13, [sp], #16
+    ldp d10, d11, [sp], #16
+    ldp d8, d9, [sp], #16
     ret
 
 
@@ -83,6 +92,11 @@ void identity_16_16( float const * a,
 FUNCLABEL(identity_16_16):
     stp x29, x30, [sp, #-16]!
     mov fp, sp
+    // smstart and smstop zero the vector registers: save the callee-saved d8 - d15
+    stp d8, d9, [sp, #-16]!
+    stp d10, d11, [sp, #-16]!
+    stp d12, d13, [sp, #-16]!
+    stp d14, d15, [sp, #-16]!
     smstart
 
     cbz x4, identity_16_16_notrans
@@ -147,6 +161,10 @@ identity_16_16_loop03_end:
 
 identity_16_16_ret:
     smstop
+    ldp d14, d15, [sp], #16
+    ldp d12, d13, [sp], #16
+    ldp d10, d11, [sp], #16
+    ldp d8, d9, [sp], #16
     ldp x29, x30, [sp], #16
     ret
 
