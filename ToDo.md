@@ -6,7 +6,7 @@ Todo Übungen
     Der Bericht hat keinen Inhalt.
 - [x] Übung 2 5/10 neon
     Der Code für Task 2 konnte nicht kompiliert und dadurch nicht getestet werden. Des Weiteren fehlen Tests und eine Build-Pipeline für selbige.
-- [ ] Übung 3+4 17/20 sme
+- [x] Übung 3+4 17/20 sme
     Tests sind vorhanden, aber kein Unittest-Framework wie Catch2 o.ä.
     Wie schon besprochen ist die ReLU Implementierung nicht optimal, da Daten doppelt bewegt werden. Zuerst für den Copy und dann nochmal für die max-Funktion.
 - [x] Übung 5 10/10 code_gen
@@ -18,4 +18,4 @@ Todo Übungen
     Die Parallelisierung fehlt.
 - [x] Übung 8 0/10
 
-- [] Abschlussbericht - group_specific - mlc.pdf - benchmarks and code_gen
+- [x] Abschlussbericht - group_specific - mlc.pdf - benchmarks and code_gen
