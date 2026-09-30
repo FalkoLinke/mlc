@@ -17,7 +17,7 @@ and with transposed and non-transposed inputs :math:`A`, :math:`B` and output :m
 
 The GEMM generator of week 6 was the starting point for the group specific component.
 It only supported a single memory layout (FP32, column-major :math:`A` and :math:`C`, row-major :math:`B`)
-and sizes :math:`M`, :math:`N`, :math:`K` which are multiples of 16; for all other inputs, the generation failed with an error.
+and sizes :math:`M`, :math:`N`, :math:`K` which are multiples of 16.
 For :math:`M = N = K = 512`, the week 6 generator reaches 1774 GFLOPS.
 Within the group specific component, the generator was extended to support arbitrary sizes and all combinations of transposed inputs and outputs.
 
@@ -61,7 +61,7 @@ The block of :math:`C` that is kept in the four tiles is chosen depending on the
 Approach
 ^^^^^^^^
 
-Before extending the generator, we implemented and benchmarked the new building blocks as hand-written assembly kernels
+To find to most performant method, we implemented and benchmarked the new building blocks as hand-written assembly kernels
 in the ``benchmarks`` directory:
 
 * the summation of multiple K-tiles for small :math:`M` and :math:`N`,
@@ -442,5 +442,3 @@ Further Optimizations
 
 * Since the SME2 instructions do not touch the ZA array, they avoid saving and restoring the accumulator tile
   and may be the better choice when more than one input has to be transposed.
-* The :math:`512 \times 512 \times 512` kernels transpose the same block of :math:`A` again for every block of :math:`N`.
-  Transposing :math:`A` once into a buffer and reusing it for all blocks of :math:`N` could improve performance.
